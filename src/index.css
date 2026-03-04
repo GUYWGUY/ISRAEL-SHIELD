@@ -1,0 +1,101 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  --bg-color: #F0F4F8;
+  --surface-color: #FFFFFF;
+  --primary-azure: #00AEEF;
+  --primary-deep-blue: #0038B8;
+  --primary-light-blue: #E1F5FE;
+  --accent-gold: #D4AF37;
+  --alert-red: #E63946;
+  --text-main: #2C3E50;
+  --text-muted: #7F8C8D;
+  --border-radius: 16px;
+  --border-color: #e2e8f0;
+  --input-bg: #f8fafc;
+}
+
+.dark {
+  --bg-color: #020617;
+  --surface-color: #0f172a;
+  --primary-azure: #38bdf8;
+  --primary-deep-blue: #3b82f6;
+  --primary-light-blue: #1e3a8a;
+  --accent-gold: #fbbf24;
+  --alert-red: #f87171;
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --border-color: #1e293b;
+  --input-bg: #1e293b;
+}
+
+@theme {
+  --font-sans: "Assistant", ui-sans-serif, system-ui, sans-serif;
+  --color-primary-azure: var(--primary-azure);
+  --color-primary-deep-blue: var(--primary-deep-blue);
+  --color-primary-light-blue: var(--primary-light-blue);
+  --color-accent-gold: var(--accent-gold);
+  --color-alert-red: var(--alert-red);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-bg-color: var(--bg-color);
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: 'Assistant', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Animations from original */
+@keyframes extremeFlash {
+  0% { background-color: var(--alert-red); }
+  100% { background-color: #8b0000; }
+}
+
+.live-flash {
+  animation: extremeFlash 0.8s infinite alternate !important;
+}
+
+@keyframes ticker {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(100%, 0, 0); }
+}
+
+.ticker-move {
+  display: inline-block;
+  white-space: nowrap;
+  padding-right: 20px;
+  animation: ticker 35s linear infinite;
+}
+
+.spinner {
+  border: 6px solid var(--primary-light-blue);
+  border-top: 6px solid var(--primary-azure);
+  border-radius: 50%;
+  width: 60px; height: 60px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.mini-spinner {
+  border: 2px solid var(--primary-light-blue);
+  border-top: 2px solid var(--primary-azure);
+  border-radius: 50%;
+  width: 14px; height: 14px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
