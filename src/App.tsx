@@ -979,10 +979,10 @@ export default function App() {
       </div>
 
       {/* Main Container */}
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden p-3 md:p-5 gap-4 md:gap-5">
+      <main className="flex-1 flex flex-col md:flex-row md:overflow-hidden p-3 md:p-5 gap-4 md:gap-5">
         
         {/* Left Panel: Analytics (First on mobile) */}
-        <div className="w-full md:w-3/4 flex flex-col gap-3 overflow-y-auto md:overflow-hidden order-1 md:order-2 scrollbar-hide">
+        <div className="w-full md:w-3/4 flex flex-col gap-3 md:overflow-y-auto order-1 md:order-2 scrollbar-hide">
           
           {/* KPI Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 flex-shrink-0">
@@ -1025,8 +1025,8 @@ export default function App() {
           </div>
 
           {/* Charts Row 1: Time Series + Donuts Side-by-Side */}
-          <div className="flex flex-col md:flex-row gap-3 flex-1 min-h-0">
-            <div className="bg-surface-color p-3 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-[2] h-[250px] md:h-auto transition-colors duration-300">
+          <div className="flex flex-col md:flex-row gap-3 md:flex-1 min-h-0">
+            <div className="bg-surface-color p-3 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-[2] h-[300px] md:h-auto transition-colors duration-300">
               <div className="flex gap-2 justify-center mb-1 overflow-x-auto pb-1 scrollbar-hide flex-shrink-0">
                 {(['year', 'month', 'weekday', 'hour', 'minute'] as const).map(res => (
                   <button 
@@ -1041,19 +1041,19 @@ export default function App() {
               <div ref={timeSeriesChartRef} className="flex-1 w-full min-h-0" />
             </div>
 
-            <div className="bg-surface-color p-2 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-1 h-[200px] md:h-auto transition-colors duration-300">
+            <div className="bg-surface-color p-2 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-1 h-[250px] md:h-auto transition-colors duration-300">
               <div className="text-center font-extrabold text-primary-deep-blue dark:text-primary-azure text-[12px] mb-1">{t.threatDist}</div>
               <div ref={threatChartRef} className="flex-1 w-full min-h-0" />
             </div>
 
-            <div className="bg-surface-color p-2 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-1 h-[200px] md:h-auto transition-colors duration-300">
+            <div className="bg-surface-color p-2 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-1 h-[250px] md:h-auto transition-colors duration-300">
               <div className="text-center font-extrabold text-primary-deep-blue dark:text-primary-azure text-[12px] mb-1">{t.sourceDist}</div>
               <div ref={sourceChartRef} className="flex-1 w-full min-h-0" />
             </div>
           </div>
 
           {/* Charts Row 2: Top Cities */}
-          <div className="bg-surface-color p-3 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-[1.2] h-[200px] md:h-auto flex-shrink-0 md:flex-shrink transition-colors duration-300">
+          <div className="bg-surface-color p-3 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-[1.2] h-[300px] md:h-auto flex-shrink-0 transition-colors duration-300">
             <div className="font-extrabold text-primary-deep-blue dark:text-primary-azure text-[13px] mb-1 px-2">{t.topCities}</div>
             <div ref={topCitiesChartRef} className="flex-1 w-full min-h-0" />
           </div>
