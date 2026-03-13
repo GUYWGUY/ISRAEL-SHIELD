@@ -722,7 +722,18 @@ export default function App() {
         avoidLabelOverlap: false,
         minAngle: 15,
         itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 1 },
-        label: { show: false },
+        label: { 
+          show: window.innerWidth < 768,
+          position: 'outside',
+          formatter: '{b}: {d}%',
+          fontSize: 10,
+          color: darkMode ? '#94a3b8' : '#7F8C8D'
+        },
+        labelLine: {
+          show: window.innerWidth < 768,
+          length: 5,
+          length2: 5
+        },
         data, 
         color: colors
       }]
