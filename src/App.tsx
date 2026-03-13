@@ -12,7 +12,7 @@ import {
   Sun, Moon, Globe, Map as MapIcon, Layers, Calendar, 
   TrendingUp, Info, Search, Filter, BarChart3, PieChart, 
   MapPin, Clock, AlertTriangle, ChevronDown, ChevronUp,
-  Sparkles, Languages, Flame, Shield
+  Sparkles, Languages, Flame, Shield, Menu, X
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -196,6 +196,7 @@ export default function App() {
   const [compareMode, setCompareMode] = useState(false);
   const [compareOperation, setCompareOperation] = useState("all");
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const t = translations[lang];
   const isRtl = lang === 'he';
@@ -251,6 +252,7 @@ export default function App() {
       download: true,
       header: true,
       skipEmptyLines: true,
+      worker: true,
       complete: (results) => {
         const parsed = results.data.filter((d: any) => d.time).map((d: any) => {
           const dt = new Date(d.time);
@@ -451,7 +453,7 @@ export default function App() {
             .bindTooltip(`<b>${city}</b><br>${lang === 'he' ? 'התרעות' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'top' });
           markersRef.current.push(marker);
         }
-      } else if (!geoCache.current.hasOwnProperty(city)) {
+      } else if (!geoCache.current.hasOwnProperty(city) && !showHeatmap) {
         queue.push({ city, count: cityCounts[city] });
       }
     }
@@ -768,6 +770,13 @@ export default function App() {
         
         <div className="flex items-center gap-2 md:gap-4">
           <button 
+            className="md:hidden p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors text-text-main"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
+          <button 
             onClick={() => {
               setDarkMode(!darkMode);
               document.documentElement.classList.toggle('dark');
@@ -805,8 +814,81 @@ export default function App() {
         </div>
       </header>
 
-      {/* Filter Bar - Sticky on mobile */}
-      <div className="bg-surface-color px-5 py-2 border-b border-border-color flex gap-4 items-center overflow-x-auto whitespace-nowrap scrollbar-hide z-20 sticky top-0 md:relative">
+      {/* Filter Bar - Drawer on mobile */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ x: isRtl ? '100%' : '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: isRtl ? '100%' : '-100%' }}
+            className="fixed inset-0 z-50 bg-surface-color p-8 flex flex-col gap-6 md:hidden overflow-y-auto"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-primary-deep-blue dark:text-primary-azure">{isRtl ? 'מסננים' : 'Filters'}</h2>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-black/5 rounded-full"><X size={24} /></button>
+            </div>
+            
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-sm text-text-main">{t.search}</label>
+                <input 
+                  type="text" 
+                  className="bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
+                  placeholder={isRtl ? "הקלד שם..." : "Type name..."}
+                  value={citySearch}
+                  onChange={(e) => setCitySearch(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-sm text-text-main">{t.operation}</label>
+                <select 
+                  className="bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
+                  value={operationFilter}
+                  onChange={(e) => setOperationFilter(e.target.value)}
+                >
+                  <option value="all">{t.all}</option>
+                  {operationsDict.map(op => <option key={op.name} value={op.name}>{op.name}</option>)}
+                  <option value="שגרה (ללא מערכה)">שגרה (ללא מערכה)</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-sm text-text-main">{t.threat}</label>
+                <select 
+                  className="bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
+                  value={threatFilter}
+                  onChange={(e) => setThreatFilter(e.target.value)}
+                >
+                  <option value="all">{t.all}</option>
+                  {Array.from(new Set(Object.values(threatDict))).map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-sm text-text-main">{t.source}</label>
+                <select 
+                  className="bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value)}
+                >
+                  <option value="all">{t.all}</option>
+                  {Array.from(new Set(globalData.map(d => d.sourceStr))).map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="mt-4 bg-primary-azure text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all"
+              >
+                {isRtl ? 'הצג תוצאות' : 'Show Results'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="hidden md:flex bg-surface-color px-5 py-2 border-b border-border-color gap-4 items-center overflow-x-auto whitespace-nowrap scrollbar-hide z-20 sticky top-0 md:relative">
         <div className="flex items-center gap-2">
           <label className="font-semibold text-[13px] text-text-main">{t.search}</label>
           <input 
@@ -899,37 +981,8 @@ export default function App() {
       {/* Main Container */}
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden p-3 md:p-5 gap-4 md:gap-5">
         
-        {/* Right Panel: Map */}
-        <div className="w-full md:w-1/4 bg-surface-color rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col overflow-hidden border-t-[5px] border-primary-azure h-[200px] md:h-full relative flex-shrink-0 transition-colors duration-300">
-          <div className="px-4 py-2 font-extrabold text-primary-deep-blue dark:text-primary-azure border-b border-border-color bg-input-bg text-sm flex justify-between items-center">
-            <span>{t.mapTitle}</span>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setShowHeatmap(!showHeatmap)}
-                className={`p-1 rounded transition-colors ${showHeatmap ? 'bg-orange-500 text-white' : 'hover:bg-black/5 text-text-muted'}`}
-                title={t.heatmap}
-              >
-                <Flame size={14} />
-              </button>
-              <button 
-                onClick={() => setMapLayer(mapLayer === 'streets' ? 'satellite' : 'streets')}
-                className="p-1 hover:bg-black/5 rounded transition-colors text-text-muted"
-                title={mapLayer === 'streets' ? t.satellite : t.streets}
-              >
-                <Layers size={14} />
-              </button>
-            </div>
-          </div>
-          <div id="map" className="flex-1 z-10" />
-          {geocodingStatus && (
-            <div className="absolute bottom-2 left-2 right-2 bg-white/90 dark:bg-slate-800/90 p-1.5 rounded-lg text-[10px] font-bold text-primary-azure shadow-sm z-20 flex items-center gap-2 border border-primary-azure/20">
-              <div className="mini-spinner" /> {geocodingStatus}
-            </div>
-          )}
-        </div>
-
-        {/* Left Panel: Analytics */}
-        <div className="w-full md:w-3/4 flex flex-col gap-3 overflow-y-auto md:overflow-hidden scrollbar-hide">
+        {/* Left Panel: Analytics (First on mobile) */}
+        <div className="w-full md:w-3/4 flex flex-col gap-3 overflow-y-auto md:overflow-hidden order-1 md:order-2 scrollbar-hide">
           
           {/* KPI Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 flex-shrink-0">
@@ -966,7 +1019,7 @@ export default function App() {
               <div className="absolute top-0 bottom-0 right-0 w-[6px] bg-alert-red" />
               <div className="text-[11px] md:text-xs text-text-muted font-semibold">{t.lastAlert}</div>
               <div className="text-base md:text-lg font-extrabold text-primary-deep-blue dark:text-primary-azure mt-1">
-                {filteredData.length > 0 ? filteredData[filteredData.length-1].operationsArray[0] : "-"}
+                {filteredData.length > 0 ? filteredData[filteredData.length-1].time : "-"}
               </div>
             </div>
           </div>
@@ -1004,6 +1057,35 @@ export default function App() {
             <div className="font-extrabold text-primary-deep-blue dark:text-primary-azure text-[13px] mb-1 px-2">{t.topCities}</div>
             <div ref={topCitiesChartRef} className="flex-1 w-full min-h-0" />
           </div>
+        </div>
+
+        {/* Right Panel: Map (Last on mobile) */}
+        <div className="w-full md:w-1/4 bg-surface-color rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col overflow-hidden border-t-[5px] border-primary-azure h-[300px] md:h-full relative flex-shrink-0 order-2 md:order-1 transition-colors duration-300">
+          <div className="px-4 py-2 font-extrabold text-primary-deep-blue dark:text-primary-azure border-b border-border-color bg-input-bg text-sm flex justify-between items-center">
+            <span>{t.mapTitle}</span>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShowHeatmap(!showHeatmap)}
+                className={`p-1 rounded transition-colors ${showHeatmap ? 'bg-orange-500 text-white' : 'hover:bg-black/5 text-text-muted'}`}
+                title={t.heatmap}
+              >
+                <Flame size={14} />
+              </button>
+              <button 
+                onClick={() => setMapLayer(mapLayer === 'streets' ? 'satellite' : 'streets')}
+                className="p-1 hover:bg-black/5 rounded transition-colors text-text-muted"
+                title={mapLayer === 'streets' ? t.satellite : t.streets}
+              >
+                <Layers size={14} />
+              </button>
+            </div>
+          </div>
+          <div id="map" className="flex-1 z-10" />
+          {geocodingStatus && (
+            <div className="absolute bottom-2 left-2 right-2 bg-white/90 dark:bg-slate-800/90 p-1.5 rounded-lg text-[10px] font-bold text-primary-azure shadow-sm z-20 flex items-center gap-2 border border-primary-azure/20">
+              <div className="mini-spinner" /> {geocodingStatus}
+            </div>
+          )}
         </div>
       </main>
 
