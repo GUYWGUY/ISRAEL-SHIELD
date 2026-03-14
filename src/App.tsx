@@ -16,6 +16,11 @@ import {
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
+// Ensure Leaflet is available globally for plugins loaded via CDN
+if (typeof window !== 'undefined') {
+  (window as any).L = L;
+}
+
 // --- Constants & Dictionaries ---
 const daysHe = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const daysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -206,6 +211,7 @@ export default function App() {
   const markersRef = useRef<L.CircleMarker[]>([]);
   const heatmapLayerRef = useRef<any>(null);
   const streetLayerRef = useRef<L.TileLayer | null>(null);
+  const darkLayerRef = useRef<L.TileLayer | null>(null);
   const satelliteLayerRef = useRef<L.TileLayer | null>(null);
   const timeSeriesChartRef = useRef<HTMLDivElement>(null);
   const topCitiesChartRef = useRef<HTMLDivElement>(null);
@@ -398,25 +404,38 @@ export default function App() {
         attribution: '&copy; OpenStreetMap'
       });
       
+
+      darkLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{y}/{x}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      });
+      
       satelliteLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri'
       });
 
-      streetLayerRef.current.addTo(mapRef.current);
+      if (darkMode) {
+        darkLayerRef.current.addTo(mapRef.current);
+      } else {
+        streetLayerRef.current.addTo(mapRef.current);
+      }
       L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
     }
   }, [loading]);
 
   useEffect(() => {
     if (!mapRef.current) return;
-    if (mapLayer === 'streets') {
-      satelliteLayerRef.current?.remove();
-      streetLayerRef.current?.addTo(mapRef.current);
-    } else {
-      streetLayerRef.current?.remove();
+    streetLayerRef.current?.remove();
+    darkLayerRef.current?.remove();
+    satelliteLayerRef.current?.remove();
+
+    if (mapLayer === 'satellite') {
       satelliteLayerRef.current?.addTo(mapRef.current);
+    } else if (darkMode) {
+      darkLayerRef.current?.addTo(mapRef.current);
+    } else {
+      streetLayerRef.current?.addTo(mapRef.current);
     }
-  }, [mapLayer]);
+  }, [mapLayer, darkMode]);
 
   // --- Map Markers & Geocoding ---
   useEffect(() => {
