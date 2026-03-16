@@ -16,10 +16,69 @@ import {
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
-// Ensure Leaflet is available globally for plugins loaded via CDN
+// Ensures Leaflet is available globally for plugins loaded via CDN
 if (typeof window !== 'undefined') {
   (window as any).L = L;
 }
+
+// --- IndexedDB Helpers ---
+const DB_NAME = 'israelShieldDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'alertsCache';
+
+const openDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const saveToCache = async (data: any[], lastModified: string) => {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.put(data, 'alerts');
+    store.put(lastModified, 'lastModified');
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) {
+    console.warn("Failed to save to cache:", e);
+  }
+};
+
+const loadFromCache = async (): Promise<{ data: any[], lastModified: string } | null> => {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const dataReq = store.get('alerts');
+    const dateReq = store.get('lastModified');
+    
+    return new Promise((resolve) => {
+      let results: any = { data: null, lastModified: null };
+      dataReq.onsuccess = () => { results.data = dataReq.result; };
+      dateReq.onsuccess = () => { results.lastModified = dateReq.result; };
+      tx.oncomplete = () => {
+        if (results.data && results.lastModified) resolve(results);
+        else resolve(null);
+      };
+      tx.onerror = () => resolve(null);
+    });
+  } catch (e) {
+    console.warn("Failed to load from cache:", e);
+    return null;
+  }
+};
 
 // --- Constants & Dictionaries ---
 const daysHe = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
@@ -194,6 +253,7 @@ export default function App() {
   const [globalData, setGlobalData] = useState<AlertData[]>([]);
   const [filteredData, setFilteredData] = useState<AlertData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingStatus, setLoadingStatus] = useState("");
   const [liveAlert, setLiveAlert] = useState<{ cities: string; title: string } | null>(null);
   const [geocodingStatus, setGeocodingStatus] = useState("");
   
@@ -262,58 +322,109 @@ export default function App() {
   // --- Data Fetching ---
   useEffect(() => {
     const csvUrl = 'https://raw.githubusercontent.com/yuval-harpaz/alarms/master/data/alarms.csv';
-    Papa.parse(csvUrl, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      worker: true,
-      complete: (results) => {
-        const parsed = results.data.filter((d: any) => d.time).map((d: any) => {
-          const dt = new Date(d.time);
-          const opsArray = getOperationNames(dt);
-          const rawStr = Object.values(d).join(" ").toLowerCase();
-          const city = (d.cities || "").toLowerCase();
-          let extractedSource = "מעורב / לא סווג";
-          
-          if (rawStr.includes("איראן") || rawStr.includes("iran")) extractedSource = "איראן";
-          else if (rawStr.includes("תימן") || rawStr.includes("yemen") || rawStr.includes("חות'ים")) extractedSource = "תימן";
-          else if (rawStr.includes("עיראק") || rawStr.includes("iraq")) extractedSource = "עיראק";
-          else if (rawStr.includes("סוריה") || rawStr.includes("syria")) extractedSource = "סוריה";
-          else if (rawStr.includes("לבנון") || rawStr.includes("lebanon") || rawStr.includes("חיזבאללה")) extractedSource = "לבנון";
-          else if (rawStr.includes("עזה") || rawStr.includes("gaza") || rawStr.includes("חמאס") || rawStr.includes("ג'יהאד")) extractedSource = "רצועת עזה";
-          else if (opsArray.some(op => op.includes("איראן"))) {
-            if (city.includes("קרית שמונה") || city.includes("מטולה")) extractedSource = "לבנון";
-            else extractedSource = "איראן";
-          } else {
-            if (city.includes("שדרות") || city.includes("אשקלון") || city.includes("עוטף")) extractedSource = "רצועת עזה";
-            else if (city.includes("קרית שמונה") || city.includes("מטולה") || city.includes("צפת")) extractedSource = "לבנון";
-            else if (city.includes("אילת")) extractedSource = "תימן / עיראק";
+    
+    const loadData = async () => {
+      setLoading(true);
+      setLoadingStatus(t.loading);
+      try {
+        // 1. Check for remote version info (ETag preferred on GitHub Raw)
+        let remoteVersion = '';
+        try {
+          // Add a timestamp to avoid browser-level caching of the HEAD request itself
+          const headRes = await fetch(csvUrl + "?t=" + Date.now(), { method: 'HEAD' });
+          remoteVersion = headRes.headers.get('etag') || headRes.headers.get('last-modified') || '';
+          console.log("Remote version detected:", remoteVersion || "None (using fallback)");
+        } catch (headErr) {
+          console.warn("HEAD request failed:", headErr);
+        }
+        
+        // 2. Try loading from cache
+        const cached = await loadFromCache();
+        
+        // --- Caching Strategy ---
+        // If we have cached data:
+        // A) If we GOT a remote version, it must match.
+        // B) If we DID NOT get a remote version (CORS/GitHub), use the cache if it exists (assuming no update).
+        const cacheIsGood = cached && (
+          (remoteVersion !== '' && cached.lastModified === remoteVersion) ||
+          (remoteVersion === '' && cached.data && cached.data.length > 0)
+        );
+
+        if (cacheIsGood && cached) {
+          console.log("Cache hit! Loading", cached.data.length, "rows from local storage.");
+          setLoadingStatus(lang === 'he' ? "טוען מהמטמון (מהיר)..." : "Loading from cache (fast)...");
+          setGlobalData(cached.data);
+          setFilteredData(cached.data);
+          setLoading(false);
+          return;
+        }
+
+        // 3. Fallback to download if cache miss or outdated
+        console.log("Cache miss or outdated. Downloading CSV...");
+        setLoadingStatus(lang === 'he' ? "מוריד נתונים מ-GitHub..." : "Downloading data from GitHub...");
+        Papa.parse(csvUrl, {
+          download: true,
+          header: true,
+          skipEmptyLines: true,
+          worker: true,
+          complete: (results) => {
+            const parsed = results.data.filter((d: any) => d.time).map((d: any) => {
+              // ... existing mapping logic ...
+              const dt = new Date(d.time);
+              const opsArray = getOperationNames(dt);
+              const rawStr = Object.values(d).join(" ").toLowerCase();
+              const city = (d.cities || "").toLowerCase();
+              let extractedSource = "מעורב / לא סווג";
+              
+              if (rawStr.includes("איראן") || rawStr.includes("iran")) extractedSource = "איראן";
+              else if (rawStr.includes("תימן") || rawStr.includes("yemen") || rawStr.includes("חות'ים")) extractedSource = "תימן";
+              else if (rawStr.includes("עיראק") || rawStr.includes("iraq")) extractedSource = "עיראק";
+              else if (rawStr.includes("סוריה") || rawStr.includes("syria")) extractedSource = "סוריה";
+              else if (rawStr.includes("לבנון") || rawStr.includes("lebanon") || rawStr.includes("חיזבאללה")) extractedSource = "לבנון";
+              else if (rawStr.includes("עזה") || rawStr.includes("gaza") || rawStr.includes("חמאס") || rawStr.includes("ג'יהאד")) extractedSource = "רצועת עזה";
+              else if (opsArray.some(op => op.includes("איראן"))) {
+                if (city.includes("קרית שמונה") || city.includes("מטולה")) extractedSource = "לבנון";
+                else extractedSource = "איראן";
+              } else {
+                if (city.includes("שדרות") || city.includes("אשקלון") || city.includes("עוטף")) extractedSource = "רצועת עזה";
+                else if (city.includes("קרית שמונה") || city.includes("מטולה") || city.includes("צפת")) extractedSource = "לבנון";
+                else if (city.includes("אילת")) extractedSource = "תימן / עיראק";
+              }
+
+              let rawThreatVal = String(d.threat || d.category || '').trim();
+              let extractedThreat = threatDict[rawThreatVal] || rawThreatVal || 'אחר';
+              if (rawStr.includes("כלי טיס") || rawStr.includes("כטב\"מ")) extractedThreat = "חדירת כלי טיס עוין";
+              else if (rawStr.includes("מחבלים")) extractedThreat = "חדירת מחבלים";
+              else if (rawStr.includes("חומרים מסוכנים")) extractedThreat = "אירוע חומרים מסוכנים";
+              else if (rawStr.includes("רקטות") || rawStr.includes("טילים")) extractedThreat = "ירי רקטות וטילים";
+
+              return {
+                ...d,
+                dateObj: dt,
+                year: dt.getFullYear().toString(),
+                month: dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0'),
+                dayOfWeek: dt.getDay(),
+                hour: dt.getHours(),
+                threatStr: extractedThreat,
+                sourceStr: extractedSource,
+                operationsArray: opsArray 
+              };
+            });
+            setGlobalData(parsed);
+            setFilteredData(parsed);
+            setLoading(false);
+            // If remoteVersion is empty, use 'cached-at-' + current date as a fallback key
+            const versionToSave = remoteVersion || ('cached-at-' + new Date().toISOString().split('T')[0]);
+            saveToCache(parsed, versionToSave);
           }
-
-          let rawThreatVal = String(d.threat || d.category || '').trim();
-          let extractedThreat = threatDict[rawThreatVal] || rawThreatVal || 'אחר';
-          if (rawStr.includes("כלי טיס") || rawStr.includes("כטב\"מ")) extractedThreat = "חדירת כלי טיס עוין";
-          else if (rawStr.includes("מחבלים")) extractedThreat = "חדירת מחבלים";
-          else if (rawStr.includes("חומרים מסוכנים")) extractedThreat = "אירוע חומרים מסוכנים";
-          else if (rawStr.includes("רקטות") || rawStr.includes("טילים")) extractedThreat = "ירי רקטות וטילים";
-
-          return {
-            ...d,
-            dateObj: dt,
-            year: dt.getFullYear().toString(),
-            month: dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0'),
-            dayOfWeek: dt.getDay(),
-            hour: dt.getHours(),
-            threatStr: extractedThreat,
-            sourceStr: extractedSource,
-            operationsArray: opsArray 
-          };
         });
-        setGlobalData(parsed);
-        setFilteredData(parsed);
-        setLoading(false);
-      }
-    });
+  } catch (e) {
+    console.error("Data loading failed:", e);
+    setLoading(false);
+  }
+};
+
+loadData();
 
     // Live alerts check
     const checkLive = async () => {
