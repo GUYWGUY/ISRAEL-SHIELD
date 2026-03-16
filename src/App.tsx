@@ -49,7 +49,6 @@ const translations = {
     days: "ימים",
     hours: "שעות",
     minutes: "דקות",
-    heatmap: "מפת חום",
     satellite: "לוויין",
     streets: "רחובות",
     compare: "מצב השוואה",
@@ -83,7 +82,6 @@ const translations = {
     days: "Days",
     hours: "Hours",
     minutes: "Minutes",
-    heatmap: "Heatmap",
     satellite: "Satellite",
     streets: "Streets",
     compare: "Comparison Mode",
@@ -148,10 +146,23 @@ const baseCoords: Record<string, [number, number]> = {
   "דן": [32.0800, 34.7800], "שפלה": [31.9000, 34.8500], "לכיש": [31.5500, 34.7000], "נגב": [31.2000, 34.8000],
 
   // מרכז
-  "תל אביב": [32.0853, 34.7818], "ירושלים": [31.7683, 35.2137], "ראשון לציון": [31.9730, 34.7925], 
+  "תל אביב": [32.0853, 34.7818], "תל אביב - יפו": [32.0853, 34.7818], "ירושלים": [31.7683, 35.2137], "ראשון לציון": [31.9730, 34.7925], 
   "פתח תקווה": [32.0833, 34.8833], "חולון": [32.0167, 34.7667], "בת ים": [32.0167, 34.7333], "רמת גן": [32.0833, 34.8167],
   "הרצליה": [32.1667, 34.8333], "נתניה": [32.3329, 34.8599], "חדרה": [32.4333, 34.9167], "רעננה": [32.1833, 34.8667],
   "כפר סבא": [32.1750, 34.9069], "הוד השרון": [32.1500, 34.8833], "מודיעין": [31.8969, 35.0086], "רחובות": [31.8944, 34.8119],
+  "בית שמש": [31.7456, 34.9867], "לוד": [31.9511, 34.8881], "רמלה": [31.9272, 34.8625], "קרית גת": [31.6081, 34.7644],
+  "קרית מלאכי": [31.7275, 34.7447], "בני ברק": [32.0833, 34.8333], "גבעתיים": [32.0722, 34.8125],
+  "רמת השרון": [32.1397, 34.8397], "נס ציונה": [31.9281, 34.7981], "יבנה": [31.8778, 34.7394],
+  "גדרה": [31.8119, 34.7778], "מזכרת בתיה": [31.8539, 34.8433], "גן יבנה": [31.7856, 34.6942], 
+  "ערד": [31.2608, 35.2125], "דימונה": [31.0667, 35.0333], "ירוחם": [30.9881, 34.9303], "מצפה רמון": [30.6083, 34.8028],
+  "סח'נין": [32.8614, 35.3031], "שפרעם": [32.8053, 35.1706], "טמרה": [32.8536, 35.2014], "נצרת": [32.7019, 35.3033],
+  "נוף הגליל": [32.7, 35.31], "עפולה": [32.6078, 35.2892], "מגדל העמק": [32.6733, 35.2417], "בית שאן": [32.4972, 35.4972],
+  "אום אל-פחם": [32.5167, 35.1500], "טייבה": [32.2667, 35.0167], "קלנסווה": [32.2833, 35.0333], "באקה אל-גרביה": [32.4167, 35.0333],
+  "מרחב דן": [32.0800, 34.7800], "מרחב ירקון": [32.1000, 34.8500], "מרחב לכיש": [31.6000, 34.7500], "מרחב שפלה": [31.9000, 34.8500],
+  "מרחב נגב": [31.2000, 34.8000], "מרחב חיפה": [32.8000, 34.9900], "מרחב אשר": [32.9500, 35.1000], "מרחב עמקים": [32.6000, 35.3000],
+  "מרחב גליל": [33.0000, 35.4000], "מרחב גולן": [33.1000, 35.7000], "מרחב יהודה": [31.5000, 35.0500], "מרחב שומרון": [32.2000, 35.2000],
+  "מרחב אילת": [29.5577, 34.9519], "אלוני הבשן": [33.0444, 35.8361], "קשת": [33.0000, 35.8000], "נטור": [32.8500, 35.7500],
+  "חספין": [32.8200, 35.7700], "מבוא חמה": [32.7300, 35.6500], "עין גב": [32.8100, 35.6400], "כנרת": [32.7200, 35.5800],
 };
 
 interface AlertData {
@@ -197,7 +208,6 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [lang, setLang] = useState<'he' | 'en'>('he');
   const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
-  const [showHeatmap, setShowHeatmap] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [compareOperation, setCompareOperation] = useState("all");
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
@@ -209,9 +219,7 @@ export default function App() {
   // Refs for charts and map
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
-  const heatmapLayerRef = useRef<any>(null);
   const streetLayerRef = useRef<L.TileLayer | null>(null);
-  const darkLayerRef = useRef<L.TileLayer | null>(null);
   const satelliteLayerRef = useRef<L.TileLayer | null>(null);
   const timeSeriesChartRef = useRef<HTMLDivElement>(null);
   const topCitiesChartRef = useRef<HTMLDivElement>(null);
@@ -315,15 +323,24 @@ export default function App() {
         if (response.ok) {
           const rawData = await response.json();
           if (rawData.contents && rawData.contents.trim().length > 0) {
-            const alertData = JSON.parse(rawData.contents);
-            if (alertData?.data?.length > 0) {
-              setLiveAlert({ cities: alertData.data.join(', '), title: alertData.title || 'התרעה' });
-              return;
+            try {
+              if (rawData.contents.trim().startsWith('{') || rawData.contents.trim().startsWith('[')) {
+                const alertData = JSON.parse(rawData.contents);
+                if (alertData?.data?.length > 0) {
+                  setLiveAlert({ cities: alertData.data.join(', '), title: alertData.title || 'התרעה' });
+                  return;
+                }
+              }
+            } catch (jsonErr) {
+              console.warn("Live alert JSON parse error:", jsonErr);
             }
           }
         }
         setLiveAlert(null);
-      } catch (e) { console.warn(e); }
+      } catch (e) { 
+        console.warn("Live alert fetch error (likely HTML returned instead of JSON):", e); 
+        setLiveAlert(null);
+      }
     };
     const interval = setInterval(checkLive, 10000);
     return () => clearInterval(interval);
@@ -404,20 +421,11 @@ export default function App() {
         attribution: '&copy; OpenStreetMap'
       });
       
-
-      darkLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{y}/{x}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-      });
-      
       satelliteLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri'
       });
 
-      if (darkMode) {
-        darkLayerRef.current.addTo(mapRef.current);
-      } else {
-        streetLayerRef.current.addTo(mapRef.current);
-      }
+      streetLayerRef.current.addTo(mapRef.current);
       L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
     }
   }, [loading]);
@@ -425,31 +433,24 @@ export default function App() {
   useEffect(() => {
     if (!mapRef.current) return;
     streetLayerRef.current?.remove();
-    darkLayerRef.current?.remove();
     satelliteLayerRef.current?.remove();
 
     if (mapLayer === 'satellite') {
       satelliteLayerRef.current?.addTo(mapRef.current);
-    } else if (darkMode) {
-      darkLayerRef.current?.addTo(mapRef.current);
     } else {
       streetLayerRef.current?.addTo(mapRef.current);
     }
-  }, [mapLayer, darkMode]);
+  }, [mapLayer]);
 
   // --- Map Markers & Geocoding ---
   useEffect(() => {
     if (!mapRef.current) return;
+    let isCancelled = false;
+    
     markersRef.current.forEach(m => mapRef.current?.removeLayer(m));
     markersRef.current = [];
-    if (heatmapLayerRef.current) {
-      mapRef.current.removeLayer(heatmapLayerRef.current);
-      heatmapLayerRef.current = null;
-    }
 
     const cityCounts: Record<string, number> = {};
-    const heatPoints: any[] = [];
-    
     filteredData.forEach(d => {
       if (d.cities) cityCounts[d.cities] = (cityCounts[d.cities] || 0) + 1;
     });
@@ -458,69 +459,59 @@ export default function App() {
     for (let city in cityCounts) {
       const coords = getCityCoords(city);
       if (coords) {
-        if (showHeatmap) {
-          heatPoints.push([...coords, Math.min(cityCounts[city] / 10, 1)]);
-        } else {
-          const marker = L.circleMarker(coords, {
-            radius: Math.min(Math.max(cityCounts[city] / 50, 5), 30),
-            fillColor: "#E63946",
-            color: darkMode ? "#fff" : "#0038B8",
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.6
-          }).addTo(mapRef.current)
-            .bindTooltip(`<b>${city}</b><br>${lang === 'he' ? 'התרעות' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'top' });
-          markersRef.current.push(marker);
-        }
-      } else if (!geoCache.current.hasOwnProperty(city) && !showHeatmap) {
+        const marker = L.circleMarker(coords, {
+          radius: Math.min(Math.max(cityCounts[city] / 50, 5), 30),
+          fillColor: "#E63946",
+          color: darkMode ? "#fff" : "#0038B8",
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.6
+        }).addTo(mapRef.current)
+          .bindTooltip(`<b>${city}</b><br>${lang === 'he' ? 'התרעות' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'top' });
+        markersRef.current.push(marker);
+      } else if (!geoCache.current.hasOwnProperty(city)) {
         queue.push({ city, count: cityCounts[city] });
       }
-    }
-
-    if (showHeatmap && heatPoints.length > 0 && (window as any).L.heatLayer) {
-      heatmapLayerRef.current = (window as any).L.heatLayer(heatPoints, {
-        radius: 25,
-        blur: 15,
-        maxZoom: 10,
-        gradient: { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1: 'red' }
-      }).addTo(mapRef.current);
     }
 
     if (queue.length > 0) {
       const processQueue = async () => {
         setGeocodingStatus("מאתר מיקומים...");
-        for (let i = 0; i < queue.length; i++) {
-          const item = queue[i];
+        // Limit geocoding to prevent long 'stuck' processes
+        const limit = 20;
+        const toProcess = queue.slice(0, limit);
+        
+        for (let i = 0; i < toProcess.length; i++) {
+          if (isCancelled) break;
+          const item = toProcess[i];
           const cleanName = item.city.replace(/[0-9]/g, '').replace('מרחב', '').split('-')[0].trim();
           try {
             const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}, ישראל`);
+            if (!res.ok) throw new Error("Fetch failed");
             const data = await res.json();
             if (data?.[0]) {
               const coords: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
               geoCache.current[item.city] = coords;
               localStorage.setItem('alertsGeoCache', JSON.stringify(geoCache.current));
-              const marker = L.circleMarker(coords, {
-                radius: Math.min(Math.max(item.count / 50, 5), 30),
-                fillColor: "#E63946",
-                color: "#0038B8",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.6
-              }).addTo(mapRef.current!)
-                .bindTooltip(`<b>${item.city}</b><br>התרעות: ${item.count.toLocaleString()}`, { direction: 'top' });
-              markersRef.current.push(marker);
             } else {
               geoCache.current[item.city] = "NOT_FOUND";
             }
-          } catch (e) { console.warn(e); }
+          } catch (e) { 
+            console.warn(`Geocoding failed for ${cleanName}:`, e);
+            break; 
+          }
           await new Promise(r => setTimeout(r, 1000));
-          setGeocodingStatus(`מאתר ${Math.round(((i + 1) / queue.length) * 100)}%`);
+          if (!isCancelled) setGeocodingStatus(`מאתר ${Math.round(((i + 1) / toProcess.length) * 100)}%`);
         }
-        setGeocodingStatus("");
+        if (!isCancelled) setGeocodingStatus("");
       };
       processQueue();
     }
-  }, [filteredData, loading]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [filteredData, loading, darkMode, lang]);
 
   // --- Charts Initialization & Updates ---
   useEffect(() => {
@@ -803,7 +794,7 @@ export default function App() {
             className="md:hidden p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors text-text-main"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {isMobileMenuOpen ? <X size={20} /> : <Filter size={20} />}
           </button>
 
           <button 
@@ -851,7 +842,7 @@ export default function App() {
             initial={{ x: isRtl ? '100%' : '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: isRtl ? '100%' : '-100%' }}
-            className="fixed inset-0 z-50 bg-surface-color p-8 flex flex-col gap-6 md:hidden overflow-y-auto"
+            className="fixed inset-0 z-[100] bg-surface-color p-8 flex flex-col gap-6 md:hidden overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-primary-deep-blue dark:text-primary-azure">{isRtl ? 'מסננים' : 'Filters'}</h2>
@@ -1095,13 +1086,6 @@ export default function App() {
             <span>{t.mapTitle}</span>
             <div className="flex items-center gap-2">
               <button 
-                onClick={() => setShowHeatmap(!showHeatmap)}
-                className={`p-1 rounded transition-colors ${showHeatmap ? 'bg-orange-500 text-white' : 'hover:bg-black/5 text-text-muted'}`}
-                title={t.heatmap}
-              >
-                <Flame size={14} />
-              </button>
-              <button 
                 onClick={() => setMapLayer(mapLayer === 'streets' ? 'satellite' : 'streets')}
                 className="p-1 hover:bg-black/5 rounded transition-colors text-text-muted"
                 title={mapLayer === 'streets' ? t.satellite : t.streets}
@@ -1110,7 +1094,11 @@ export default function App() {
               </button>
             </div>
           </div>
-          <div id="map" className="flex-1 z-10" />
+          <div 
+            id="map" 
+            className="flex-1 z-10 transition-all duration-500" 
+            style={darkMode ? { filter: 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)' } : {}}
+          />
           {geocodingStatus && (
             <div className="absolute bottom-2 left-2 right-2 bg-white/90 dark:bg-slate-800/90 p-1.5 rounded-lg text-[10px] font-bold text-primary-azure shadow-sm z-20 flex items-center gap-2 border border-primary-azure/20">
               <div className="mini-spinner" /> {geocodingStatus}

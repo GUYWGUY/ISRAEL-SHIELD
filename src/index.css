@@ -40,6 +40,9 @@
   --color-text-main: var(--text-main);
   --color-text-muted: var(--text-muted);
   --color-bg-color: var(--bg-color);
+  --color-surface-color: var(--surface-color);
+  --color-border-color: var(--border-color);
+  --color-input-bg: var(--input-bg);
 }
 
 body {
