@@ -248,6 +248,70 @@ const getWarningTime = (city: string) => {
   return "דקה וחצי";
 };
 
+// --- MultiSelect Component ---
+const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const toggle = (val: string) => {
+    if (val === 'all') {
+      onChange(['all']);
+    } else {
+      const newSelected = selected.includes(val) 
+        ? selected.filter((s: string) => s !== val) 
+        : [...selected.filter((s: string) => s !== 'all'), val];
+      onChange(newSelected.length === 0 ? ['all'] : newSelected);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="glass-card flex items-center justify-between gap-2 px-3 py-1.5 text-[10px] font-black hover:bg-white/10 transition-all min-w-[120px] shadow-sm uppercase tracking-wider h-9"
+      >
+        <div className="flex items-center gap-2">
+          {Icon && <Icon size={14} className="text-primary-azure" />}
+          <span className="truncate max-w-[80px]">
+            {selected.includes('all') ? label : `${selected.length} ${isRtl ? 'נבחרו' : 'Selected'}`}
+          </span>
+        </div>
+        <ChevronDown size={12} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className={`absolute top-full mt-2 ${isRtl ? 'right-0' : 'left-0'} glass-card z-50 p-2 min-w-[220px] max-h-[300px] overflow-y-auto shadow-2xl border border-white/10 backdrop-blur-3xl`}
+            >
+              <div 
+                className={`flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors ${selected.includes('all') ? 'text-primary-azure bg-white/5' : 'text-white/70'}`}
+                onClick={() => { toggle('all'); setIsOpen(false); }}
+              >
+                <span className="text-xs font-black uppercase tracking-widest">{isRtl ? 'הכל' : 'ALL'}</span>
+                {selected.includes('all') && <Check size={14} />}
+              </div>
+              <div className="h-[1px] bg-white/5 my-1" />
+              {options.map((opt: string) => (
+                <div 
+                  key={opt}
+                  className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer hover:bg-white/5 transition-colors mb-1 last:mb-0 ${selected.includes(opt) ? 'text-primary-azure bg-white/10' : 'text-white/80'}`}
+                  onClick={() => toggle(opt)}
+                >
+                  <span className="text-sm font-medium">{opt}</span>
+                  {selected.includes(opt) && <Check size={14} />}
+                </div>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export default function App() {
   const [globalData, setGlobalData] = useState<AlertData[]>([]);
   const [filteredData, setFilteredData] = useState<AlertData[]>([]);
@@ -296,6 +360,26 @@ export default function App() {
   const geoCache = useRef<Record<string, [number, number] | "NOT_FOUND">>(
     JSON.parse(localStorage.getItem('alertsGeoCache') || '{}')
   );
+
+  const operationOptions = useMemo(() => [...operationsDict.map(op => op.name), "שגרה (ללא מערכה)"], []);
+  const threatOptions = useMemo(() => Array.from(new Set(Object.values(threatDict))), []);
+  const sourceOptions = useMemo(() => Array.from(new Set(globalData.map(d => d.sourceStr))), [globalData]);
+  const allCities = useMemo(() => {
+    const cities = new Set<string>();
+    // Add base coords first
+    Object.keys(baseCoords).forEach(c => cities.add(c));
+    // Add from data
+    globalData.forEach(d => {
+      if (d.cities) {
+        // Handle comma separated if any, but usually it's one city string
+        d.cities.split(',').forEach(c => {
+          const trimmed = c.trim();
+          if (trimmed) cities.add(trimmed);
+        });
+      }
+    });
+    return Array.from(cities).sort((a, b) => a.localeCompare(b, 'he'));
+  }, [globalData]);
 
   // --- Helper Functions ---
   const getOperationNames = (dateObj: Date) => {
@@ -564,69 +648,7 @@ loadData();
     };
   }, [filteredData]);
 
-// --- MultiSelect Component ---
-const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: any) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const toggle = (val: string) => {
-    if (val === 'all') {
-      onChange(['all']);
-    } else {
-      const newSelected = selected.includes(val) 
-        ? selected.filter((s: string) => s !== val) 
-        : [...selected.filter((s: string) => s !== 'all'), val];
-      onChange(newSelected.length === 0 ? ['all'] : newSelected);
-    }
-  };
 
-  return (
-    <div className="relative">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="glass-card flex items-center justify-between gap-2 px-3 py-1.5 text-[10px] font-black hover:bg-white/10 transition-all min-w-[120px] shadow-sm uppercase tracking-wider"
-      >
-        <div className="flex items-center gap-2">
-          {Icon && <Icon size={14} className="text-primary-azure" />}
-          <span className="truncate max-w-[80px]">
-            {selected.includes('all') ? label : `${selected.length} ${isRtl ? 'נבחרו' : 'Selected'}`}
-          </span>
-        </div>
-        <ChevronDown size={12} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-            <motion.div 
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className={`absolute top-full mt-2 ${isRtl ? 'right-0' : 'left-0'} glass-card z-50 p-2 min-w-[220px] max-h-[300px] overflow-y-auto shadow-2xl border border-white/10 backdrop-blur-2xl`}
-            >
-              <div 
-                className={`flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors ${selected.includes('all') ? 'text-primary-azure bg-white/5' : 'text-white/70'}`}
-                onClick={() => { toggle('all'); setIsOpen(false); }}
-              >
-                <span className="text-xs font-black uppercase tracking-widest">{isRtl ? 'הכל' : 'ALL'}</span>
-                {selected.includes('all') && <Check size={14} />}
-              </div>
-              <div className="h-[1px] bg-white/5 my-1" />
-              {options.map((opt: string) => (
-                <div 
-                  key={opt}
-                  className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer hover:bg-white/5 transition-colors mb-1 last:mb-0 ${selected.includes(opt) ? 'text-primary-azure bg-white/10' : 'text-white/80'}`}
-                  onClick={() => toggle(opt)}
-                >
-                  <span className="text-sm font-medium">{opt}</span>
-                  {selected.includes(opt) && <Check size={14} />}
-                </div>
-              ))}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
 
 
   // --- Filtering Logic ---
@@ -1021,6 +1043,16 @@ const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: 
     const neonColors = ['#f87171', '#38bdf8', '#fbbf24', '#3b82f6', '#94a3b8', '#10b981'];
     threatInstance.current.setOption(pieOpt(Object.entries(tCounts).map(([n, v]) => ({ name: n, value: v })), neonColors));
     sourceInstance.current.setOption(pieOpt(Object.entries(sCounts).map(([n, v]) => ({ name: n, value: v })), neonColors));
+
+    // Interactive Filtering
+    threatInstance.current.off('click');
+    threatInstance.current.on('click', (params: any) => {
+      if (params.name) setThreatFilter([params.name]);
+    });
+    sourceInstance.current.off('click');
+    sourceInstance.current.on('click', (params: any) => {
+      if (params.name) setSourceFilter([params.name]);
+    });
   }, [filteredData, darkMode]);
 
   // --- Insights ---
@@ -1121,7 +1153,7 @@ const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: 
 
               <MultiSelect 
                 label={t.operation} 
-                options={[...operationsDict.map(op => op.name), "שגרה (ללא מערכה)"]}
+                options={operationOptions}
                 selected={operationFilter}
                 onChange={setOperationFilter}
                 icon={BarChart3}
@@ -1132,7 +1164,7 @@ const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: 
                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
                  <MultiSelect 
                     label={isRtl ? "להשוות מול..." : "Compare vs..."} 
-                    options={[...operationsDict.map(op => op.name), "שגרה (ללא מערכה)"]}
+                    options={operationOptions}
                     selected={compareOperation}
                     onChange={setCompareOperation}
                     icon={TrendingUp}
@@ -1143,7 +1175,7 @@ const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: 
 
              <MultiSelect 
                 label={t.threat} 
-                options={Array.from(new Set(Object.values(threatDict)))}
+                options={threatOptions}
                 selected={threatFilter}
                 onChange={setThreatFilter}
                 icon={PieChartIcon}
@@ -1152,7 +1184,7 @@ const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: 
 
              <MultiSelect 
                 label={t.source} 
-                options={Array.from(new Set(globalData.map(d => d.sourceStr)))}
+                options={sourceOptions}
                 selected={sourceFilter}
                 onChange={setSourceFilter}
                 icon={Globe}
