@@ -248,6 +248,26 @@ const getWarningTime = (city: string) => {
   return "דקה וחצי";
 };
 
+const customTooltipPosition = (point: any, params: any, dom: any, rect: any, size: any) => {
+  const obj: any = { top: 10 };
+  obj[['left', 'right'][+(point[0] < size.viewSize[0] / 2)]] = 5;
+  return obj;
+};
+
+const getGroupedData = (data: any[], res: string) => {
+  const grouped: Record<string, number> = {};
+  data.forEach(d => {
+    let key = "";
+    if (res === 'year') key = d.year;
+    else if (res === 'month') key = d.month;
+    else if (res === 'weekday') key = daysHe[d.dayOfWeek];
+    else if (res === 'hour') key = String(d.hour).padStart(2, '0') + ":00";
+    else if (res === 'minute') key = String(d.hour).padStart(2, '0') + ":" + String(Math.floor(d.dateObj.getMinutes()/10)*10).padStart(2, '0');
+    grouped[key] = (grouped[key] || 0) + 1;
+  });
+  return grouped;
+};
+
 // --- MultiSelect Component ---
 const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: any) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -405,28 +425,11 @@ export default function App() {
     return null;
   };
 
-  const uniqueCities = useMemo(() => {
-    const cities = new Set<string>();
-    // Add base coords first
-    Object.keys(baseCoords).forEach(c => cities.add(c));
-    // Add from data
-    globalData.forEach(d => {
-      if (d.cities) {
-        // Handle comma separated if any, but usually it's one city string
-        d.cities.split(',').forEach(c => {
-          const trimmed = c.trim();
-          if (trimmed) cities.add(trimmed);
-        });
-      }
-    });
-    return Array.from(cities).sort((a, b) => a.localeCompare(b, 'he'));
-  }, [globalData]);
-
   const handleCitySearchChange = (val: string, source: 'desktop' | 'mobile') => {
     setCitySearch(val);
     setActiveSearchSource(source);
     if (val.trim().length > 0) {
-      const filtered = uniqueCities.filter(c => c.includes(val)).slice(0, 10);
+      const filtered = allCities.filter(c => c.toLowerCase().includes(val.toLowerCase())).slice(0, 10);
       setCitySuggestions(filtered);
       setShowSuggestions(true);
     } else {
@@ -651,29 +654,41 @@ loadData();
 
 
 
-  // --- Filtering Logic ---
+  // --- Filtering Logic (Debounced) ---
   useEffect(() => {
-    const filtered = globalData.filter(d => {
-      let matchCity = true, matchThreat = true, matchSource = true, matchOperation = true, matchDate = true;
-      if (citySearch) matchCity = d.cities && d.cities.toLowerCase().includes(citySearch.toLowerCase());
+    const timer = setTimeout(() => {
+      const filtered = globalData.filter(d => {
+        let matchCity = true, matchThreat = true, matchSource = true, matchOperation = true, matchDate = true;
+        if (citySearch) matchCity = d.cities && d.cities.toLowerCase().includes(citySearch.toLowerCase());
+        
+        const dThreat = d.threatStr || 'אחר';
+        const dSource = d.sourceStr || 'מעורב / לא סווג';
+        const dOps = d.operationsArray || ['שגרה'];
+
+        if (!threatFilter.includes('all')) matchThreat = threatFilter.includes(dThreat);
+        if (!sourceFilter.includes('all')) matchSource = sourceFilter.includes(dSource);
+        
+        if (compareMode && !compareOperation.includes('all')) {
+          matchOperation = dOps.some(op => operationFilter.includes(op)) || 
+                           dOps.some(op => compareOperation.includes(op));
+        } else if (!operationFilter.includes('all')) {
+          matchOperation = dOps.some(op => operationFilter.includes(op));
+        }
+
+        if (dateRange.start) matchDate = matchDate && d.dateObj >= new Date(dateRange.start);
+        if (dateRange.end) matchDate = matchDate && d.dateObj <= new Date(dateRange.end);
+
+        return matchCity && matchThreat && matchSource && matchOperation && matchDate;
+      });
       
-      if (!threatFilter.includes('all')) matchThreat = threatFilter.includes(d.threatStr);
-      if (!sourceFilter.includes('all')) matchSource = sourceFilter.includes(d.sourceStr);
-      
-      if (compareMode && !compareOperation.includes('all')) {
-        matchOperation = d.operationsArray.some(op => operationFilter.includes(op)) || 
-                         d.operationsArray.some(op => compareOperation.includes(op));
-      } else if (!operationFilter.includes('all')) {
-        matchOperation = d.operationsArray.some(op => operationFilter.includes(op));
+      // Avoid infinite loop if results haven't changed in length
+      // For large datasets, a more robust check might be needed, but length + console log for debug
+      if (filtered.length !== filteredData.length || (filtered.length > 0 && filteredData.length > 0 && filtered[0] !== filteredData[0])) {
+         console.log("Filtering complete. Result size:", filtered.length);
+         setFilteredData(filtered);
       }
-
-      if (dateRange.start) matchDate = matchDate && d.dateObj >= new Date(dateRange.start);
-      if (dateRange.end) matchDate = matchDate && d.dateObj <= new Date(dateRange.end);
-
-      return matchCity && matchThreat && matchSource && matchOperation && matchDate;
-    });
-    console.log("Filtering complete. Global:", globalData.length, "Filtered:", filtered.length);
-    setFilteredData(filtered);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [citySearch, threatFilter, sourceFilter, operationFilter, compareOperation, compareMode, dateRange, globalData]);
 
 
@@ -831,64 +846,39 @@ loadData();
     };
   }, [loading]);
 
-  // --- Tooltip Position Helper ---
-  const customTooltipPosition = (point: number[], params: any, dom: any, rect: any, size: any) => {
-    let x = point[0] + 15;
-    let y = point[1] - size.contentSize[1] - 15;
-    if (y < 0) y = point[1] + 15;
-    // Prevent right overflow
-    if (x + size.contentSize[0] > size.viewSize[0]) {
-      x = point[0] - size.contentSize[0] - 15;
-    }
-    return [x, y];
-  };
+
 
   useEffect(() => {
     if (!timeSeriesInstance.current) return;
     
-    const getGroupedData = (data: any[]) => {
-      const grouped: Record<string, number> = {};
-      if (timeResolution === 'hour') {
-        for (let h = 0; h < 24; h++) {
-          for (let m = 0; m < 60; m += 10) { // 10 min steps for better density
-            grouped[String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0')] = 0;
-          }
-        }
-      } else if (timeResolution === 'minute') {
-        for (let m = 0; m < 60; m++) grouped[String(m).padStart(2, '0')] = 0;
-      }
-      data.forEach(d => {
-        let key;
-        if (timeResolution === 'year') key = d.year;
-        else if (timeResolution === 'month') key = d.month;
-        else if (timeResolution === 'weekday') key = daysHe[d.dayOfWeek];
-        else if (timeResolution === 'hour') key = String(d.hour).padStart(2, '0') + ':' + String(Math.floor(d.dateObj.getMinutes()/10)*10).padStart(2, '0');
-        else if (timeResolution === 'minute') key = String(d.dateObj.getMinutes()).padStart(2, '0');
-        if (key !== undefined) grouped[key] = (grouped[key] || 0) + 1;
-      });
-      return grouped;
-    };
-
     const datasets: { name: string; data: any[]; color: string }[] = [];
     
     if (compareMode && !compareOperation.includes('all')) {
       // Comparison Mode Logic
-      const op1Data = globalData.filter(d => d.operationsArray.some(op => operationFilter.includes(op)));
-      const op2Data = globalData.filter(d => d.operationsArray.some(op => compareOperation.includes(op)));
+      const op1Data = filteredData.filter(d => d.operationsArray.some(op => operationFilter.includes(op)));
+      const op2Data = filteredData.filter(d => d.operationsArray.some(op => compareOperation.includes(op)));
       
-      const g1 = getGroupedData(op1Data);
-      const g2 = getGroupedData(op2Data);
+      const g1 = getGroupedData(op1Data, timeResolution);
+      const g2 = getGroupedData(op2Data, timeResolution);
       
-      const xKeys = Array.from(new Set([...Object.keys(g1), ...Object.keys(g2)]));
-      if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) xKeys.sort();
-      else if (timeResolution === 'weekday') xKeys.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
+      const allKeys = Array.from(new Set([...Object.keys(g1), ...Object.keys(g2)]));
+      if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) allKeys.sort();
+      else if (timeResolution === 'weekday') allKeys.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
 
-      datasets.push({ name: operationFilter.join(', '), data: xKeys.map(k => g1[k] || 0), color: '#38bdf8' });
-      datasets.push({ name: compareOperation.join(', '), data: xKeys.map(k => g2[k] || 0), color: '#fbbf24' });
-      
+      datasets.push({ 
+        name: operationFilter.includes('all') ? 'Base' : operationFilter.join(', '), 
+        data: allKeys.map(k => g1[k] || 0), 
+        color: '#38bdf8' 
+      });
+      datasets.push({ 
+        name: compareOperation.join(', '), 
+        data: allKeys.map(k => g2[k] || 0), 
+        color: '#fbbf24' 
+      });
+
       timeSeriesInstance.current.setOption({
         legend: { show: true, bottom: 0, textStyle: { color: '#94a3b8' } },
-        xAxis: { data: xKeys },
+        xAxis: { data: allKeys },
         series: datasets.map(ds => ({
           name: ds.name,
           type: 'line',
@@ -904,8 +894,7 @@ loadData();
         }))
       });
     } else {
-      // Single Mode Logic
-      const grouped = getGroupedData(filteredData);
+      const grouped = getGroupedData(filteredData, timeResolution);
       const xData = Object.keys(grouped);
       if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) xData.sort();
       else if (timeResolution === 'weekday') xData.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
@@ -1357,7 +1346,7 @@ loadData();
           ) : (
             globalData.slice(-15).reverse().map((alert, i) => (
               <span key={i} className="inline-block px-10 text-xs font-bold opacity-80 hover:opacity-100 transition-opacity">
-                <span className="text-alert-red">●</span> {alert.operationsArray[0] || 'שגרה'} | <b className="text-white">{alert.cities}</b> <span className="text-text-muted font-normal">({alert.threatStr})</span>
+                <span className="text-alert-red">●</span> {alert.operationsArray?.[0] || 'שגרה'} | <b className="text-white">{alert.cities}</b> <span className="text-text-muted font-normal">({alert.threatStr})</span>
               </span>
             ))
           )}
