@@ -272,6 +272,9 @@ export default function App() {
   const [compareOperation, setCompareOperation] = useState("all");
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSearchSource, setActiveSearchSource] = useState<'desktop' | 'mobile' | null>(null);
 
   const t = translations[lang];
   const isRtl = lang === 'he';
@@ -317,6 +320,42 @@ export default function App() {
       if (cityStr.includes(key)) return baseCoords[key];
     }
     return null;
+  };
+
+  const uniqueCities = useMemo(() => {
+    const cities = new Set<string>();
+    // Add base coords first
+    Object.keys(baseCoords).forEach(c => cities.add(c));
+    // Add from data
+    globalData.forEach(d => {
+      if (d.cities) {
+        // Handle comma separated if any, but usually it's one city string
+        d.cities.split(',').forEach(c => {
+          const trimmed = c.trim();
+          if (trimmed) cities.add(trimmed);
+        });
+      }
+    });
+    return Array.from(cities).sort((a, b) => a.localeCompare(b, 'he'));
+  }, [globalData]);
+
+  const handleCitySearchChange = (val: string, source: 'desktop' | 'mobile') => {
+    setCitySearch(val);
+    setActiveSearchSource(source);
+    if (val.trim().length > 0) {
+      const filtered = uniqueCities.filter(c => c.includes(val)).slice(0, 10);
+      setCitySuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setCitySuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectCity = (city: string) => {
+    setCitySearch(city);
+    setShowSuggestions(false);
+    setActiveSearchSource(null);
   };
 
   // --- Data Fetching ---
@@ -469,6 +508,18 @@ loadData();
     const interval = setInterval(checkLive, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showSuggestions) {
+        // Simple delay to allow click events on suggestions to fire first
+        setTimeout(() => setShowSuggestions(false), 200);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSuggestions]);
 
   // --- Shower Index Calculation ---
   const showerIndex = useMemo(() => {
@@ -976,13 +1027,32 @@ loadData();
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <label className="font-semibold text-sm text-text-main">{t.search}</label>
-                <input 
-                  type="text" 
-                  className="bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
-                  placeholder={isRtl ? "הקלד שם..." : "Type name..."}
-                  value={citySearch}
-                  onChange={(e) => setCitySearch(e.target.value)}
-                />
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    className="w-full bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
+                    placeholder={isRtl ? "הקלד שם..." : "Type name..."}
+                    value={citySearch}
+                    onChange={(e) => handleCitySearchChange(e.target.value, 'mobile')}
+                    onFocus={() => {
+                        if (citySearch.trim().length > 0) setShowSuggestions(true);
+                        setActiveSearchSource('mobile');
+                    }}
+                  />
+                  {showSuggestions && activeSearchSource === 'mobile' && citySuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 bg-surface-color border border-border-color mt-1 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
+                      {citySuggestions.map((city, idx) => (
+                        <div 
+                          key={idx} 
+                          className="px-4 py-3 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer text-text-main border-b border-border-color last:border-0"
+                          onClick={() => selectCity(city)}
+                        >
+                          {city}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -1034,15 +1104,34 @@ loadData();
       </AnimatePresence>
 
       <div className="hidden md:flex bg-surface-color px-5 py-2 border-b border-border-color gap-4 items-center overflow-x-auto whitespace-nowrap scrollbar-hide z-20 sticky top-0 md:relative">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
           <label className="font-semibold text-[13px] text-text-main">{t.search}</label>
-          <input 
-            type="text" 
-            className="bg-input-bg border border-border-color rounded-full px-4 py-1 text-sm outline-none focus:ring-2 focus:ring-primary-azure transition-all w-40 md:w-48 text-text-main"
-            placeholder={isRtl ? "הקלד שם..." : "Type name..."}
-            value={citySearch}
-            onChange={(e) => setCitySearch(e.target.value)}
-          />
+          <div className="relative">
+            <input 
+              type="text" 
+              className="bg-input-bg border border-border-color rounded-full px-4 py-1 text-sm outline-none focus:ring-2 focus:ring-primary-azure transition-all w-40 md:w-48 text-text-main"
+              placeholder={isRtl ? "הקלד שם..." : "Type name..."}
+              value={citySearch}
+              onChange={(e) => handleCitySearchChange(e.target.value, 'desktop')}
+              onFocus={() => {
+                  if (citySearch.trim().length > 0) setShowSuggestions(true);
+                  setActiveSearchSource('desktop');
+              }}
+            />
+            {showSuggestions && activeSearchSource === 'desktop' && citySuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-surface-color border border-border-color mt-1 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto min-w-[180px]">
+                {citySuggestions.map((city, idx) => (
+                  <div 
+                    key={idx} 
+                    className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer text-text-main text-sm border-b border-border-color last:border-0"
+                    onClick={() => selectCity(city)}
+                  >
+                    {city}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
