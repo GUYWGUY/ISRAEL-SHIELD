@@ -327,15 +327,28 @@ export default function App() {
       setLoading(true);
       setLoadingStatus(t.loading);
       try {
-        // 1. Check for remote version info (ETag preferred on GitHub Raw)
+        // 1. Check for remote version info using GitHub API
         let remoteVersion = '';
         try {
-          // Add a timestamp to avoid browser-level caching of the HEAD request itself
-          const headRes = await fetch(csvUrl + "?t=" + Date.now(), { method: 'HEAD' });
-          remoteVersion = headRes.headers.get('etag') || headRes.headers.get('last-modified') || '';
-          console.log("Remote version detected:", remoteVersion || "None (using fallback)");
-        } catch (headErr) {
-          console.warn("HEAD request failed:", headErr);
+          // GitHub API returns the latest commit for this specific file
+          const apiURL = 'https://api.github.com/repos/yuval-harpaz/alarms/commits?path=data/alarms.csv&per_page=1';
+          const apiRes = await fetch(apiURL);
+          if (apiRes.ok) {
+            const apiData = await apiRes.json();
+            if (apiData && apiData.length > 0) {
+              remoteVersion = apiData[0].sha;
+              console.log("Remote version (SHA) detected via API:", remoteVersion);
+            }
+          }
+          
+          // Fallback to HEAD request if API fails (unlikely but good for robustness)
+          if (!remoteVersion) {
+            const headRes = await fetch(csvUrl + "?t=" + Date.now(), { method: 'HEAD' });
+            remoteVersion = headRes.headers.get('etag') || headRes.headers.get('last-modified') || '';
+            console.log("Remote version detected via HEAD (fallback):", remoteVersion || "None");
+          }
+        } catch (err) {
+          console.warn("Version check failed:", err);
         }
         
         // 2. Try loading from cache
@@ -344,7 +357,7 @@ export default function App() {
         // --- Caching Strategy ---
         // If we have cached data:
         // A) If we GOT a remote version, it must match.
-        // B) If we DID NOT get a remote version (CORS/GitHub), use the cache if it exists (assuming no update).
+        // B) If we DID NOT get a remote version (unlikely now), use the cache if it exists.
         const cacheIsGood = cached && (
           (remoteVersion !== '' && cached.lastModified === remoteVersion) ||
           (remoteVersion === '' && cached.data && cached.data.length > 0)
@@ -418,11 +431,11 @@ export default function App() {
             saveToCache(parsed, versionToSave);
           }
         });
-  } catch (e) {
-    console.error("Data loading failed:", e);
-    setLoading(false);
-  }
-};
+      } catch (e) {
+        console.error("Data loading failed:", e);
+        setLoading(false);
+      }
+    };
 
 loadData();
 
