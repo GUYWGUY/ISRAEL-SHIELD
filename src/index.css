@@ -2,32 +2,34 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
-  --bg-color: #F0F4F8;
-  --surface-color: #FFFFFF;
-  --primary-azure: #00AEEF;
-  --primary-deep-blue: #0038B8;
-  --primary-light-blue: #E1F5FE;
-  --accent-gold: #D4AF37;
-  --alert-red: #E63946;
-  --text-main: #2C3E50;
-  --text-muted: #7F8C8D;
-  --border-radius: 16px;
-  --border-color: #e2e8f0;
-  --input-bg: #f8fafc;
+  --bg-color: #0B1120;
+  --surface-color: rgba(255, 255, 255, 0.05);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --primary-azure: #38bdf8;
+  --primary-deep-blue: #3b82f6;
+  --primary-light-blue: rgba(56, 189, 248, 0.1);
+  --accent-gold: #fbbf24;
+  --alert-red: #f87171;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-radius: 20px;
+  --glow-color: rgba(56, 189, 248, 0.4);
 }
 
 .dark {
   --bg-color: #020617;
-  --surface-color: #0f172a;
+  --surface-color: rgba(15, 23, 42, 0.6);
+  --glass-bg: rgba(15, 23, 42, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.08);
   --primary-azure: #38bdf8;
   --primary-deep-blue: #3b82f6;
-  --primary-light-blue: #1e3a8a;
+  --primary-light-blue: rgba(30, 58, 138, 0.3);
   --accent-gold: #fbbf24;
   --alert-red: #f87171;
   --text-main: #f8fafc;
   --text-muted: #cbd5e1;
-  --border-color: #1e293b;
-  --input-bg: #1e293b;
+  --glow-color: rgba(59, 130, 246, 0.5);
 }
 
 @theme {
@@ -46,11 +48,64 @@
 }
 
 body {
-  background-color: var(--bg-color);
+  background: var(--bg-color);
   color: var(--text-main);
   font-family: 'Assistant', sans-serif;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+}
+
+/* Mesh Gradient Background */
+.mesh-gradient {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: -1;
+  background-color: var(--bg-color);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0, transparent 50%), 
+    radial-gradient(at 50% 0%, rgba(59, 130, 246, 0.1) 0, transparent 50%), 
+    radial-gradient(at 100% 0%, rgba(248, 113, 113, 0.05) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(20, 184, 166, 0.05) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0, transparent 50%);
+  filter: blur(80px);
+  animation: meshMove 20s ease infinite alternate;
+}
+
+@keyframes meshMove {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.1) translate(-2%, -2%); }
+}
+
+/* Glass Card Style */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+.neon-border {
+  position: relative;
+}
+.neon-border::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(45deg, var(--primary-azure), transparent, var(--primary-deep-blue));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0.3;
+  transition: opacity 0.3s;
+}
+.neon-border:hover::after {
+  opacity: 0.6;
+}
+
+.neon-text {
+  text-shadow: 0 0 10px var(--glow-color);
 }
 
 /* Animations from original */

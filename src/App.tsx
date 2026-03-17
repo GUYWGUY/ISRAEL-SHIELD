@@ -9,10 +9,9 @@ import Papa from 'papaparse';
 import * as echarts from 'echarts';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Sun, Moon, Globe, Map as MapIcon, Layers, Calendar, 
-  TrendingUp, Info, Search, Filter, BarChart3, PieChart, 
-  MapPin, Clock, AlertTriangle, ChevronDown, ChevronUp,
-  Sparkles, Languages, Flame, Shield, Menu, X
+  Shield, Filter, X, ChevronDown, Calendar, Search, 
+  Map as MapIcon, BarChart3, PieChart as PieChartIcon, 
+  Info, Bell, Menu, Sun, Moon, Languages, Layers, TrendingUp, Check, Globe
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -259,9 +258,9 @@ export default function App() {
   
   // Filters
   const [citySearch, setCitySearch] = useState("");
-  const [threatFilter, setThreatFilter] = useState("all");
-  const [sourceFilter, setSourceFilter] = useState("all");
-  const [operationFilter, setOperationFilter] = useState("all");
+  const [threatFilter, setThreatFilter] = useState<string[]>(['all']);
+  const [sourceFilter, setSourceFilter] = useState<string[]>(['all']);
+  const [operationFilter, setOperationFilter] = useState<string[]>(['all']);
   const [timeResolution, setTimeResolution] = useState<'year' | 'month' | 'weekday' | 'hour' | 'minute'>('month');
 
   // New Features State
@@ -269,7 +268,7 @@ export default function App() {
   const [lang, setLang] = useState<'he' | 'en'>('he');
   const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
   const [compareMode, setCompareMode] = useState(false);
-  const [compareOperation, setCompareOperation] = useState("all");
+  const [compareOperation, setCompareOperation] = useState<string[]>(['all']);
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
@@ -565,18 +564,85 @@ loadData();
     };
   }, [filteredData]);
 
+// --- MultiSelect Component ---
+const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const toggle = (val: string) => {
+    if (val === 'all') {
+      onChange(['all']);
+    } else {
+      const newSelected = selected.includes(val) 
+        ? selected.filter((s: string) => s !== val) 
+        : [...selected.filter((s: string) => s !== 'all'), val];
+      onChange(newSelected.length === 0 ? ['all'] : newSelected);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="glass-card flex items-center justify-between gap-2 px-3 py-1.5 text-[10px] font-black hover:bg-white/10 transition-all min-w-[120px] shadow-sm uppercase tracking-wider"
+      >
+        <div className="flex items-center gap-2">
+          {Icon && <Icon size={14} className="text-primary-azure" />}
+          <span className="truncate max-w-[80px]">
+            {selected.includes('all') ? label : `${selected.length} ${isRtl ? 'נבחרו' : 'Selected'}`}
+          </span>
+        </div>
+        <ChevronDown size={12} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className={`absolute top-full mt-2 ${isRtl ? 'right-0' : 'left-0'} glass-card z-50 p-2 min-w-[220px] max-h-[300px] overflow-y-auto shadow-2xl border border-white/10 backdrop-blur-2xl`}
+            >
+              <div 
+                className={`flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors ${selected.includes('all') ? 'text-primary-azure bg-white/5' : 'text-white/70'}`}
+                onClick={() => { toggle('all'); setIsOpen(false); }}
+              >
+                <span className="text-xs font-black uppercase tracking-widest">{isRtl ? 'הכל' : 'ALL'}</span>
+                {selected.includes('all') && <Check size={14} />}
+              </div>
+              <div className="h-[1px] bg-white/5 my-1" />
+              {options.map((opt: string) => (
+                <div 
+                  key={opt}
+                  className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer hover:bg-white/5 transition-colors mb-1 last:mb-0 ${selected.includes(opt) ? 'text-primary-azure bg-white/10' : 'text-white/80'}`}
+                  onClick={() => toggle(opt)}
+                >
+                  <span className="text-sm font-medium">{opt}</span>
+                  {selected.includes(opt) && <Check size={14} />}
+                </div>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+
   // --- Filtering Logic ---
   useEffect(() => {
     const filtered = globalData.filter(d => {
       let matchCity = true, matchThreat = true, matchSource = true, matchOperation = true, matchDate = true;
-      if (citySearch) matchCity = d.cities && d.cities.includes(citySearch);
-      if (threatFilter !== 'all') matchThreat = d.threatStr === threatFilter;
-      if (sourceFilter !== 'all') matchSource = d.sourceStr === sourceFilter;
+      if (citySearch) matchCity = d.cities && d.cities.toLowerCase().includes(citySearch.toLowerCase());
       
-      if (compareMode && compareOperation !== 'all') {
-        matchOperation = d.operationsArray.includes(operationFilter) || d.operationsArray.includes(compareOperation);
-      } else if (operationFilter !== 'all') {
-        matchOperation = d.operationsArray.includes(operationFilter);
+      if (!threatFilter.includes('all')) matchThreat = threatFilter.includes(d.threatStr);
+      if (!sourceFilter.includes('all')) matchSource = sourceFilter.includes(d.sourceStr);
+      
+      if (compareMode && !compareOperation.includes('all')) {
+        matchOperation = d.operationsArray.some(op => operationFilter.includes(op)) || 
+                         d.operationsArray.some(op => compareOperation.includes(op));
+      } else if (!operationFilter.includes('all')) {
+        matchOperation = d.operationsArray.some(op => operationFilter.includes(op));
       }
 
       if (dateRange.start) matchDate = matchDate && d.dateObj >= new Date(dateRange.start);
@@ -587,6 +653,8 @@ loadData();
     console.log("Filtering complete. Global:", globalData.length, "Filtered:", filtered.length);
     setFilteredData(filtered);
   }, [citySearch, threatFilter, sourceFilter, operationFilter, compareOperation, compareMode, dateRange, globalData]);
+
+
 
   // --- Map Initialization ---
   useEffect(() => {
@@ -756,85 +824,102 @@ loadData();
   useEffect(() => {
     if (!timeSeriesInstance.current) return;
     
-    const grouped: Record<string, number> = {};
-    if (timeResolution === 'hour') {
-      for (let h = 0; h < 24; h++) {
-        for (let m = 0; m < 60; m++) {
-          grouped[String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0')] = 0;
+    const getGroupedData = (data: any[]) => {
+      const grouped: Record<string, number> = {};
+      if (timeResolution === 'hour') {
+        for (let h = 0; h < 24; h++) {
+          for (let m = 0; m < 60; m += 10) { // 10 min steps for better density
+            grouped[String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0')] = 0;
+          }
         }
+      } else if (timeResolution === 'minute') {
+        for (let m = 0; m < 60; m++) grouped[String(m).padStart(2, '0')] = 0;
       }
-    } else if (timeResolution === 'minute') {
-      for (let m = 0; m < 60; m++) {
-        grouped[String(m).padStart(2, '0')] = 0;
-      }
-    }
+      data.forEach(d => {
+        let key;
+        if (timeResolution === 'year') key = d.year;
+        else if (timeResolution === 'month') key = d.month;
+        else if (timeResolution === 'weekday') key = daysHe[d.dayOfWeek];
+        else if (timeResolution === 'hour') key = String(d.hour).padStart(2, '0') + ':' + String(Math.floor(d.dateObj.getMinutes()/10)*10).padStart(2, '0');
+        else if (timeResolution === 'minute') key = String(d.dateObj.getMinutes()).padStart(2, '0');
+        if (key !== undefined) grouped[key] = (grouped[key] || 0) + 1;
+      });
+      return grouped;
+    };
 
-    filteredData.forEach(d => {
-      let key;
-      if (timeResolution === 'year') key = d.year;
-      else if (timeResolution === 'month') key = d.month;
-      else if (timeResolution === 'weekday') key = daysHe[d.dayOfWeek];
-      else if (timeResolution === 'hour') key = String(d.hour).padStart(2, '0') + ':' + String(d.dateObj.getMinutes()).padStart(2, '0');
-      else if (timeResolution === 'minute') key = String(d.dateObj.getMinutes()).padStart(2, '0');
-      if (key !== undefined) grouped[key] = (grouped[key] || 0) + 1;
-    });
-
-    const xData = Object.keys(grouped);
-    if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) xData.sort();
-    else if (timeResolution === 'weekday') xData.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
+    const datasets: { name: string; data: any[]; color: string }[] = [];
     
-    const yData = xData.map(k => grouped[k]);
-    const series: any[] = [{
-      name: 'התרעות',
-      data: yData,
-      type: ['hour', 'weekday', 'minute'].includes(timeResolution) ? 'bar' : 'line',
-      smooth: true,
-      itemStyle: { color: '#00AEEF', borderRadius: [4, 4, 0, 0] },
-      areaStyle: timeResolution === 'month' ? {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(0,174,239,0.4)' },
-          { offset: 1, color: 'rgba(0,174,239,0.05)' }
-        ])
-      } : null
-    }];
+    if (compareMode && !compareOperation.includes('all')) {
+      // Comparison Mode Logic
+      const op1Data = globalData.filter(d => d.operationsArray.some(op => operationFilter.includes(op)));
+      const op2Data = globalData.filter(d => d.operationsArray.some(op => compareOperation.includes(op)));
+      
+      const g1 = getGroupedData(op1Data);
+      const g2 = getGroupedData(op2Data);
+      
+      const xKeys = Array.from(new Set([...Object.keys(g1), ...Object.keys(g2)]));
+      if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) xKeys.sort();
+      else if (timeResolution === 'weekday') xKeys.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
 
-    if (timeResolution === 'hour') {
-      const trend = [];
-      const win = 15;
-      for (let i = 0; i < yData.length; i++) {
-        let sum = 0, count = 0;
-        for (let j = Math.max(0, i - win); j <= Math.min(yData.length - 1, i + win); j++) {
-          sum += yData[j]; count++;
-        }
-        trend.push(Number((sum / count).toFixed(2)));
-      }
-      series.push({
-        name: 'מגמה',
-        data: trend,
-        type: 'line',
-        smooth: true,
-        symbol: 'none',
-        lineStyle: { width: 2, color: '#E63946', type: 'dashed' }
+      datasets.push({ name: operationFilter.join(', '), data: xKeys.map(k => g1[k] || 0), color: '#38bdf8' });
+      datasets.push({ name: compareOperation.join(', '), data: xKeys.map(k => g2[k] || 0), color: '#fbbf24' });
+      
+      timeSeriesInstance.current.setOption({
+        legend: { show: true, bottom: 0, textStyle: { color: '#94a3b8' } },
+        xAxis: { data: xKeys },
+        series: datasets.map(ds => ({
+          name: ds.name,
+          type: 'line',
+          smooth: true,
+          data: ds.data,
+          itemStyle: { color: ds.color },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: ds.color + '66' },
+              { offset: 1, color: ds.color + '00' }
+            ])
+          }
+        }))
+      });
+    } else {
+      // Single Mode Logic
+      const grouped = getGroupedData(filteredData);
+      const xData = Object.keys(grouped);
+      if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) xData.sort();
+      else if (timeResolution === 'weekday') xData.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
+      
+      const yData = xData.map(k => grouped[k]);
+      timeSeriesInstance.current.setOption({
+        legend: { show: false },
+        xAxis: { data: xData },
+        series: [{
+          name: 'התרעות',
+          data: yData,
+          type: ['hour', 'weekday', 'minute'].includes(timeResolution) ? 'bar' : 'line',
+          smooth: true,
+          itemStyle: { 
+            color: '#38bdf8',
+            borderRadius: [8, 8, 0, 0],
+            shadowBlur: 10,
+            shadowColor: 'rgba(56, 189, 248, 0.4)'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(56,189,248,0.4)' },
+              { offset: 1, color: 'rgba(56,189,248,0)' }
+            ])
+          }
+        }]
       });
     }
 
     timeSeriesInstance.current.setOption({
-      tooltip: { 
-        trigger: 'axis', 
-        axisPointer: { type: 'shadow' }, 
-        appendToBody: true,
-        position: customTooltipPosition
-      },
-      grid: { top: '10%', bottom: '5%', left: '0%', right: '2%', containLabel: true },
-      yAxis: { type: 'value', axisLabel: { show: false }, splitLine: { lineStyle: { color: darkMode ? '#334155' : '#eee', type: 'dashed' } } },
-      xAxis: { 
-        type: 'category', 
-        data: xData,
-        axisLabel: { color: darkMode ? '#94a3b8' : '#7F8C8D' }
-      },
-      series
+      tooltip: { trigger: 'axis', axisPointer: { type: 'cross', label: { backgroundColor: '#0f172a' } }, appendToBody: true, position: customTooltipPosition },
+      grid: { top: '10%', bottom: compareMode ? '15%' : '5%', left: '2%', right: '2%', containLabel: true },
+      yAxis: { type: 'value', axisLabel: { color: '#64748b', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } } },
+      xAxis: { axisLabel: { color: '#94a3b8', fontSize: 10, rotate: timeResolution === 'hour' ? 45 : 0 } },
     });
-  }, [filteredData, timeResolution, darkMode]);
+  }, [filteredData, globalData, timeResolution, compareMode, compareOperation, operationFilter, darkMode]);
 
   useEffect(() => {
     if (!topCitiesInstance.current) return;
@@ -847,6 +932,9 @@ loadData();
         trigger: 'axis', 
         axisPointer: { type: 'shadow' }, 
         appendToBody: true,
+        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+        borderWidth: 0,
+        textStyle: { color: '#fff' },
         position: customTooltipPosition
       },
       grid: { top: '15%', bottom: '15%', left: '2%', right: '2%', containLabel: true },
@@ -855,30 +943,30 @@ loadData();
         data: sorted.map(s => s[0]),
         axisLabel: {
           interval: 0, rotate: 30, fontSize: 10,
-          color: darkMode ? '#94a3b8' : '#7F8C8D',
-          formatter: (v: string) => v.length > 10 ? v.substring(0, 10) + '...' : v
+          color: '#94a3b8',
+          formatter: (v: string) => v.length > 8 ? v.substring(0, 8) + '...' : v
         }
       },
-      yAxis: { type: 'value', splitLine: { lineStyle: { color: darkMode ? '#334155' : '#eee', type: 'dashed' } }, axisLabel: { show: false } },
+      yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } }, axisLabel: { show: false } },
       series: [{
         type: 'bar',
         data: sorted.map(s => s[1]),
         itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#00AEEF' }, { offset: 1, color: darkMode ? '#3b82f6' : '#0038B8' }]),
-          borderRadius: [4, 4, 0, 0]
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#38bdf8' },
+            { offset: 1, color: '#3b82f6' }
+          ]),
+          borderRadius: [6, 6, 0, 0],
+          shadowBlur: 10,
+          shadowColor: 'rgba(56, 189, 248, 0.3)'
         },
         label: { 
           show: true, 
           position: 'top', 
           fontSize: 10,
-          formatter: (params: any) => {
-            const city = sorted[params.dataIndex][0];
-            return `{a|${params.value}}\n{b|${getWarningTime(city)}}`;
-          },
-          rich: {
-            a: { fontWeight: 'bold', color: darkMode ? '#38bdf8' : '#0038B8' },
-            b: { fontSize: 8, color: '#E63946', padding: [2, 0] }
-          }
+          fontWeight: 'bold',
+          color: '#38bdf8',
+          formatter: '{c}'
         }
       }]
     });
@@ -899,34 +987,40 @@ loadData();
       tooltip: { 
         trigger: 'item', 
         appendToBody: true,
+        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+        borderWidth: 0,
+        textStyle: { color: '#fff' },
         position: customTooltipPosition,
-        formatter: '{b}: <br/>{c} התרעות ({d}%)'
+        formatter: '{b}: <br/><b>{c} התרעות</b> ({d}%)'
       },
       series: [{
         type: 'pie', 
-        radius: ['40%', '70%'], 
+        radius: ['45%', '75%'], 
         avoidLabelOverlap: false,
         minAngle: 15,
-        itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 1 },
+        itemStyle: { borderRadius: 8, borderColor: 'rgba(0,0,0,0)', borderWidth: 2 },
         label: { 
-          show: window.innerWidth < 768,
-          position: 'outside',
-          formatter: '{b}: {d}%',
-          fontSize: 10,
-          color: darkMode ? '#94a3b8' : '#7F8C8D'
+          show: false,
+          position: 'center'
         },
-        labelLine: {
-          show: window.innerWidth < 768,
-          length: 5,
-          length2: 5
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 12,
+            fontWeight: 'bold',
+            formatter: '{b}\n{d}%',
+            color: '#fff'
+          }
         },
+        labelLine: { show: false },
         data, 
         color: colors
       }]
     });
 
-    threatInstance.current.setOption(pieOpt(Object.entries(tCounts).map(([n, v]) => ({ name: n, value: v })), ['#E63946', '#00AEEF', '#D4AF37', darkMode ? '#3b82f6' : '#0038B8', '#7F8C8D']));
-    sourceInstance.current.setOption(pieOpt(Object.entries(sCounts).map(([n, v]) => ({ name: n, value: v })), [darkMode ? '#3b82f6' : '#0038B8', '#D4AF37', '#E63946', '#00AEEF', '#7F8C8D']));
+    const neonColors = ['#f87171', '#38bdf8', '#fbbf24', '#3b82f6', '#94a3b8', '#10b981'];
+    threatInstance.current.setOption(pieOpt(Object.entries(tCounts).map(([n, v]) => ({ name: n, value: v })), neonColors));
+    sourceInstance.current.setOption(pieOpt(Object.entries(sCounts).map(([n, v]) => ({ name: n, value: v })), neonColors));
   }, [filteredData, darkMode]);
 
   // --- Insights ---
@@ -955,366 +1049,263 @@ loadData();
   }
 
   return (
-    <div className={`flex flex-col h-screen bg-bg-color font-sans transition-colors duration-300 ${darkMode ? 'dark' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className={`flex flex-col h-screen bg-bg-color font-sans transition-colors duration-500 overflow-hidden relative ${darkMode ? 'dark' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
+      <div className="mesh-gradient" />
+      
       {/* Header */}
-      <header className="bg-surface-color text-text-main px-5 py-3 flex justify-between items-center border-b border-border-color z-30 flex-shrink-0 transition-colors duration-300">
+      <header className="glass-card mx-4 mt-4 px-6 py-3 flex justify-between items-center z-30 flex-shrink-0 border-none shadow-2xl">
         <div className="flex items-center gap-3">
-          <div className="bg-primary-deep-blue dark:bg-primary-azure p-2 rounded-xl shadow-sm">
+          <motion.div 
+            initial={{ rotate: -20, scale: 0.8 }}
+            animate={{ rotate: 0, scale: 1 }}
+            className="bg-gradient-to-br from-primary-azure to-primary-deep-blue p-2.5 rounded-2xl shadow-[0_0_15px_rgba(56,189,248,0.5)]"
+          >
             <Shield size={24} className="text-white" />
+          </motion.div>
+          <div>
+            <h1 className="text-xl md:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-primary-azure neon-text">
+              {t.title}
+            </h1>
+            <div className="hidden md:flex items-center gap-2 mt-0.5">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{isRtl ? 'מחובר לנתוני אמת' : 'CONNECTED TO LIVE DATA'}</span>
+            </div>
           </div>
-          <h1 className="text-lg md:text-xl font-extrabold tracking-tight text-primary-deep-blue dark:text-primary-azure">{t.title}</h1>
         </div>
         
         <div className="flex items-center gap-2 md:gap-4">
           <button 
-            className="md:hidden p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors text-text-main"
+            className="md:hidden p-2.5 hover:bg-white/10 rounded-xl transition-all text-text-main glass-card border-none"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={20} /> : <Filter size={20} />}
           </button>
+
+          <div className="hidden md:flex items-center gap-3">
+             <div className="flex items-center gap-2 bg-black/20 rounded-xl px-3 py-1.5 border border-white/5">
+                <Search size={14} className="text-text-muted" />
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    className="bg-transparent border-none text-sm outline-none w-32 md:w-44 text-white placeholder:text-text-muted/50"
+                    placeholder={isRtl ? "חיפוש עיר..." : "Search city..."}
+                    value={citySearch}
+                    onChange={(e) => handleCitySearchChange(e.target.value, 'desktop')}
+                    onFocus={() => {
+                        if (citySearch.trim().length > 0) setShowSuggestions(true);
+                        setActiveSearchSource('desktop');
+                    }}
+                  />
+                  <AnimatePresence>
+                    {showSuggestions && activeSearchSource === 'desktop' && citySuggestions.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute top-full left-0 right-0 glass-card mt-2 p-2 z-50 max-h-60 overflow-y-auto min-w-[200px]"
+                      >
+                        {citySuggestions.map((city, idx) => (
+                          <div 
+                            key={idx} 
+                            className="px-4 py-2 hover:bg-white/10 rounded-lg cursor-pointer text-white text-sm transition-colors"
+                            onClick={() => selectCity(city)}
+                          >
+                            {city}
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+             </div>
+
+              <MultiSelect 
+                label={t.operation} 
+                options={[...operationsDict.map(op => op.name), "שגרה (ללא מערכה)"]}
+                selected={operationFilter}
+                onChange={setOperationFilter}
+                icon={BarChart3}
+                isRtl={isRtl}
+             />
+
+             {compareMode && (
+               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+                 <MultiSelect 
+                    label={isRtl ? "להשוות מול..." : "Compare vs..."} 
+                    options={[...operationsDict.map(op => op.name), "שגרה (ללא מערכה)"]}
+                    selected={compareOperation}
+                    onChange={setCompareOperation}
+                    icon={TrendingUp}
+                    isRtl={isRtl}
+                 />
+               </motion.div>
+             )}
+
+             <MultiSelect 
+                label={t.threat} 
+                options={Array.from(new Set(Object.values(threatDict)))}
+                selected={threatFilter}
+                onChange={setThreatFilter}
+                icon={PieChartIcon}
+                isRtl={isRtl}
+             />
+
+             <MultiSelect 
+                label={t.source} 
+                options={Array.from(new Set(globalData.map(d => d.sourceStr)))}
+                selected={sourceFilter}
+                onChange={setSourceFilter}
+                icon={Globe}
+                isRtl={isRtl}
+             />
+          </div>
+
+          <div className="h-8 w-[1px] bg-white/10 hidden md:block" />
 
           <button 
             onClick={() => {
               setDarkMode(!darkMode);
               document.documentElement.classList.toggle('dark');
             }}
-            className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors text-text-main"
-            title={darkMode ? "Light Mode" : "Dark Mode"}
+            className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-text-main glass-card border-none"
           >
-            {darkMode ? <Moon size={20} className="text-accent-gold" /> : <Sun size={20} className="text-text-muted" />}
+            {darkMode ? <Moon size={20} className="text-accent-gold neon-text" /> : <Sun size={20} className="text-white" />}
           </button>
 
-          <div className="flex items-center gap-1 bg-black/5 dark:bg-white/10 rounded-full px-2 py-1">
+          <div className="flex items-center gap-1 glass-card p-1 border-none">
             <button 
               onClick={() => setLang('he')}
-              className={`w-8 h-8 flex items-center justify-center rounded-full transition-all overflow-hidden border-2 ${lang === 'he' ? 'border-primary-deep-blue scale-110 shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
-              title="עברית"
+              className={`w-7 h-7 rounded-lg transition-all ${lang === 'he' ? 'ring-2 ring-primary-azure ring-offset-2 ring-offset-transparent' : 'opacity-40 hover:opacity-100'}`}
             >
-              <img src="https://flagcdn.com/w40/il.png" alt="IL" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://flagcdn.com/w40/il.png" alt="IL" className="w-full h-full object-cover rounded-md" />
             </button>
             <button 
               onClick={() => setLang('en')}
-              className={`w-8 h-8 flex items-center justify-center rounded-full transition-all overflow-hidden border-2 ${lang === 'en' ? 'border-primary-deep-blue scale-110 shadow-sm' : 'border-transparent opacity-60 hover:opacity-100'}`}
-              title="English"
+              className={`w-7 h-7 rounded-lg transition-all ${lang === 'en' ? 'ring-2 ring-primary-azure ring-offset-2 ring-offset-transparent' : 'opacity-40 hover:opacity-100'}`}
             >
-              <img src="https://flagcdn.com/w40/us.png" alt="US" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://flagcdn.com/w40/us.png" alt="US" className="w-full h-full object-cover rounded-md" />
             </button>
-          </div>
-
-          <div className="hidden md:flex flex-col items-end leading-tight">
-            <span className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">{isRtl ? 'מצב מערכת' : 'SYSTEM STATUS'}</span>
-            <span className="text-xs font-bold flex items-center gap-1.5 text-text-main">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-              {isRtl ? 'מחובר לנתוני אמת' : 'CONNECTED TO LIVE DATA'}
-            </span>
           </div>
         </div>
       </header>
 
-      {/* Filter Bar - Drawer on mobile */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div 
-            initial={{ x: isRtl ? '100%' : '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: isRtl ? '100%' : '-100%' }}
-            className="fixed inset-0 z-[100] bg-surface-color p-8 flex flex-col gap-6 md:hidden overflow-y-auto"
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-primary-deep-blue dark:text-primary-azure">{isRtl ? 'מסננים' : 'Filters'}</h2>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-black/5 rounded-full"><X size={24} /></button>
-            </div>
-            
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="font-semibold text-sm text-text-main">{t.search}</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    className="w-full bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
-                    placeholder={isRtl ? "הקלד שם..." : "Type name..."}
-                    value={citySearch}
-                    onChange={(e) => handleCitySearchChange(e.target.value, 'mobile')}
-                    onFocus={() => {
-                        if (citySearch.trim().length > 0) setShowSuggestions(true);
-                        setActiveSearchSource('mobile');
-                    }}
-                  />
-                  {showSuggestions && activeSearchSource === 'mobile' && citySuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 bg-surface-color border border-border-color mt-1 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
-                      {citySuggestions.map((city, idx) => (
-                        <div 
-                          key={idx} 
-                          className="px-4 py-3 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer text-text-main border-b border-border-color last:border-0"
-                          onClick={() => selectCity(city)}
-                        >
-                          {city}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="font-semibold text-sm text-text-main">{t.operation}</label>
-                <select 
-                  className="bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
-                  value={operationFilter}
-                  onChange={(e) => setOperationFilter(e.target.value)}
-                >
-                  <option value="all">{t.all}</option>
-                  {operationsDict.map(op => <option key={op.name} value={op.name}>{op.name}</option>)}
-                  <option value="שגרה (ללא מערכה)">שגרה (ללא מערכה)</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="font-semibold text-sm text-text-main">{t.threat}</label>
-                <select 
-                  className="bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
-                  value={threatFilter}
-                  onChange={(e) => setThreatFilter(e.target.value)}
-                >
-                  <option value="all">{t.all}</option>
-                  {Array.from(new Set(Object.values(threatDict))).map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="font-semibold text-sm text-text-main">{t.source}</label>
-                <select 
-                  className="bg-input-bg border border-border-color rounded-xl px-4 py-3 text-base outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
-                  value={sourceFilter}
-                  onChange={(e) => setSourceFilter(e.target.value)}
-                >
-                  <option value="all">{t.all}</option>
-                  {Array.from(new Set(globalData.map(d => d.sourceStr))).map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-              </div>
-
-              <button 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="mt-4 bg-primary-azure text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all"
-              >
-                {isRtl ? 'הצג תוצאות' : 'Show Results'}
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="hidden md:flex bg-surface-color px-5 py-2 border-b border-border-color gap-4 items-center flex-wrap z-20 sticky top-0 md:relative">
-        <div className="flex items-center gap-2 relative">
-          <label className="font-semibold text-[13px] text-text-main">{t.search}</label>
-          <div className="relative">
-            <input 
-              type="text" 
-              className="bg-input-bg border border-border-color rounded-full px-4 py-1 text-sm outline-none focus:ring-2 focus:ring-primary-azure transition-all w-40 md:w-48 text-text-main"
-              placeholder={isRtl ? "הקלד שם..." : "Type name..."}
-              value={citySearch}
-              onChange={(e) => handleCitySearchChange(e.target.value, 'desktop')}
-              onFocus={() => {
-                  if (citySearch.trim().length > 0) setShowSuggestions(true);
-                  setActiveSearchSource('desktop');
-              }}
-            />
-            {showSuggestions && activeSearchSource === 'desktop' && citySuggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 bg-surface-color border border-border-color mt-1 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto min-w-[180px]">
-                {citySuggestions.map((city, idx) => (
-                  <div 
-                    key={idx} 
-                    className="px-4 py-2 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer text-text-main text-sm border-b border-border-color last:border-0"
-                    onClick={() => selectCity(city)}
-                  >
-                    {city}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="font-semibold text-[13px] text-text-main">{t.operation}</label>
-          <select 
-            className="bg-input-bg border border-border-color rounded-full px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
-            value={operationFilter}
-            onChange={(e) => setOperationFilter(e.target.value)}
-          >
-            <option value="all">{t.all}</option>
-            {operationsDict.map(op => <option key={op.name} value={op.name}>{op.name}</option>)}
-            <option value="שגרה (ללא מערכה)">שגרה (ללא מערכה)</option>
-          </select>
-        </div>
-
-        {/* Comparison Toggle */}
-        <div className="flex items-center gap-2 border-l border-border-color pl-4">
-          <button 
-            onClick={() => setCompareMode(!compareMode)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${compareMode ? 'bg-accent-gold text-white' : 'bg-input-bg text-text-muted border border-border-color'}`}
-          >
-            <TrendingUp size={14} />
-            {t.compare}
-          </button>
-          
-          {compareMode && (
-            <select 
-              className="bg-input-bg border border-accent-gold rounded-full px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-accent-gold text-text-main animate-in fade-in slide-in-from-right-2"
-              value={compareOperation}
-              onChange={(e) => setCompareOperation(e.target.value)}
-            >
-              <option value="all">{t.all}</option>
-              {operationsDict.map(op => <option key={op.name} value={op.name}>{op.name}</option>)}
-            </select>
-          )}
-        </div>
-
-        {/* Date Range */}
-        <div className="flex items-center gap-2 border-l border-border-color pl-4">
-          <Calendar size={14} className="text-text-muted" />
-          <input 
-            type="date" 
-            className="bg-input-bg border border-border-color rounded-full px-2 py-0.5 text-xs text-text-main outline-none"
-            value={dateRange.start}
-            onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-          />
-          <span className="text-text-muted">-</span>
-          <input 
-            type="date" 
-            className="bg-input-bg border border-border-color rounded-full px-2 py-0.5 text-xs text-text-main outline-none"
-            value={dateRange.end}
-            onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="font-semibold text-[13px] text-text-main">{t.threat}</label>
-          <select 
-            className="bg-input-bg border border-border-color rounded-full px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
-            value={threatFilter}
-            onChange={(e) => setThreatFilter(e.target.value)}
-          >
-            <option value="all">{t.all}</option>
-            {Array.from(new Set(Object.values(threatDict))).map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <label className="font-semibold text-[13px] text-text-main">{t.source}</label>
-          <select 
-            className="bg-input-bg border border-border-color rounded-full px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-primary-azure text-text-main"
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-          >
-            <option value="all">{t.all}</option>
-            {Array.from(new Set(globalData.map(d => d.sourceStr))).map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-        </div>
-      </div>
-
       {/* Main Container */}
-      <main className="flex-1 flex flex-col md:flex-row md:overflow-hidden p-3 md:p-5 gap-4 md:gap-5">
+      <main className="flex-1 flex flex-col md:flex-row md:overflow-hidden p-4 gap-4">
         
-        {/* Left Panel: Analytics (First on mobile) */}
-        <div className="w-full md:w-3/4 flex flex-col gap-3 md:overflow-y-auto order-1 md:order-2 scrollbar-hide">
+        {/* Left Panel: Analytics */}
+        <div className="w-full md:w-3/4 flex flex-col gap-4 md:overflow-y-auto order-1 md:order-2 scrollbar-hide">
           
           {/* KPI Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 flex-shrink-0">
-            <div className="bg-surface-color p-3 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-center relative overflow-hidden transition-colors duration-300">
-              <div className="absolute top-0 bottom-0 right-0 w-[6px] bg-primary-azure" />
-              <div className="text-[11px] md:text-xs text-text-muted font-semibold">{t.totalAlerts}</div>
-              <div className="text-xl md:text-[22px] font-extrabold text-primary-deep-blue dark:text-primary-azure mt-1">{filteredData.length.toLocaleString()}</div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 flex-shrink-0">
+            <motion.div whileHover={{ y: -5 }} className="glass-card p-4 relative overflow-hidden group">
+              <div className="absolute top-0 bottom-0 left-0 w-1 bg-primary-azure group-hover:w-2 transition-all shadow-[0_0_15px_var(--primary-azure)]" />
+              <div className="text-xs text-text-muted font-bold tracking-widest uppercase mb-1">{t.totalAlerts}</div>
+              <div className="text-3xl font-black text-white neon-text">{filteredData.length.toLocaleString()}</div>
+            </motion.div>
             
-            {/* Shower Index Card */}
-            <div className="bg-surface-color p-3 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-center relative overflow-hidden group transition-colors duration-300">
-              <div className="absolute top-0 bottom-0 right-0 w-[6px] bg-sky-400" />
+            <motion.div whileHover={{ y: -5 }} className="glass-card p-4 relative overflow-hidden group">
+              <div className="absolute top-0 bottom-0 left-0 w-1 bg-sky-400 shadow-[0_0_15px_#38bdf8]" />
               <div className="flex justify-between items-center mb-1">
-                <div className="text-[11px] md:text-xs text-text-muted font-semibold">{t.showerIndex}</div>
-                <div className="text-sky-400"><Info size={14} /></div>
+                <div className="text-xs text-text-muted font-bold tracking-widest uppercase">{t.showerIndex}</div>
+                <Info size={14} className="text-sky-400" />
               </div>
-              <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-col">
                 {showerIndex ? (
                   <>
-                    <div className="text-lg md:text-xl font-black text-primary-deep-blue dark:text-primary-azure leading-none">
-                      {showerIndex.time}
-                    </div>
-                    <div className="text-[10px] text-text-muted font-bold mt-1 flex items-center gap-1">
-                      {t.showerDesc} | <span className="text-emerald-500">{showerIndex.probability}% {isRtl ? 'שקט' : 'Quiet'}</span>
+                    <div className="text-2xl font-black text-white leading-none">{showerIndex.time}</div>
+                    <div className="text-[10px] text-text-muted font-bold mt-2 flex items-center gap-2">
+                       <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        {showerIndex.probability}% {isRtl ? 'סיכוי לשקט' : 'Quiet Chance'}
+                       </span>
                     </div>
                   </>
                 ) : (
-                  <span className="text-xs opacity-50 italic">{t.noData}</span>
+                  <span className="text-sm italic opacity-50">{t.noData}</span>
                 )}
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-surface-color p-3 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-center relative overflow-hidden sm:col-span-2 md:col-span-1 transition-colors duration-300">
-              <div className="absolute top-0 bottom-0 right-0 w-[6px] bg-alert-red" />
-              <div className="text-[11px] md:text-xs text-text-muted font-semibold">{t.lastAlert}</div>
-              <div className="text-base md:text-lg font-extrabold text-primary-deep-blue dark:text-primary-azure mt-1">
+            <motion.div whileHover={{ y: -5 }} className="glass-card p-4 relative overflow-hidden group sm:col-span-2 md:col-span-1">
+              <div className="absolute top-0 bottom-0 left-0 w-1 bg-alert-red shadow-[0_0_15px_#f87171]" />
+              <div className="text-xs text-text-muted font-bold tracking-widest uppercase mb-1">{t.lastAlert}</div>
+              <div className="text-xl font-black text-white">
                 {filteredData.length > 0 ? filteredData[filteredData.length-1].time : "-"}
               </div>
-            </div>
+            </motion.div>
           </div>
 
-          {/* Charts Row 1: Time Series + Donuts Side-by-Side */}
-          <div className="flex flex-col md:flex-row gap-3 md:flex-1 min-h-0">
-            <div className="bg-surface-color p-3 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-[2] h-[300px] md:h-auto transition-colors duration-300">
-              <div className="flex gap-2 justify-center mb-1 overflow-x-auto pb-1 scrollbar-hide flex-shrink-0">
-                {(['year', 'month', 'weekday', 'hour', 'minute'] as const).map(res => (
-                  <button 
-                    key={res}
-                    className={`px-3 py-1 rounded-full text-[10px] font-semibold transition-all whitespace-nowrap ${timeResolution === res ? 'bg-primary-azure text-white' : 'bg-primary-light-blue dark:bg-primary-light-blue/20 text-primary-deep-blue dark:text-primary-azure'}`}
-                    onClick={() => setTimeResolution(res)}
-                  >
-                    {res === 'year' ? t.years : res === 'month' ? t.months : res === 'weekday' ? t.days : res === 'hour' ? t.hours : t.minutes}
-                  </button>
-                ))}
+          {/* Charts Row 1 */}
+          <div className="flex flex-col md:flex-row gap-4 md:flex-1 min-h-[350px]">
+            <div className="glass-card p-5 flex flex-col md:flex-[2.5] h-[350px] md:h-auto neon-border">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex gap-1.5 p-1 bg-black/30 rounded-xl border border-white/5">
+                  {(['year', 'month', 'weekday', 'hour', 'minute'] as const).map(res => (
+                    <button 
+                      key={res}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${timeResolution === res ? 'bg-primary-azure text-white shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-text-muted hover:text-white'}`}
+                      onClick={() => setTimeResolution(res)}
+                    >
+                      {res === 'year' ? t.years : res === 'month' ? t.months : res === 'weekday' ? t.days : res === 'hour' ? t.hours : t.minutes}
+                    </button>
+                  ))}
+                </div>
+                <button 
+                    onClick={() => setCompareMode(!compareMode)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${compareMode ? 'bg-accent-gold text-white shadow-[0_0_10px_#fbbf24]' : 'bg-black/20 text-text-muted border border-white/5 hover:border-white/20'}`}
+                >
+                    <TrendingUp size={12} />
+                    {t.compare}
+                </button>
               </div>
               <div ref={timeSeriesChartRef} className="flex-1 w-full min-h-0" />
             </div>
 
-            <div className="bg-surface-color p-2 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-1 h-[250px] md:h-auto transition-colors duration-300">
-              <div className="text-center font-extrabold text-primary-deep-blue dark:text-primary-azure text-[12px] mb-1">{t.threatDist}</div>
+            <div className="glass-card p-4 flex flex-col md:flex-1 h-[280px] md:h-auto">
+              <div className="flex items-center gap-2 mb-4">
+                 <PieChartIcon size={16} className="text-alert-red" />
+                 <span className="font-black text-white text-xs uppercase tracking-widest">{t.threatDist}</span>
+              </div>
               <div ref={threatChartRef} className="flex-1 w-full min-h-0" />
-            </div>
-
-            <div className="bg-surface-color p-2 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-1 h-[250px] md:h-auto transition-colors duration-300">
-              <div className="text-center font-extrabold text-primary-deep-blue dark:text-primary-azure text-[12px] mb-1">{t.sourceDist}</div>
-              <div ref={sourceChartRef} className="flex-1 w-full min-h-0" />
             </div>
           </div>
 
-          {/* Charts Row 2: Top Cities */}
-          <div className="bg-surface-color p-3 rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col md:flex-[1.2] h-[300px] md:h-auto flex-shrink-0 transition-colors duration-300">
-            <div className="font-extrabold text-primary-deep-blue dark:text-primary-azure text-[13px] mb-1 px-2">{t.topCities}</div>
-            <div ref={topCitiesChartRef} className="flex-1 w-full min-h-0" />
+          {/* Charts Row 2 */}
+          <div className="flex flex-col md:flex-row gap-4 h-[300px] md:h-[280px] flex-shrink-0">
+            <div className="glass-card p-4 flex flex-col md:flex-1 h-full">
+              <div className="flex items-center gap-2 mb-3">
+                 <Globe size={16} className="text-primary-azure" />
+                 <span className="font-black text-white text-xs uppercase tracking-widest">{t.sourceDist}</span>
+              </div>
+              <div ref={sourceChartRef} className="flex-1 w-full min-h-0" />
+            </div>
+            <div className="glass-card p-4 flex flex-col md:flex-[2] h-full">
+              <div className="flex items-center gap-2 mb-3">
+                 <MapIcon size={16} className="text-primary-azure" />
+                 <span className="font-black text-white text-xs uppercase tracking-widest">{t.topCities}</span>
+              </div>
+              <div ref={topCitiesChartRef} className="flex-1 w-full min-h-0" />
+            </div>
           </div>
         </div>
 
-        {/* Right Panel: Map (Last on mobile) */}
-        <div className="w-full md:w-1/4 bg-surface-color rounded-[16px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex flex-col overflow-hidden border-t-[5px] border-primary-azure h-[300px] md:h-full relative flex-shrink-0 order-2 md:order-1 transition-colors duration-300">
-          <div className="px-4 py-2 font-extrabold text-primary-deep-blue dark:text-primary-azure border-b border-border-color bg-input-bg text-sm flex justify-between items-center">
-            <span>{t.mapTitle}</span>
-            <div className="flex items-center gap-2">
-              <button 
+        {/* Right Panel: Map */}
+        <div className="w-full md:w-1/4 glass-card flex flex-col overflow-hidden h-[400px] md:h-full relative flex-shrink-0 order-2 md:order-1 border-none">
+          <div className="px-5 py-3 bg-black/40 border-b border-white/5 flex justify-between items-center">
+            <span className="font-black text-white text-xs uppercase tracking-widest">{t.mapTitle}</span>
+            <button 
                 onClick={() => setMapLayer(mapLayer === 'streets' ? 'satellite' : 'streets')}
-                className="p-1 hover:bg-black/5 rounded transition-colors text-text-muted"
-                title={mapLayer === 'streets' ? t.satellite : t.streets}
-              >
+                className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-text-muted"
+            >
                 <Layers size={14} />
-              </button>
-            </div>
+            </button>
           </div>
           <div 
             id="map" 
-            className="flex-1 z-10 transition-all duration-500" 
+            className="flex-1 z-10 transition-all duration-700 grayscale-[0.5] invert-[0.1]" 
             style={darkMode ? { filter: 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)' } : {}}
           />
           {geocodingStatus && (
-            <div className="absolute bottom-2 left-2 right-2 bg-white/90 dark:bg-slate-800/90 p-1.5 rounded-lg text-[10px] font-bold text-primary-azure shadow-sm z-20 flex items-center gap-2 border border-primary-azure/20">
+            <div className="absolute bottom-4 left-4 right-4 glass-card px-4 py-2 text-[10px] font-black text-primary-azure z-20 flex items-center gap-3 border-none bg-black/60 shadow-2xl">
               <div className="mini-spinner" /> {geocodingStatus}
             </div>
           )}
@@ -1322,24 +1313,138 @@ loadData();
       </main>
 
       {/* Ticker */}
-      <div className={`h-[40px] md:h-[45px] flex items-center overflow-hidden shadow-[0_-4px_15px_rgba(0,0,0,0.1)] transition-colors duration-500 z-30 ${liveAlert ? 'live-flash' : filteredData.length > 0 && (Date.now() - new Date(filteredData[filteredData.length-1].time).getTime() < 86400000) ? 'bg-alert-red' : 'bg-primary-azure'}`}>
-        <div className="bg-black/20 h-full px-4 md:px-6 flex items-center font-extrabold text-sm md:text-base text-white whitespace-nowrap z-10 shadow-[2px_0_5px_rgba(0,0,0,0.1)]">
+      <footer className={`h-12 flex items-center overflow-hidden z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] transition-all duration-1000 ${liveAlert ? 'live-flash' : 'bg-black/60 backdrop-blur-xl border-t border-white/5'}`}>
+        <div className="bg-primary-deep-blue/40 backdrop-blur-md h-full px-6 flex items-center font-black text-xs uppercase tracking-widest text-white z-10 border-r border-white/10 shadow-[5px_0_15px_rgba(0,0,0,0.3)]">
           {liveAlert ? `🚨 ${t.liveAlert}` : t.tickerTitle}
         </div>
-        <div className="ticker-move flex-1 text-white">
+        <div className="ticker-move flex-1 text-white py-1">
           {liveAlert ? (
-            <span className="inline-block px-8 text-base md:text-lg font-extrabold">
-              {liveAlert.title}: <span className="text-white">{liveAlert.cities}</span>
+            <span className="inline-block px-10 text-base font-black neon-text">
+              {liveAlert.title}: <span className="text-primary-azure">{liveAlert.cities}</span>
             </span>
           ) : (
-            globalData.slice(-10).reverse().map((alert, i) => (
-              <span key={i} className="inline-block px-8 text-sm md:text-base font-semibold">
-                🔴 {alert.operationsArray[0]} | <b>{alert.cities}</b> <span className="opacity-80 font-normal">({alert.threatStr})</span>
+            globalData.slice(-15).reverse().map((alert, i) => (
+              <span key={i} className="inline-block px-10 text-xs font-bold opacity-80 hover:opacity-100 transition-opacity">
+                <span className="text-alert-red">●</span> {alert.operationsArray[0] || 'שגרה'} | <b className="text-white">{alert.cities}</b> <span className="text-text-muted font-normal">({alert.threatStr})</span>
               </span>
             ))
           )}
         </div>
-      </div>
+      </footer>
+
+      {/* Mobile Menu Backdrop */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] md:hidden"
+            />
+            <motion.div 
+              initial={{ x: isRtl ? '100%' : '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: isRtl ? '100%' : '-100%' }}
+              className="fixed inset-y-0 right-0 w-[85%] max-w-sm z-[100] glass-card m-4 p-8 flex flex-col gap-8 md:hidden overflow-y-auto border-none shadow-[w-full_0_50px_rgba(0,0,0,0.5)]"
+            >
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-black text-white neon-text uppercase tracking-tighter">{isRtl ? 'מסננים' : 'Filters'}</h2>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-all">
+                  <X size={24} className="text-white" />
+                </button>
+              </div>
+              
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t.search}</label>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      className="w-full glass-card bg-black/30 border-none px-4 py-3 text-white outline-none focus:ring-1 focus:ring-primary-azure shadow-inner"
+                      placeholder={isRtl ? "חיפוש עיר..." : "Search city..."}
+                      value={citySearch}
+                      onChange={(e) => handleCitySearchChange(e.target.value, 'mobile')}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t.operation}</label>
+                    <div className="flex flex-wrap gap-2">
+                        {["all", ...operationsDict.map(op => op.name)].map(opt => (
+                            <button 
+                                key={opt}
+                                onClick={() => {
+                                    if (opt === 'all') setOperationFilter(['all']);
+                                    else {
+                                        const newOps = operationFilter.includes(opt) 
+                                            ? operationFilter.filter(o => o !== opt)
+                                            : [...operationFilter.filter(o => o !== 'all'), opt];
+                                        setOperationFilter(newOps.length === 0 ? ['all'] : newOps);
+                                    }
+                                }}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${operationFilter.includes(opt) ? 'bg-primary-azure text-white shadow-lg' : 'bg-black/40 text-text-muted border border-white/5'}`}
+                            >
+                                {opt === 'all' ? 'הכל' : opt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t.threat}</label>
+                    <div className="flex flex-wrap gap-2">
+                        {["all", ...Array.from(new Set(Object.values(threatDict)))].map(opt => (
+                            <button 
+                                key={opt}
+                                onClick={() => {
+                                    if (opt === 'all') setThreatFilter(['all']);
+                                    else {
+                                        const newThreats = threatFilter.includes(opt) 
+                                            ? threatFilter.filter(t => t !== opt)
+                                            : [...threatFilter.filter(t => t !== 'all'), opt];
+                                        setThreatFilter(newThreats.length === 0 ? ['all'] : newThreats);
+                                    }
+                                }}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${threatFilter.includes(opt) ? 'bg-primary-azure text-white shadow-lg' : 'bg-black/40 text-text-muted border border-white/5'}`}
+                            >
+                                {opt === 'all' ? 'הכל' : opt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t.dateRange}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input 
+                      type="date" 
+                      className="glass-card bg-black/30 border-none px-3 py-2 text-xs text-white"
+                      value={dateRange.start}
+                      onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                    />
+                    <input 
+                      type="date" 
+                      className="glass-card bg-black/30 border-none px-3 py-2 text-xs text-white"
+                      value={dateRange.end}
+                      onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="mt-6 bg-gradient-to-r from-primary-azure to-primary-deep-blue text-white font-black py-4 rounded-2xl shadow-[0_10px_30px_rgba(56,189,248,0.4)] active:scale-95 transition-all text-sm uppercase tracking-widest"
+                >
+                  {isRtl ? 'הצג תוצאות' : 'Show Results'}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
