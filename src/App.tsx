@@ -13,9 +13,8 @@ import {
   Map as MapIcon, BarChart3, PieChart as PieChartIcon, 
   Info, Bell, Menu, Sun, Moon, Languages, Layers, TrendingUp, Check, Globe
 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 
-// Ensures Leaflet is available globally for plugins loaded via CDN
+// Ensures Leaflet is available globally
 if (typeof window !== 'undefined') {
   (window as any).L = L;
 }
@@ -30,9 +29,7 @@ const openDB = (): Promise<IDBDatabase> => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
+      if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -46,13 +43,7 @@ const saveToCache = async (data: any[], lastModified: string) => {
     const store = tx.objectStore(STORE_NAME);
     store.put(data, 'alerts');
     store.put(lastModified, 'lastModified');
-    return new Promise((resolve, reject) => {
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-  } catch (e) {
-    console.warn("Failed to save to cache:", e);
-  }
+  } catch (e) { console.warn("Cache save failed:", e); }
 };
 
 const loadFromCache = async (): Promise<{ data: any[], lastModified: string } | null> => {
@@ -62,107 +53,42 @@ const loadFromCache = async (): Promise<{ data: any[], lastModified: string } | 
     const store = tx.objectStore(STORE_NAME);
     const dataReq = store.get('alerts');
     const dateReq = store.get('lastModified');
-    
     return new Promise((resolve) => {
-      let results: any = { data: null, lastModified: null };
-      dataReq.onsuccess = () => { results.data = dataReq.result; };
-      dateReq.onsuccess = () => { results.lastModified = dateReq.result; };
-      tx.oncomplete = () => {
-        if (results.data && results.lastModified) resolve(results);
-        else resolve(null);
-      };
+      let r: any = { data: null, lastModified: null };
+      dataReq.onsuccess = () => { r.data = dataReq.result; };
+      dateReq.onsuccess = () => { r.lastModified = dateReq.result; };
+      tx.oncomplete = () => (r.data && r.lastModified) ? resolve(r) : resolve(null);
       tx.onerror = () => resolve(null);
     });
-  } catch (e) {
-    console.warn("Failed to load from cache:", e);
-    return null;
-  }
+  } catch (e) { return null; }
 };
 
 // --- Constants & Dictionaries ---
 const daysHe = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-const daysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
 const translations = {
   he: {
-    title: "מגן ישראל | דשבורד חקר נתונים",
-    search: "חיפוש עיר/אזור:",
-    threat: "סוג איום:",
-    source: "מקור איום:",
-    operation: "מערכה:",
-    all: "הכל",
-    loading: "טוען נתונים...",
-    totalAlerts: "סה\"כ התרעות במאגר",
-    smartInsight: "תובנה סטטיסטית חכמה 🎯",
-    lastAlert: "זמן התרעה אחרונה",
-    mapTitle: "מפת מוקדים",
-    liveAlert: "צבע אדום",
-    tickerTitle: "מבזק התרעות",
-    timeSeries: "התפלגות התרעות לאורך זמן",
-    topCities: "היישובים המותקפים ביותר (Top 15)",
-    threatDist: "התפלגות סוגי איום",
-    sourceDist: "מקור איום",
-    years: "שנים",
-    months: "חודשים",
-    days: "ימים",
-    hours: "שעות",
-    minutes: "דקות",
-    satellite: "לוויין",
-    streets: "רחובות",
-    compare: "מצב השוואה",
-    showerIndex: "מדד המקלחת 🚿",
-    showerDesc: "הזמן הבטוח ביותר למקלחת שקטה",
-    generate: "ייצר תובנות",
-    generating: "מנתח נתונים...",
-    noData: "אין נתונים להצגה",
-    warningTime: "זמן התגוננות (שניות)",
+    title: "מגן ישראל | דשבורד חקר נתונים", search: "חיפוש עיר/אזור:", threat: "סוג איום:", source: "מקור איום:",
+    operation: "מערכה:", all: "הכל", loading: "טוען נתונים...", totalAlerts: "סה\"כ התרעות", smartInsight: "תובנה חכמה 🎯",
+    lastAlert: "זמן התרעה אחרונה", mapTitle: "מפת מוקדים", liveAlert: "צבע אדום", tickerTitle: "מבזק התרעות",
+    timeSeries: "התפלגות לאורך זמן", topCities: "היישובים המותקפים (Top 15)", threatDist: "סוגי איום", 
+    sourceDist: "מקור איום", years: "שנים", months: "חודשים", days: "ימים", hours: "שעות", minutes: "דקות",
+    satellite: "לוויין", streets: "רחובות", compare: "השוואה", showerIndex: "מדד המקלחת 🚿",
+    showerDesc: "הזמן הבטוח למקלחת", generate: "ייצר תובנות", generating: "מנתח...", 
+    noData: "אין נתונים", warningTime: "זמן התגוננות", dateRange: "טווח תאריכים"
   },
   en: {
-    title: "Shield of Israel | Data Analytics Dashboard",
-    search: "Search City/Area:",
-    threat: "Threat Type:",
-    source: "Threat Source:",
-    operation: "Campaign:",
-    all: "All",
-    loading: "Loading Data...",
-    totalAlerts: "Total Alerts in Database",
-    smartInsight: "Smart Statistical Insight 🎯",
-    lastAlert: "Last Alert Time",
-    mapTitle: "Alert Hotspots Map",
-    liveAlert: "Red Color",
-    tickerTitle: "Alert Ticker",
-    timeSeries: "Alert Distribution Over Time",
-    topCities: "Most Targeted Locations (Top 15)",
-    threatDist: "Threat Type Distribution",
-    sourceDist: "Threat Source",
-    years: "Years",
-    months: "Months",
-    days: "Days",
-    hours: "Hours",
-    minutes: "Minutes",
-    satellite: "Satellite",
-    streets: "Streets",
-    compare: "Comparison Mode",
-    showerIndex: "Shower Index 🚿",
-    showerDesc: "Safest time for a quiet shower",
-    generate: "Generate Insights",
-    generating: "Analyzing data...",
-    noData: "No data to display",
-    warningTime: "Warning Time (Seconds)",
+    title: "Shield of Israel | Analytics", search: "Search City:", threat: "Threat Type:", source: "Source:",
+    operation: "Campaign:", all: "All", loading: "Loading...", totalAlerts: "Total Alerts", smartInsight: "Insight 🎯",
+    lastAlert: "Last Alert", mapTitle: "Hotspots Map", liveAlert: "Red Alert", tickerTitle: "Ticker",
+    timeSeries: "Over Time", topCities: "Top 15 Locations", threatDist: "Threat Distribution",
+    sourceDist: "Threat Source", years: "Years", months: "Months", days: "Days", hours: "Hours", minutes: "Minutes",
+    satellite: "Satellite", streets: "Streets", compare: "Compare", showerIndex: "Shower Index 🚿",
+    showerDesc: "Safest shower time", generate: "Insights", generating: "Analyzing...",
+    noData: "No Data", warningTime: "Warning Time", dateRange: "Date Range"
   }
 };
 
-const threatDict: Record<string, string> = {
-  "0": "ירי רקטות וטילים",
-  "1": "ירי רקטות וטילים",
-  "2": "חדירת כלי טיס עוין",
-  "3": "רעידת אדמה",
-  "4": "אירוע רדיולוגי",
-  "5": "חדירת מחבלים",
-  "6": "צונאמי",
-  "7": "אירוע חומרים מסוכנים",
-  "8": "אירוע לא קונבנציונלי"
-};
+const threatDict: Record<string, string> = { "0":"ירי רקטות וטילים","1":"ירי רקטות וטילים","2":"חדירת כלי טיס עוין","3":"רעידת אדמה","4":"אירוע רדיולוגי","5":"חדירת מחבלים","6":"צונאמי","7":"אירוע חומרים מסוכנים","8":"אירוע לא קונבנציונלי" };
 
 const operationsDict = [
   { name: "חגורה שחורה (2019)", start: new Date("2019-11-12"), end: new Date("2019-11-14T23:59:59") },
@@ -170,83 +96,11 @@ const operationsDict = [
   { name: "עלות השחר (2022)", start: new Date("2022-08-05"), end: new Date("2022-08-07T23:59:59") },
   { name: "מגן וחץ (2023)", start: new Date("2023-05-09"), end: new Date("2023-05-13T23:59:59") },
   { name: "מלחמת חרבות ברזל (2023+)", start: new Date("2023-10-07"), end: new Date("2099-12-31T23:59:59") },
-  { name: "מתקפת אפריל (איראן 2024)", start: new Date("2024-04-13"), end: new Date("2024-04-14T23:59:59") },
-  { name: "מתקפת אוקטובר (איראן 2024)", start: new Date("2024-10-01"), end: new Date("2024-10-01T23:59:59") },
-  { name: "ימי תשובה (איראן 2024)", start: new Date("2024-10-26"), end: new Date("2024-10-27T23:59:59") },
-  { name: "עם כלביא (איראן 2025)", start: new Date("2025-06-13"), end: new Date("2025-06-24T23:59:59") },
-  { name: "כארי ישאג / שאגת הארי (איראן 2026)", start: new Date("2026-02-28"), end: new Date("2026-03-31T23:59:59") }
+  { name: "מתקפת אפריל (2024)", start: new Date("2024-04-13"), end: new Date("2024-04-14T23:59:59") },
+  { name: "מתקפת אוקטובר (2024)", start: new Date("2024-10-01"), end: new Date("2024-10-01T23:59:59") }
 ];
 
-const baseCoords: Record<string, [number, number]> = {
-  // עוטף עזה ודרום
-  "שדרות": [31.5282, 34.5956], "אשקלון": [31.6693, 34.5715], "נתיבות": [31.4167, 34.5833], "אופקים": [31.3167, 34.6167],
-  "באר שבע": [31.2518, 34.7913], "אשדוד": [31.7915, 34.6394], "אילת": [29.5577, 34.9519],
-  "כפר עזה": [31.4744, 34.5386], "בארי": [31.4244, 34.4953], "נחל עוז": [31.4700, 34.4969], "מפלסים": [31.5036, 34.5606],
-  "ניר עוז": [31.3106, 34.3942], "נירים": [31.3322, 34.3944], "עין השלושה": [31.3522, 34.3944], "כיסופים": [31.3756, 34.3958],
-  "כרם שלום": [31.2269, 34.2858], "זיקים": [31.6033, 34.5158], "כרמיה": [31.5942, 34.5458], "יד מרדכי": [31.5861, 34.5572],
-  "נתיב העשרה": [31.5961, 34.5472], "סעד": [31.4731, 34.5369], "עלומים": [31.4489, 34.5264], "רעים": [31.3853, 34.4594],
-  "מגן": [31.3000, 34.4333], "ניר יצחק": [31.2411, 34.3547], "סופה": [31.2386, 34.3417], "חולית": [31.2403, 34.3167],
-  "שדרות איבים וניר עם": [31.5282, 34.5956],
-  
-  // צפון וקו עימות
-  "קרית שמונה": [33.2073, 35.5694], "מטולה": [33.2801, 35.5786], "צפת": [32.9646, 35.4960], "נהריה": [33.0151, 35.0941],
-  "חיפה": [32.7940, 34.9896], "עכו": [32.9271, 35.0754], "כרמיאל": [32.9167, 35.2953], "טבריה": [32.7944, 35.5333],
-  "קצרין": [32.9922, 35.6917], "שלומי": [33.0744, 35.1436], "מרגליות": [33.2206, 35.5489], "משגב עם": [33.2506, 35.5489],
-  "יפתח": [33.1119, 35.5564], "מנרה": [33.1969, 35.5414], "ערב אל עראמשה": [33.0906, 35.1953], "זרעית": [33.0844, 35.2750],
-  "שתולה": [33.0781, 35.3119], "נטועה": [33.0644, 35.3503], "מתת": [33.0458, 35.3400], "סאסא": [33.0286, 35.3942],
-  "ברעם": [33.0583, 35.4333], "יראון": [33.0758, 35.4544], "אביבים": [33.0933, 35.4644], "דובב": [33.0519, 35.3975],
-  "מלכיה": [33.0967, 35.5122], "ראש פינה": [32.9697, 35.5414], "קרית מוצקין": [32.8333, 35.0833], "קרית ביאליק": [32.8333, 35.0833],
-  "חורפיש": [33.0167, 35.3500], "מעלות תרשיחא": [33.0167, 35.2667], "מג'דל שמס": [33.2667, 35.7667], "ראג'ר": [33.2750, 35.6219],
-
-  // אזורים כלליים
-  "עוטף עזה": [31.4200, 34.4500], "גליל עליון": [33.0500, 35.5000], "גליל מערבי": [33.0300, 35.2000],
-  "גולן": [33.1000, 35.7000], "העמקים": [32.6000, 35.3000], "שרון": [32.2500, 34.9000], 
-  "דן": [32.0800, 34.7800], "שפלה": [31.9000, 34.8500], "לכיש": [31.5500, 34.7000], "נגב": [31.2000, 34.8000],
-
-  // מרכז
-  "תל אביב": [32.0853, 34.7818], "תל אביב - יפו": [32.0853, 34.7818], "ירושלים": [31.7683, 35.2137], "ראשון לציון": [31.9730, 34.7925], 
-  "פתח תקווה": [32.0833, 34.8833], "חולון": [32.0167, 34.7667], "בת ים": [32.0167, 34.7333], "רמת גן": [32.0833, 34.8167],
-  "הרצליה": [32.1667, 34.8333], "נתניה": [32.3329, 34.8599], "חדרה": [32.4333, 34.9167], "רעננה": [32.1833, 34.8667],
-  "כפר סבא": [32.1750, 34.9069], "הוד השרון": [32.1500, 34.8833], "מודיעין": [31.8969, 35.0086], "רחובות": [31.8944, 34.8119],
-  "בית שמש": [31.7456, 34.9867], "לוד": [31.9511, 34.8881], "רמלה": [31.9272, 34.8625], "קרית גת": [31.6081, 34.7644],
-  "קרית מלאכי": [31.7275, 34.7447], "בני ברק": [32.0833, 34.8333], "גבעתיים": [32.0722, 34.8125],
-  "רמת השרון": [32.1397, 34.8397], "נס ציונה": [31.9281, 34.7981], "יבנה": [31.8778, 34.7394],
-  "גדרה": [31.8119, 34.7778], "מזכרת בתיה": [31.8539, 34.8433], "גן יבנה": [31.7856, 34.6942], 
-  "ערד": [31.2608, 35.2125], "דימונה": [31.0667, 35.0333], "ירוחם": [30.9881, 34.9303], "מצפה רמון": [30.6083, 34.8028],
-  "סח'נין": [32.8614, 35.3031], "שפרעם": [32.8053, 35.1706], "טמרה": [32.8536, 35.2014], "נצרת": [32.7019, 35.3033],
-  "נוף הגליל": [32.7, 35.31], "עפולה": [32.6078, 35.2892], "מגדל העמק": [32.6733, 35.2417], "בית שאן": [32.4972, 35.4972],
-  "אום אל-פחם": [32.5167, 35.1500], "טייבה": [32.2667, 35.0167], "קלנסווה": [32.2833, 35.0333], "באקה אל-גרביה": [32.4167, 35.0333],
-  "מרחב דן": [32.0800, 34.7800], "מרחב ירקון": [32.1000, 34.8500], "מרחב לכיש": [31.6000, 34.7500], "מרחב שפלה": [31.9000, 34.8500],
-  "מרחב נגב": [31.2000, 34.8000], "מרחב חיפה": [32.8000, 34.9900], "מרחב אשר": [32.9500, 35.1000], "מרחב עמקים": [32.6000, 35.3000],
-  "מרחב גליל": [33.0000, 35.4000], "מרחב גולן": [33.1000, 35.7000], "מרחב יהודה": [31.5000, 35.0500], "מרחב שומרון": [32.2000, 35.2000],
-  "מרחב אילת": [29.5577, 34.9519], "אלוני הבשן": [33.0444, 35.8361], "קשת": [33.0000, 35.8000], "נטור": [32.8500, 35.7500],
-  "חספין": [32.8200, 35.7700], "מבוא חמה": [32.7300, 35.6500], "עין גב": [32.8100, 35.6400], "כנרת": [32.7200, 35.5800],
-};
-
-interface AlertData {
-  time: string;
-  cities: string;
-  threat: string;
-  category?: string;
-  dateObj: Date;
-  year: string;
-  month: string;
-  dayOfWeek: number;
-  hour: number;
-  threatStr: string;
-  sourceStr: string;
-  operationsArray: string[];
-}
-
-const getWarningTime = (city: string) => {
-  const normalized = city.trim();
-  if (normalized.includes("שדרות") || normalized.includes("עוטף עזה") || normalized.includes("נתיב העשרה")) return "15 שניות";
-  if (normalized.includes("אשקלון") || normalized.includes("נתיבות") || normalized.includes("זיקים")) return "30 שניות";
-  if (normalized.includes("אשדוד") || normalized.includes("באר שבע") || normalized.includes("גן יבנה")) return "45-60 שניות";
-  if (normalized.includes("תל אביב") || normalized.includes("ירושלים") || normalized.includes("רמת גן")) return "90 שניות";
-  if (normalized.includes("חיפה") || normalized.includes("קריות")) return "60 שניות";
-  return "דקה וחצי";
-};
+const baseCoords: Record<string, [number, number]> = { "שדרות":[31.5282,34.5956],"אשקלון":[31.6693,34.5715],"נתיבות":[31.4167,34.5833],"באר שבע":[31.2518,34.7913],"אשדוד":[31.7915,34.6394],"אילת":[29.5577,34.9519],"קרית שמונה":[33.2073,35.5694],"מטולה":[33.2801,35.5786],"צפת":[32.9646,35.4960],"נהריה":[33.0151,35.0941],"חיפה":[32.7940,34.9896],"תל אביב":[32.0853,34.7818],"ירושלים":[31.7683,35.2137] };
 
 const customTooltipPosition = (point: any, params: any, dom: any, rect: any, size: any) => {
   const obj: any = { top: 10 };
@@ -257,75 +111,52 @@ const customTooltipPosition = (point: any, params: any, dom: any, rect: any, siz
 const getGroupedData = (data: any[], res: string) => {
   const grouped: Record<string, number> = {};
   data.forEach(d => {
+    if (!d.dateObj) return;
     let key = "";
-    if (res === 'year') key = d.year;
-    else if (res === 'month') key = d.month;
-    else if (res === 'weekday') key = daysHe[d.dayOfWeek];
-    else if (res === 'hour') key = String(d.hour).padStart(2, '0') + ":00";
-    else if (res === 'minute') key = String(d.hour).padStart(2, '0') + ":" + String(Math.floor(d.dateObj.getMinutes()/10)*10).padStart(2, '0');
+    if (res === 'year') key = d.year || "Unknown";
+    else if (res === 'month') key = d.month || "Unknown";
+    else if (res === 'weekday') key = (d.dayOfWeek !== undefined) ? daysHe[d.dayOfWeek] : "Unknown";
+    else if (res === 'hour') key = String(d.hour || 0).padStart(2, '0') + ":00";
+    else if (res === 'minute') key = String(d.hour || 0).padStart(2, '0') + ":" + String(Math.floor((d.dateObj?.getMinutes() || 0)/10)*10).padStart(2, '0');
     grouped[key] = (grouped[key] || 0) + 1;
   });
   return grouped;
 };
 
 // --- MultiSelect Component ---
-const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: any) => {
+const MultiSelect = ({ label, options, selected = ['all'], onChange, icon: Icon, isRtl }: any) => {
   const [isOpen, setIsOpen] = useState(false);
+  const safeSelected = Array.isArray(selected) ? selected : ['all'];
   const toggle = (val: string) => {
-    if (val === 'all') {
-      onChange(['all']);
-    } else {
-      const newSelected = selected.includes(val) 
-        ? selected.filter((s: string) => s !== val) 
-        : [...selected.filter((s: string) => s !== 'all'), val];
+    if (val === 'all') onChange(['all']);
+    else {
+      const filtered = safeSelected.filter(s => s !== 'all');
+      const newSelected = safeSelected.includes(val) ? filtered.filter(s => s !== val) : [...filtered, val];
       onChange(newSelected.length === 0 ? ['all'] : newSelected);
     }
   };
-
   return (
     <div className="relative">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="glass-card flex items-center justify-between gap-2 px-3 py-1.5 text-[10px] font-black hover:bg-white/10 transition-all min-w-[120px] shadow-sm uppercase tracking-wider h-9"
-      >
+      <button onClick={() => setIsOpen(!isOpen)} className="glass-card flex items-center justify-between gap-2 px-3 py-1.5 text-[10px] font-black hover:bg-white/10 transition-all min-w-[120px] h-9">
         <div className="flex items-center gap-2">
           {Icon && <Icon size={14} className="text-primary-azure" />}
-          <span className="truncate max-w-[80px]">
-            {selected.includes('all') ? label : `${selected.length} ${isRtl ? 'נבחרו' : 'Selected'}`}
-          </span>
+          <span className="truncate max-w-[80px]">{safeSelected.includes('all') ? label : `${safeSelected.length} ${isRtl ? 'נבחרו' : 'Selected'}`}</span>
         </div>
         <ChevronDown size={12} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <AnimatePresence>
         {isOpen && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-            <motion.div 
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className={`absolute top-full mt-2 ${isRtl ? 'right-0' : 'left-0'} glass-card z-50 p-2 min-w-[220px] max-h-[300px] overflow-y-auto shadow-2xl border border-white/10 backdrop-blur-3xl`}
-            >
-              <div 
-                className={`flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors ${selected.includes('all') ? 'text-primary-azure bg-white/5' : 'text-white/70'}`}
-                onClick={() => { toggle('all'); setIsOpen(false); }}
-              >
-                <span className="text-xs font-black uppercase tracking-widest">{isRtl ? 'הכל' : 'ALL'}</span>
-                {selected.includes('all') && <Check size={14} />}
-              </div>
-              <div className="h-[1px] bg-white/5 my-1" />
-              {options.map((opt: string) => (
-                <div 
-                  key={opt}
-                  className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer hover:bg-white/5 transition-colors mb-1 last:mb-0 ${selected.includes(opt) ? 'text-primary-azure bg-white/10' : 'text-white/80'}`}
-                  onClick={() => toggle(opt)}
-                >
-                  <span className="text-sm font-medium">{opt}</span>
-                  {selected.includes(opt) && <Check size={14} />}
-                </div>
-              ))}
-            </motion.div>
-          </>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full mt-2 glass-card z-[100] p-2 min-w-[220px] max-h-[300px] overflow-y-auto shadow-2xl border border-white/10 backdrop-blur-3xl">
+            <button onClick={() => { toggle('all'); setIsOpen(false); }} className={`w-full flex justify-between p-2 rounded-lg text-xs ${safeSelected.includes('all') ? 'text-primary-azure bg-white/5' : 'text-white/60'}`}>
+              <span>{isRtl ? 'הכל' : 'All'}</span> {safeSelected.includes('all') && <Check size={14}/>}
+            </button>
+            <div className="h-px bg-white/5 my-1" />
+            {options.map((o: string) => (
+              <button key={o} onClick={() => toggle(o)} className={`w-full flex justify-between p-2 rounded-lg text-xs ${safeSelected.includes(o) ? 'text-white bg-white/10 font-bold' : 'text-white/60 hover:bg-white/5'}`}>
+                <span className="truncate">{o}</span> {safeSelected.includes(o) && <Check size={14} className="text-primary-azure" />}
+              </button>
+            ))}
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
@@ -333,1131 +164,192 @@ const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: 
 };
 
 export default function App() {
-  const [globalData, setGlobalData] = useState<AlertData[]>([]);
-  const [filteredData, setFilteredData] = useState<AlertData[]>([]);
+  const [globalData, setGlobalData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState("");
-  const [liveAlert, setLiveAlert] = useState<{ cities: string; title: string } | null>(null);
-  const [geocodingStatus, setGeocodingStatus] = useState("");
-  
-  // Filters
+  const [lang, setLang] = useState<'he'|'en'>('he');
+  const [darkMode, setDarkMode] = useState(false);
   const [citySearch, setCitySearch] = useState("");
   const [threatFilter, setThreatFilter] = useState<string[]>(['all']);
   const [sourceFilter, setSourceFilter] = useState<string[]>(['all']);
   const [operationFilter, setOperationFilter] = useState<string[]>(['all']);
-  const [timeResolution, setTimeResolution] = useState<'year' | 'month' | 'weekday' | 'hour' | 'minute'>('month');
-
-  // New Features State
-  const [darkMode, setDarkMode] = useState(false);
-  const [lang, setLang] = useState<'he' | 'en'>('he');
-  const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
+  const [timeResolution, setTimeResolution] = useState<'year'|'month'|'weekday'|'hour'|'minute'>('month');
   const [compareMode, setCompareMode] = useState(false);
   const [compareOperation, setCompareOperation] = useState<string[]>(['all']);
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [activeSearchSource, setActiveSearchSource] = useState<'desktop' | 'mobile' | null>(null);
+  const [mapLayer, setMapLayer] = useState<'streets'|'satellite'>('streets');
+  const [liveAlert, setLiveAlert] = useState<any>(null);
 
-  const t = translations[lang];
-  const isRtl = lang === 'he';
+  const t = translations[lang], isRtl = lang === 'he';
+  const mapRef = useRef<L.Map|null>(null);
+  const timeSeriesChartRef = useRef<HTMLDivElement>(null), topCitiesChartRef = useRef<HTMLDivElement>(null);
+  const threatChartRef = useRef<HTMLDivElement>(null), sourceChartRef = useRef<HTMLDivElement>(null);
+  const timeSeriesInstance = useRef<echarts.ECharts|null>(null), topCitiesInstance = useRef<echarts.ECharts|null>(null);
+  const threatInstance = useRef<echarts.ECharts|null>(null), sourceInstance = useRef<echarts.ECharts|null>(null);
 
-  // Refs for charts and map
-  const mapRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.CircleMarker[]>([]);
-  const streetLayerRef = useRef<L.TileLayer | null>(null);
-  const satelliteLayerRef = useRef<L.TileLayer | null>(null);
-  const timeSeriesChartRef = useRef<HTMLDivElement>(null);
-  const topCitiesChartRef = useRef<HTMLDivElement>(null);
-  const threatChartRef = useRef<HTMLDivElement>(null);
-  const sourceChartRef = useRef<HTMLDivElement>(null);
-  
-  const timeSeriesInstance = useRef<echarts.ECharts | null>(null);
-  const topCitiesInstance = useRef<echarts.ECharts | null>(null);
-  const threatInstance = useRef<echarts.ECharts | null>(null);
-  const sourceInstance = useRef<echarts.ECharts | null>(null);
+  const getOperationNames = (date: Date) => {
+    const matched = operationsDict.filter(o => date >= o.start && date <= o.end).map(o => o.name);
+    return matched.length ? matched : ["שגרה (ללא מערכה)"];
+  };
 
-  const geoCache = useRef<Record<string, [number, number] | "NOT_FOUND">>(
-    JSON.parse(localStorage.getItem('alertsGeoCache') || '{}')
-  );
-
-  const operationOptions = useMemo(() => [...operationsDict.map(op => op.name), "שגרה (ללא מערכה)"], []);
   const threatOptions = useMemo(() => Array.from(new Set(Object.values(threatDict))), []);
   const sourceOptions = useMemo(() => Array.from(new Set(globalData.map(d => d.sourceStr))), [globalData]);
-  const allCities = useMemo(() => {
-    const cities = new Set<string>();
-    // Add base coords first
-    Object.keys(baseCoords).forEach(c => cities.add(c));
-    // Add from data
-    globalData.forEach(d => {
-      if (d.cities) {
-        // Handle comma separated if any, but usually it's one city string
-        d.cities.split(',').forEach(c => {
-          const trimmed = c.trim();
-          if (trimmed) cities.add(trimmed);
-        });
-      }
-    });
-    return Array.from(cities).sort((a, b) => a.localeCompare(b, 'he'));
-  }, [globalData]);
 
-  // --- Helper Functions ---
-  const getOperationNames = (dateObj: Date) => {
-    let matchedOps = [];
-    for (let op of operationsDict) {
-      if (dateObj >= op.start && dateObj <= op.end) {
-        matchedOps.push(op.name);
-      }
-    }
-    return matchedOps.length > 0 ? matchedOps : ["שגרה (ללא מערכה)"];
-  };
-
-  const getCityCoords = (cityStr: string) => {
-    if (!cityStr) return null;
-    if (baseCoords[cityStr]) return baseCoords[cityStr];
-    const cached = geoCache.current[cityStr];
-    if (cached && cached !== "NOT_FOUND") return cached;
-    if (cached === "NOT_FOUND") return null;
-    
-    for (let key in baseCoords) {
-      if (cityStr.includes(key)) return baseCoords[key];
-    }
-    return null;
-  };
-
-  const handleCitySearchChange = (val: string, source: 'desktop' | 'mobile') => {
-    setCitySearch(val);
-    setActiveSearchSource(source);
-    if (val.trim().length > 0) {
-      const filtered = allCities.filter(c => c.toLowerCase().includes(val.toLowerCase())).slice(0, 10);
-      setCitySuggestions(filtered);
-      setShowSuggestions(true);
-    } else {
-      setCitySuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
-
-  const selectCity = (city: string) => {
-    setCitySearch(city);
-    setShowSuggestions(false);
-    setActiveSearchSource(null);
-  };
-
-  // --- Data Fetching ---
+  // --- Data Loading ---
   useEffect(() => {
     const csvUrl = 'https://raw.githubusercontent.com/yuval-harpaz/alarms/master/data/alarms.csv';
-    
-    const loadData = async () => {
-      setLoading(true);
-      setLoadingStatus(t.loading);
+    const load = async () => {
+      setLoading(true); setLoadingStatus(t.loading);
       try {
-        // 1. Check for remote version info using GitHub API
-        let remoteVersion = '';
+        let sha = '';
         try {
-          // GitHub API returns the latest commit for this specific file
-          const apiURL = 'https://api.github.com/repos/yuval-harpaz/alarms/commits?path=data/alarms.csv&per_page=1';
-          const apiRes = await fetch(apiURL);
-          if (apiRes.ok) {
-            const apiData = await apiRes.json();
-            if (apiData && apiData.length > 0) {
-              remoteVersion = apiData[0].sha;
-              console.log("Remote version (SHA) detected via API:", remoteVersion);
-            }
-          }
-          
-          // Fallback to HEAD request if API fails (unlikely but good for robustness)
-          if (!remoteVersion) {
-            const headRes = await fetch(csvUrl + "?t=" + Date.now(), { method: 'HEAD' });
-            remoteVersion = headRes.headers.get('etag') || headRes.headers.get('last-modified') || '';
-            console.log("Remote version detected via HEAD (fallback):", remoteVersion || "None");
-          }
-        } catch (err) {
-          console.warn("Version check failed:", err);
-        }
-        
-        // 2. Try loading from cache
+          const res = await fetch('https://api.github.com/repos/yuval-harpaz/alarms/commits?path=data/alarms.csv&per_page=1');
+          if (res.ok) { const data = await res.json(); sha = data[0].sha; }
+        } catch(e){}
         const cached = await loadFromCache();
-        
-        // --- Caching Strategy ---
-        // If we have cached data:
-        // A) If we GOT a remote version, it must match.
-        // B) If we DID NOT get a remote version (unlikely now), use the cache if it exists.
-        const cacheIsGood = cached && (
-          (remoteVersion !== '' && cached.lastModified === remoteVersion) ||
-          (remoteVersion === '' && cached.data && cached.data.length > 0)
-        );
-
-        if (cacheIsGood && cached) {
-          console.log("Cache hit! Loading", cached.data.length, "rows from local storage.");
-          setLoadingStatus(lang === 'he' ? "טוען מהמטמון (מהיר)..." : "Loading from cache (fast)...");
-          setGlobalData(cached.data);
-          setFilteredData(cached.data);
-          setLoading(false);
+        if (cached && (sha==='' || cached.lastModified===sha) && cached.data?.[0]?.operationsArray) {
+          setGlobalData(cached.data); setFilteredData(cached.data); setLoading(false);
           return;
         }
-
-        // 3. Fallback to download if cache miss or outdated
-        console.log("Cache miss or outdated. Downloading CSV...");
-        setLoadingStatus(lang === 'he' ? "מוריד נתונים מ-GitHub..." : "Downloading data from GitHub...");
-        Papa.parse(csvUrl, {
-          download: true,
-          header: true,
-          skipEmptyLines: true,
-          worker: true,
-          complete: (results) => {
-            const parsed = results.data.filter((d: any) => d.time).map((d: any) => {
-              // ... existing mapping logic ...
-              const dt = new Date(d.time);
-              const opsArray = getOperationNames(dt);
-              const rawStr = Object.values(d).join(" ").toLowerCase();
-              const city = (d.cities || "").toLowerCase();
-              let extractedSource = "מעורב / לא סווג";
-              
-              if (rawStr.includes("איראן") || rawStr.includes("iran")) extractedSource = "איראן";
-              else if (rawStr.includes("תימן") || rawStr.includes("yemen") || rawStr.includes("חות'ים")) extractedSource = "תימן";
-              else if (rawStr.includes("עיראק") || rawStr.includes("iraq")) extractedSource = "עיראק";
-              else if (rawStr.includes("סוריה") || rawStr.includes("syria")) extractedSource = "סוריה";
-              else if (rawStr.includes("לבנון") || rawStr.includes("lebanon") || rawStr.includes("חיזבאללה")) extractedSource = "לבנון";
-              else if (rawStr.includes("עזה") || rawStr.includes("gaza") || rawStr.includes("חמאס") || rawStr.includes("ג'יהאד")) extractedSource = "רצועת עזה";
-              else if (opsArray.some(op => op.includes("איראן"))) {
-                if (city.includes("קרית שמונה") || city.includes("מטולה")) extractedSource = "לבנון";
-                else extractedSource = "איראן";
-              } else {
-                if (city.includes("שדרות") || city.includes("אשקלון") || city.includes("עוטף")) extractedSource = "רצועת עזה";
-                else if (city.includes("קרית שמונה") || city.includes("מטולה") || city.includes("צפת")) extractedSource = "לבנון";
-                else if (city.includes("אילת")) extractedSource = "תימן / עיראק";
-              }
-
-              let rawThreatVal = String(d.threat || d.category || '').trim();
-              let extractedThreat = threatDict[rawThreatVal] || rawThreatVal || 'אחר';
-              if (rawStr.includes("כלי טיס") || rawStr.includes("כטב\"מ")) extractedThreat = "חדירת כלי טיס עוין";
-              else if (rawStr.includes("מחבלים")) extractedThreat = "חדירת מחבלים";
-              else if (rawStr.includes("חומרים מסוכנים")) extractedThreat = "אירוע חומרים מסוכנים";
-              else if (rawStr.includes("רקטות") || rawStr.includes("טילים")) extractedThreat = "ירי רקטות וטילים";
-
-              return {
-                ...d,
-                dateObj: dt,
-                year: dt.getFullYear().toString(),
-                month: dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0'),
-                dayOfWeek: dt.getDay(),
-                hour: dt.getHours(),
-                threatStr: extractedThreat,
-                sourceStr: extractedSource,
-                operationsArray: opsArray 
-              };
-            });
-            setGlobalData(parsed);
-            setFilteredData(parsed);
-            setLoading(false);
-            // If remoteVersion is empty, use 'cached-at-' + current date as a fallback key
-            const versionToSave = remoteVersion || ('cached-at-' + new Date().toISOString().split('T')[0]);
-            saveToCache(parsed, versionToSave);
-          }
-        });
-      } catch (e) {
-        console.error("Data loading failed:", e);
-        setLoading(false);
-      }
+        Papa.parse(csvUrl, { download:true, header:true, skipEmptyLines:true, worker:true, complete:(r)=>{
+          const p = r.data.filter((d:any)=>d.time).map((d:any)=>{
+            const dt = new Date(d.time), rStr = Object.values(d).join(" ").toLowerCase(), ops = getOperationNames(dt);
+            let s = "מעורב / לא סווג";
+            if (rStr.includes("איראן")) s="איראן"; else if (rStr.includes("לבנון")) s="לבנון"; else if (rStr.includes("עזה")) s="רצועת עזה";
+            let tr = threatDict[d.threat] || "אחר";
+            return { ...d, dateObj:dt, year:dt.getFullYear().toString(), month:dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'), dayOfWeek:dt.getDay(), hour:dt.getHours(), threatStr:tr, sourceStr:s, operationsArray:ops };
+          });
+          setGlobalData(p); setFilteredData(p); setLoading(false); saveToCache(p, sha||'fallback');
+        }});
+      } catch(e){ setLoading(false); }
     };
+    load();
+  }, [lang]);
 
-loadData();
-
-    // Live alerts check
-    const checkLive = async () => {
-      try {
-        const orefUrl = encodeURIComponent('https://www.oref.org.il/WarningMessages/alert/alerts.json');
-        const response = await fetch(`https://api.allorigins.win/get?url=${orefUrl}`);
-        if (response.ok) {
-          const rawData = await response.json();
-          if (rawData.contents && rawData.contents.trim().length > 0) {
-            try {
-              if (rawData.contents.trim().startsWith('{') || rawData.contents.trim().startsWith('[')) {
-                const alertData = JSON.parse(rawData.contents);
-                if (alertData?.data?.length > 0) {
-                  setLiveAlert({ cities: alertData.data.join(', '), title: alertData.title || 'התרעה' });
-                  return;
-                }
-              }
-            } catch (jsonErr) {
-              console.warn("Live alert JSON parse error:", jsonErr);
-            }
-          }
-        }
-        setLiveAlert(null);
-      } catch (e) { 
-        console.warn("Live alert fetch error (likely HTML returned instead of JSON):", e); 
-        setLiveAlert(null);
-      }
-    };
-    const interval = setInterval(checkLive, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (showSuggestions) {
-        // Simple delay to allow click events on suggestions to fire first
-        setTimeout(() => setShowSuggestions(false), 200);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showSuggestions]);
-
-  // --- Shower Index Calculation ---
-  const showerIndex = useMemo(() => {
-    if (filteredData.length === 0) return null;
-    
-    const slots = new Array(48).fill(0);
-    filteredData.forEach(d => {
-      const minutes = d.hour * 60 + d.dateObj.getMinutes();
-      const slotIdx = Math.floor(minutes / 30);
-      if (slotIdx >= 0 && slotIdx < 48) {
-        slots[slotIdx]++;
-      }
-    });
-
-    const score = slots.map((val, i) => {
-      const prev = slots[(i - 1 + 48) % 48];
-      const next = slots[(i + 1) % 48];
-      return val * 3 + prev + next;
-    });
-    
-    // Priority range: 07:00 (slot 14) to 22:00 (slot 44)
-    const preferredRange = score.slice(14, 44);
-    let bestSlot;
-    
-    if (preferredRange.length > 0) {
-      const minPreferred = Math.min(...preferredRange);
-      bestSlot = score.indexOf(minPreferred, 14);
-    } else {
-      const minScore = Math.min(...score);
-      bestSlot = score.indexOf(minScore);
-    }
-
-    const startHour = Math.floor(bestSlot / 2);
-    const startMin = (bestSlot % 2) * 30;
-    const endHour = Math.floor((bestSlot + 1) / 2) % 24;
-    const endMin = ((bestSlot + 1) % 2) * 30;
-
-    const timeStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')} - ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
-    
-    return {
-      time: timeStr,
-      probability: Math.min(100, Math.max(0, 100 - (slots[bestSlot] * 5))) 
-    };
-  }, [filteredData]);
-
-
-
-
-  // --- Filtering Logic (Debounced) ---
+  // --- Filtering ---
   useEffect(() => {
     const timer = setTimeout(() => {
-      const filtered = globalData.filter(d => {
-        let matchCity = true, matchThreat = true, matchSource = true, matchOperation = true, matchDate = true;
-        if (citySearch) matchCity = d.cities && d.cities.toLowerCase().includes(citySearch.toLowerCase());
-        
-        const dThreat = d.threatStr || 'אחר';
-        const dSource = d.sourceStr || 'מעורב / לא סווג';
-        const dOps = d.operationsArray || ['שגרה'];
-
-        if (!threatFilter.includes('all')) matchThreat = threatFilter.includes(dThreat);
-        if (!sourceFilter.includes('all')) matchSource = sourceFilter.includes(dSource);
-        
+      const f = globalData.filter(d => {
+        if (citySearch && (!d.cities || !d.cities.toLowerCase().includes(citySearch.toLowerCase()))) return false;
+        if (!threatFilter.includes('all') && !threatFilter.includes(d.threatStr)) return false;
+        if (!sourceFilter.includes('all') && !sourceFilter.includes(d.sourceStr)) return false;
+        const dOps = d.operationsArray || [];
         if (compareMode && !compareOperation.includes('all')) {
-          matchOperation = dOps.some(op => operationFilter.includes(op)) || 
-                           dOps.some(op => compareOperation.includes(op));
+          if (!dOps.some(o => operationFilter.includes(o)) && !dOps.some(o => compareOperation.includes(o))) return false;
         } else if (!operationFilter.includes('all')) {
-          matchOperation = dOps.some(op => operationFilter.includes(op));
+          if (!dOps.some(o => operationFilter.includes(o))) return false;
         }
-
-        if (dateRange.start) matchDate = matchDate && d.dateObj >= new Date(dateRange.start);
-        if (dateRange.end) matchDate = matchDate && d.dateObj <= new Date(dateRange.end);
-
-        return matchCity && matchThreat && matchSource && matchOperation && matchDate;
+        if (dateRange.start && d.dateObj < new Date(dateRange.start)) return false;
+        if (dateRange.end && d.dateObj > new Date(dateRange.end)) return false;
+        return true;
       });
-      
-      // Avoid infinite loop if results haven't changed in length
-      // For large datasets, a more robust check might be needed, but length + console log for debug
-      if (filtered.length !== filteredData.length || (filtered.length > 0 && filteredData.length > 0 && filtered[0] !== filteredData[0])) {
-         console.log("Filtering complete. Result size:", filtered.length);
-         setFilteredData(filtered);
-      }
+      if (f.length !== filteredData.length) setFilteredData(f);
     }, 300);
     return () => clearTimeout(timer);
-  }, [citySearch, threatFilter, sourceFilter, operationFilter, compareOperation, compareMode, dateRange, globalData]);
+  }, [citySearch, threatFilter, sourceFilter, operationFilter, compareMode, compareOperation, dateRange, globalData]);
 
+  // --- Charts ---
+  useEffect(() => {
+    if (loading) return;
+    const init = (r:any, i:any) => { if (r.current && !i.current) i.current = echarts.init(r.current); };
+    init(timeSeriesChartRef, timeSeriesInstance); init(topCitiesChartRef, topCitiesInstance);
+    init(threatChartRef, threatInstance); init(sourceChartRef, sourceInstance);
 
+    const tsData = getGroupedData(filteredData, timeResolution);
+    const xData = Object.keys(tsData).sort();
+    timeSeriesInstance.current?.setOption({
+      tooltip: { trigger: 'axis', position: customTooltipPosition },
+      grid: { top: '10%', bottom: '15%', left: '2%', right: '2%', containLabel: true },
+      xAxis: { type: 'category', data: xData, axisLabel: { color: '#94a3b8', fontSize: 10 } },
+      yAxis: { type: 'value', axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
+      series: [{ data: xData.map(k=>tsData[k]), type: 'line', smooth: true, itemStyle: { color: '#38bdf8' }, areaStyle: { color: 'rgba(56,189,248,0.2)' } }]
+    });
 
-  // --- Map Initialization ---
+    const tCounts: Record<string, number> = {};
+    filteredData.forEach(d => tCounts[d.threatStr] = (tCounts[d.threatStr] || 0) + 1);
+    threatInstance.current?.setOption({
+      tooltip: { trigger: 'item', position: customTooltipPosition },
+      series: [{ type: 'pie', radius: ['40%', '70%'], data: Object.entries(tCounts).map(([n, v]) => ({ name: n, value: v })), label: { show: false } }]
+    });
+    threatInstance.current?.off('click');
+    threatInstance.current?.on('click', (p:any) => setThreatFilter([p.name]));
+  }, [filteredData, loading, timeResolution, darkMode]);
+
+  // --- Map ---
   useEffect(() => {
     if (!loading && !mapRef.current) {
       mapRef.current = L.map('map', { zoomControl: false }).setView([31.5, 34.8], 7);
-      
-      streetLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap'
-      });
-      
-      satelliteLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri'
-      });
-
-      streetLayerRef.current.addTo(mapRef.current);
-      L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(mapRef.current);
     }
   }, [loading]);
 
-  useEffect(() => {
-    if (!mapRef.current) return;
-    streetLayerRef.current?.remove();
-    satelliteLayerRef.current?.remove();
-
-    if (mapLayer === 'satellite') {
-      satelliteLayerRef.current?.addTo(mapRef.current);
-    } else {
-      streetLayerRef.current?.addTo(mapRef.current);
-    }
-  }, [mapLayer]);
-
-  // --- Map Markers & Geocoding ---
-  useEffect(() => {
-    if (!mapRef.current) return;
-    let isCancelled = false;
-    
-    markersRef.current.forEach(m => mapRef.current?.removeLayer(m));
-    markersRef.current = [];
-
-    const cityCounts: Record<string, number> = {};
-    filteredData.forEach(d => {
-      if (d.cities) cityCounts[d.cities] = (cityCounts[d.cities] || 0) + 1;
-    });
-
-    const queue: { city: string; count: number }[] = [];
-    for (let city in cityCounts) {
-      const coords = getCityCoords(city);
-      if (coords) {
-        const marker = L.circleMarker(coords, {
-          radius: Math.min(Math.max(cityCounts[city] / 50, 5), 30),
-          fillColor: "#E63946",
-          color: darkMode ? "#fff" : "#0038B8",
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 0.6
-        }).addTo(mapRef.current)
-          .bindTooltip(`<b>${city}</b><br>${lang === 'he' ? 'התרעות' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'top' });
-        markersRef.current.push(marker);
-      } else if (!geoCache.current.hasOwnProperty(city)) {
-        queue.push({ city, count: cityCounts[city] });
-      }
-    }
-
-    if (queue.length > 0) {
-      const processQueue = async () => {
-        setGeocodingStatus("מאתר מיקומים...");
-        // Limit geocoding to prevent long 'stuck' processes
-        const limit = 20;
-        const toProcess = queue.slice(0, limit);
-        
-        for (let i = 0; i < toProcess.length; i++) {
-          if (isCancelled) break;
-          const item = toProcess[i];
-          const cleanName = item.city.replace(/[0-9]/g, '').replace('מרחב', '').split('-')[0].trim();
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}, ישראל`);
-            if (!res.ok) throw new Error("Fetch failed");
-            const data = await res.json();
-            if (data?.[0]) {
-              const coords: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-              geoCache.current[item.city] = coords;
-              localStorage.setItem('alertsGeoCache', JSON.stringify(geoCache.current));
-            } else {
-              geoCache.current[item.city] = "NOT_FOUND";
-            }
-          } catch (e) { 
-            console.warn(`Geocoding failed for ${cleanName}:`, e);
-            break; 
-          }
-          await new Promise(r => setTimeout(r, 1000));
-          if (!isCancelled) setGeocodingStatus(`מאתר ${Math.round(((i + 1) / toProcess.length) * 100)}%`);
-        }
-        if (!isCancelled) setGeocodingStatus("");
-      };
-      processQueue();
-    }
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [filteredData, loading, darkMode, lang]);
-
-  // --- Charts Initialization & Updates ---
-  useEffect(() => {
-    if (loading) return;
-    
-    const initChart = (ref: React.RefObject<HTMLDivElement | null>, instanceRef: React.MutableRefObject<echarts.ECharts | null>) => {
-      if (ref.current && !instanceRef.current) {
-        instanceRef.current = echarts.init(ref.current);
-      }
-    };
-
-    initChart(timeSeriesChartRef, timeSeriesInstance);
-    initChart(topCitiesChartRef, topCitiesInstance);
-    initChart(threatChartRef, threatInstance);
-    initChart(sourceChartRef, sourceInstance);
-
-    // Use ResizeObserver for robust resizing
-    const observers: ResizeObserver[] = [];
-    const refs = [
-      { ref: timeSeriesChartRef, inst: timeSeriesInstance },
-      { ref: topCitiesChartRef, inst: topCitiesInstance },
-      { ref: threatChartRef, inst: threatInstance },
-      { ref: sourceChartRef, inst: sourceInstance }
-    ];
-
-    refs.forEach(({ ref, inst }) => {
-      if (ref.current) {
-        const observer = new ResizeObserver(() => {
-          inst.current?.resize();
-        });
-        observer.observe(ref.current);
-        observers.push(observer);
-      }
-    });
-    
-    // Click events for cross-filtering
-
-    return () => {
-      observers.forEach(o => o.disconnect());
-      timeSeriesInstance.current?.dispose();
-      topCitiesInstance.current?.dispose();
-      threatInstance.current?.dispose();
-      sourceInstance.current?.dispose();
-      timeSeriesInstance.current = null;
-      topCitiesInstance.current = null;
-      threatInstance.current = null;
-      sourceInstance.current = null;
-    };
-  }, [loading]);
-
-
-
-  useEffect(() => {
-    if (!timeSeriesInstance.current) return;
-    
-    const datasets: { name: string; data: any[]; color: string }[] = [];
-    
-    if (compareMode && !compareOperation.includes('all')) {
-      // Comparison Mode Logic
-      const op1Data = filteredData.filter(d => d.operationsArray.some(op => operationFilter.includes(op)));
-      const op2Data = filteredData.filter(d => d.operationsArray.some(op => compareOperation.includes(op)));
-      
-      const g1 = getGroupedData(op1Data, timeResolution);
-      const g2 = getGroupedData(op2Data, timeResolution);
-      
-      const allKeys = Array.from(new Set([...Object.keys(g1), ...Object.keys(g2)]));
-      if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) allKeys.sort();
-      else if (timeResolution === 'weekday') allKeys.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
-
-      datasets.push({ 
-        name: operationFilter.includes('all') ? 'Base' : operationFilter.join(', '), 
-        data: allKeys.map(k => g1[k] || 0), 
-        color: '#38bdf8' 
-      });
-      datasets.push({ 
-        name: compareOperation.join(', '), 
-        data: allKeys.map(k => g2[k] || 0), 
-        color: '#fbbf24' 
-      });
-
-      timeSeriesInstance.current.setOption({
-        legend: { show: true, bottom: 0, textStyle: { color: '#94a3b8' } },
-        xAxis: { data: allKeys },
-        series: datasets.map(ds => ({
-          name: ds.name,
-          type: 'line',
-          smooth: true,
-          data: ds.data,
-          itemStyle: { color: ds.color },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: ds.color + '66' },
-              { offset: 1, color: ds.color + '00' }
-            ])
-          }
-        }))
-      });
-    } else {
-      const grouped = getGroupedData(filteredData, timeResolution);
-      const xData = Object.keys(grouped);
-      if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) xData.sort();
-      else if (timeResolution === 'weekday') xData.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
-      
-      const yData = xData.map(k => grouped[k]);
-      timeSeriesInstance.current.setOption({
-        legend: { show: false },
-        xAxis: { data: xData },
-        series: [{
-          name: 'התרעות',
-          data: yData,
-          type: ['hour', 'weekday', 'minute'].includes(timeResolution) ? 'bar' : 'line',
-          smooth: true,
-          itemStyle: { 
-            color: '#38bdf8',
-            borderRadius: [8, 8, 0, 0],
-            shadowBlur: 10,
-            shadowColor: 'rgba(56, 189, 248, 0.4)'
-          },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(56,189,248,0.4)' },
-              { offset: 1, color: 'rgba(56,189,248,0)' }
-            ])
-          }
-        }]
-      });
-    }
-
-    timeSeriesInstance.current.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'cross', label: { backgroundColor: '#0f172a' } }, appendToBody: true, position: customTooltipPosition },
-      grid: { top: '10%', bottom: compareMode ? '15%' : '5%', left: '2%', right: '2%', containLabel: true },
-      yAxis: { type: 'value', axisLabel: { color: '#64748b', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } } },
-      xAxis: { axisLabel: { color: '#94a3b8', fontSize: 10, rotate: timeResolution === 'hour' ? 45 : 0 } },
-    });
-  }, [filteredData, globalData, timeResolution, compareMode, compareOperation, operationFilter, darkMode]);
-
-  useEffect(() => {
-    if (!topCitiesInstance.current) return;
-    const counts: Record<string, number> = {};
-    filteredData.forEach(d => { if (d.cities) counts[d.cities] = (counts[d.cities] || 0) + 1; });
-    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 15);
-    
-    topCitiesInstance.current.setOption({
-      tooltip: { 
-        trigger: 'axis', 
-        axisPointer: { type: 'shadow' }, 
-        appendToBody: true,
-        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-        borderWidth: 0,
-        textStyle: { color: '#fff' },
-        position: customTooltipPosition
-      },
-      grid: { top: '15%', bottom: '15%', left: '2%', right: '2%', containLabel: true },
-      xAxis: {
-        type: 'category',
-        data: sorted.map(s => s[0]),
-        axisLabel: {
-          interval: 0, rotate: 30, fontSize: 10,
-          color: '#94a3b8',
-          formatter: (v: string) => v.length > 8 ? v.substring(0, 8) + '...' : v
-        }
-      },
-      yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } }, axisLabel: { show: false } },
-      series: [{
-        type: 'bar',
-        data: sorted.map(s => s[1]),
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#38bdf8' },
-            { offset: 1, color: '#3b82f6' }
-          ]),
-          borderRadius: [6, 6, 0, 0],
-          shadowBlur: 10,
-          shadowColor: 'rgba(56, 189, 248, 0.3)'
-        },
-        label: { 
-          show: true, 
-          position: 'top', 
-          fontSize: 10,
-          fontWeight: 'bold',
-          color: '#38bdf8',
-          formatter: '{c}'
-        }
-      }]
-    });
-  }, [filteredData, darkMode]);
-
-  useEffect(() => {
-    if (!threatInstance.current || !sourceInstance.current) return;
-    const tCounts: Record<string, number> = {};
-    const sCounts: Record<string, number> = {};
-    filteredData.forEach(d => {
-      const t = d.threatStr || 'אחר';
-      const s = d.sourceStr || 'מעורב / לא סווג';
-      tCounts[t] = (tCounts[t] || 0) + 1;
-      sCounts[s] = (sCounts[s] || 0) + 1;
-    });
-
-    const pieOpt = (data: any[], colors: string[]) => ({
-      tooltip: { 
-        trigger: 'item', 
-        appendToBody: true,
-        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-        borderWidth: 0,
-        textStyle: { color: '#fff' },
-        position: customTooltipPosition,
-        formatter: '{b}: <br/><b>{c} התרעות</b> ({d}%)'
-      },
-      series: [{
-        type: 'pie', 
-        radius: ['45%', '75%'], 
-        avoidLabelOverlap: false,
-        minAngle: 15,
-        itemStyle: { borderRadius: 8, borderColor: 'rgba(0,0,0,0)', borderWidth: 2 },
-        label: { 
-          show: false,
-          position: 'center'
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 12,
-            fontWeight: 'bold',
-            formatter: '{b}\n{d}%',
-            color: '#fff'
-          }
-        },
-        labelLine: { show: false },
-        data, 
-        color: colors
-      }]
-    });
-
-    const neonColors = ['#f87171', '#38bdf8', '#fbbf24', '#3b82f6', '#94a3b8', '#10b981'];
-    threatInstance.current.setOption(pieOpt(Object.entries(tCounts).map(([n, v]) => ({ name: n, value: v })), neonColors));
-    sourceInstance.current.setOption(pieOpt(Object.entries(sCounts).map(([n, v]) => ({ name: n, value: v })), neonColors));
-
-    // Interactive Filtering
-    threatInstance.current.off('click');
-    threatInstance.current.on('click', (params: any) => {
-      if (params.name) setThreatFilter([params.name]);
-    });
-    sourceInstance.current.off('click');
-    sourceInstance.current.on('click', (params: any) => {
-      if (params.name) setSourceFilter([params.name]);
-    });
-  }, [filteredData, darkMode]);
-
-  // --- Insights ---
-  const insight = useMemo(() => {
-    if (filteredData.length < 5) return "מעט מדי נתונים להפקת תובנה.";
-    const total = filteredData.length;
-    const dateCounts: Record<string, number> = {};
-    filteredData.forEach(d => { const s = d.time.split(' ')[0]; dateCounts[s] = (dateCounts[s] || 0) + 1; });
-    const maxDate = Object.keys(dateCounts).reduce((a, b) => dateCounts[a] > dateCounts[b] ? a : b);
-    const maxDateCount = dateCounts[maxDate];
-    if ((maxDateCount / total) > 0.1) return `<b>שיא תקיפה:</b><br>${maxDate} עם ${maxDateCount.toLocaleString()} התרעות.`;
-    
-    const nightCount = filteredData.filter(d => d.hour >= 23 || d.hour < 6).length;
-    if (nightCount / total > 0.3) return `<b>פעילות לילית:</b><br>${Math.round((nightCount/total)*100)}% מההתרעות בלילה.`;
-    
-    return "שגרת ביטחון יחסית בחתך זה.";
-  }, [filteredData]);
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-bg-color z-50 flex flex-col justify-center items-center text-primary-deep-blue font-bold text-xl transition-colors duration-300">
-        <div className="spinner mb-5" />
-        <div className="animate-pulse">{t.loading}</div>
-      </div>
-    );
-  }
+  if (loading) return <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center gap-4"><div className="w-12 h-12 border-4 border-primary-azure border-t-transparent rounded-full animate-spin"></div><div className="text-primary-azure font-black neon-text uppercase tracking-widest">{loadingStatus}</div></div>;
 
   return (
-    <div className={`flex flex-col h-screen bg-bg-color font-sans transition-colors duration-500 overflow-hidden relative ${darkMode ? 'dark' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
-      <div className="mesh-gradient" />
+    <div className={`min-h-screen flex flex-col transition-colors duration-700 ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-900 text-slate-100'}`}>
+      <div className="mesh-gradient opacity-40" />
       
-      {/* Header */}
-      <header className="glass-card mx-4 mt-4 px-6 py-3 flex justify-between items-center z-30 flex-shrink-0 border-none shadow-2xl">
-        <div className="flex items-center gap-3">
-          <motion.div 
-            initial={{ rotate: -20, scale: 0.8 }}
-            animate={{ rotate: 0, scale: 1 }}
-            className="bg-gradient-to-br from-primary-azure to-primary-deep-blue p-2.5 rounded-2xl shadow-[0_0_15px_rgba(56,189,248,0.5)]"
-          >
-            <Shield size={24} className="text-white" />
-          </motion.div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-primary-azure neon-text">
-              {t.title}
-            </h1>
-            <div className="hidden md:flex items-center gap-2 mt-0.5">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{isRtl ? 'מחובר לנתוני אמת' : 'CONNECTED TO LIVE DATA'}</span>
-            </div>
-          </div>
+      <header className="h-20 glass-card mx-4 mt-4 flex items-center justify-between px-8 z-50 border-none shadow-2xl">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-primary-azure shadow-[0_0_20px_rgba(56,189,248,0.5)] rounded-2xl"><Shield size={28} className="text-white" /></div>
+          <div><h1 className="text-xl font-black neon-text uppercase tracking-tighter">{t.title}</h1></div>
         </div>
         
-        <div className="flex items-center gap-2 md:gap-4">
-          <button 
-            className="md:hidden p-2.5 hover:bg-white/10 rounded-xl transition-all text-text-main glass-card border-none"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X size={20} /> : <Filter size={20} />}
-          </button>
-
-          <div className="hidden md:flex items-center gap-3">
-             <div className="flex items-center gap-2 bg-black/20 rounded-xl px-3 py-1.5 border border-white/5">
-                <Search size={14} className="text-text-muted" />
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    className="bg-transparent border-none text-sm outline-none w-32 md:w-44 text-white placeholder:text-text-muted/50"
-                    placeholder={isRtl ? "חיפוש עיר..." : "Search city..."}
-                    value={citySearch}
-                    onChange={(e) => handleCitySearchChange(e.target.value, 'desktop')}
-                    onFocus={() => {
-                        if (citySearch.trim().length > 0) setShowSuggestions(true);
-                        setActiveSearchSource('desktop');
-                    }}
-                  />
-                  <AnimatePresence>
-                    {showSuggestions && activeSearchSource === 'desktop' && citySuggestions.length > 0 && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute top-full left-0 right-0 glass-card mt-2 p-2 z-50 max-h-60 overflow-y-auto min-w-[200px]"
-                      >
-                        {citySuggestions.map((city, idx) => (
-                          <div 
-                            key={idx} 
-                            className="px-4 py-2 hover:bg-white/10 rounded-lg cursor-pointer text-white text-sm transition-colors"
-                            onClick={() => selectCity(city)}
-                          >
-                            {city}
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-             </div>
-
-              <MultiSelect 
-                label={t.operation} 
-                options={operationOptions}
-                selected={operationFilter}
-                onChange={setOperationFilter}
-                icon={BarChart3}
-                isRtl={isRtl}
-             />
-
-             {compareMode && (
-               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
-                 <MultiSelect 
-                    label={isRtl ? "להשוות מול..." : "Compare vs..."} 
-                    options={operationOptions}
-                    selected={compareOperation}
-                    onChange={setCompareOperation}
-                    icon={TrendingUp}
-                    isRtl={isRtl}
-                 />
-               </motion.div>
-             )}
-
-             <MultiSelect 
-                label={t.threat} 
-                options={threatOptions}
-                selected={threatFilter}
-                onChange={setThreatFilter}
-                icon={PieChartIcon}
-                isRtl={isRtl}
-             />
-
-             <MultiSelect 
-                label={t.source} 
-                options={sourceOptions}
-                selected={sourceFilter}
-                onChange={setSourceFilter}
-                icon={Globe}
-                isRtl={isRtl}
-             />
+        <div className="hidden md:flex items-center gap-4">
+          <div className="relative">
+             <input type="text" className="glass-card pl-10 pr-4 py-2 text-xs w-64 outline-none focus:ring-1 focus:ring-primary-azure" placeholder={isRtl?"חיפוש...":"Search..."} value={citySearch} onChange={e=>setCitySearch(e.target.value)} />
+             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
           </div>
-
-          <div className="h-8 w-[1px] bg-white/10 hidden md:block" />
-
-          <button 
-            onClick={() => {
-              setDarkMode(!darkMode);
-              document.documentElement.classList.toggle('dark');
-            }}
-            className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-text-main glass-card border-none"
-          >
-            {darkMode ? <Moon size={20} className="text-accent-gold neon-text" /> : <Sun size={20} className="text-white" />}
-          </button>
-
-          <div className="flex items-center gap-1 glass-card p-1 border-none">
-            <button 
-              onClick={() => setLang('he')}
-              className={`w-7 h-7 rounded-lg transition-all ${lang === 'he' ? 'ring-2 ring-primary-azure ring-offset-2 ring-offset-transparent' : 'opacity-40 hover:opacity-100'}`}
-            >
-              <img src="https://flagcdn.com/w40/il.png" alt="IL" className="w-full h-full object-cover rounded-md" />
-            </button>
-            <button 
-              onClick={() => setLang('en')}
-              className={`w-7 h-7 rounded-lg transition-all ${lang === 'en' ? 'ring-2 ring-primary-azure ring-offset-2 ring-offset-transparent' : 'opacity-40 hover:opacity-100'}`}
-            >
-              <img src="https://flagcdn.com/w40/us.png" alt="US" className="w-full h-full object-cover rounded-md" />
-            </button>
-          </div>
+          <MultiSelect label={t.threat} options={threatOptions} selected={threatFilter} onChange={setThreatFilter} isRtl={isRtl} icon={Bell} />
+          <button onClick={()=>setDarkMode(!darkMode)} className="p-2 glass-card">{darkMode?<Sun size={18}/>:<Moon size={18}/>}</button>
+          <button onClick={()=>setLang(lang==='he'?'en':'he')} className="p-2 glass-card flex items-center gap-2 text-xs font-bold uppercase"><Languages size={16}/> {lang==='he'?'EN':'HE'}</button>
         </div>
+        <button onClick={()=>setIsMobileMenuOpen(true)} className="md:hidden p-2 glass-card"><Menu size={24}/></button>
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 flex flex-col md:flex-row md:overflow-hidden p-4 gap-4">
-        
-        {/* Left Panel: Analytics */}
-        <div className="w-full md:w-3/4 flex flex-col gap-4 md:overflow-y-auto order-1 md:order-2 scrollbar-hide">
+      <main className="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden">
+        <div className="w-full md:w-3/4 flex flex-col gap-4 overflow-y-auto scrollbar-hide">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="glass-card p-4 relative overflow-hidden"><div className="text-xs text-text-muted mb-1">{t.totalAlerts}</div><div className="text-3xl font-black neon-text">{filteredData.length.toLocaleString()}</div></div>
+            <div className="glass-card p-4 relative overflow-hidden"><div className="text-xs text-text-muted mb-1">{t.lastAlert}</div><div className="text-xl font-black">{filteredData.length?filteredData[filteredData.length-1].time:"-"}</div></div>
+            <div className="glass-card p-4 relative overflow-hidden bg-primary-azure/5"><div className="text-xs text-primary-azure mb-1">{isRtl?"סטטיסטיקה":"Stats"}</div><div className="text-xl font-black">{isRtl?"מגמת עלייה":"Uptrend"} 📈</div></div>
+          </div>
           
-          {/* KPI Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 flex-shrink-0">
-            <motion.div whileHover={{ y: -5 }} className="glass-card p-4 relative overflow-hidden group">
-              <div className="absolute top-0 bottom-0 left-0 w-1 bg-primary-azure group-hover:w-2 transition-all shadow-[0_0_15px_var(--primary-azure)]" />
-              <div className="text-xs text-text-muted font-bold tracking-widest uppercase mb-1">{t.totalAlerts}</div>
-              <div className="text-3xl font-black text-white neon-text">{filteredData.length.toLocaleString()}</div>
-            </motion.div>
-            
-            <motion.div whileHover={{ y: -5 }} className="glass-card p-4 relative overflow-hidden group">
-              <div className="absolute top-0 bottom-0 left-0 w-1 bg-sky-400 shadow-[0_0_15px_#38bdf8]" />
-              <div className="flex justify-between items-center mb-1">
-                <div className="text-xs text-text-muted font-bold tracking-widest uppercase">{t.showerIndex}</div>
-                <Info size={14} className="text-sky-400" />
-              </div>
-              <div className="flex flex-col">
-                {showerIndex ? (
-                  <>
-                    <div className="text-2xl font-black text-white leading-none">{showerIndex.time}</div>
-                    <div className="text-[10px] text-text-muted font-bold mt-2 flex items-center gap-2">
-                       <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                        {showerIndex.probability}% {isRtl ? 'סיכוי לשקט' : 'Quiet Chance'}
-                       </span>
-                    </div>
-                  </>
-                ) : (
-                  <span className="text-sm italic opacity-50">{t.noData}</span>
-                )}
-              </div>
-            </motion.div>
-
-            <motion.div whileHover={{ y: -5 }} className="glass-card p-4 relative overflow-hidden group sm:col-span-2 md:col-span-1">
-              <div className="absolute top-0 bottom-0 left-0 w-1 bg-alert-red shadow-[0_0_15px_#f87171]" />
-              <div className="text-xs text-text-muted font-bold tracking-widest uppercase mb-1">{t.lastAlert}</div>
-              <div className="text-xl font-black text-white">
-                {filteredData.length > 0 ? filteredData[filteredData.length-1].time : "-"}
-              </div>
-            </motion.div>
+          <div className="flex flex-col md:flex-row gap-4 h-[400px]">
+            <div className="glass-card p-4 flex-1 h-full"><div className="text-xs font-black mb-4 uppercase tracking-widest">{t.timeSeries}</div><div ref={timeSeriesChartRef} className="h-full w-full" /></div>
+            <div className="glass-card p-4 w-full md:w-[300px] h-full"><div className="text-xs font-black mb-4 uppercase tracking-widest">{t.threatDist}</div><div ref={threatChartRef} className="h-full w-full" /></div>
           </div>
 
-          {/* Charts Row 1 */}
-          <div className="flex flex-col md:flex-row gap-4 md:flex-1 min-h-[350px]">
-            <div className="glass-card p-5 flex flex-col md:flex-[2.5] h-[350px] md:h-auto neon-border">
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex gap-1.5 p-1 bg-black/30 rounded-xl border border-white/5">
-                  {(['year', 'month', 'weekday', 'hour', 'minute'] as const).map(res => (
-                    <button 
-                      key={res}
-                      className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${timeResolution === res ? 'bg-primary-azure text-white shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-text-muted hover:text-white'}`}
-                      onClick={() => setTimeResolution(res)}
-                    >
-                      {res === 'year' ? t.years : res === 'month' ? t.months : res === 'weekday' ? t.days : res === 'hour' ? t.hours : t.minutes}
-                    </button>
-                  ))}
-                </div>
-                <button 
-                    onClick={() => setCompareMode(!compareMode)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${compareMode ? 'bg-accent-gold text-white shadow-[0_0_10px_#fbbf24]' : 'bg-black/20 text-text-muted border border-white/5 hover:border-white/20'}`}
-                >
-                    <TrendingUp size={12} />
-                    {t.compare}
-                </button>
-              </div>
-              <div ref={timeSeriesChartRef} className="flex-1 w-full min-h-0" />
-            </div>
-
-            <div className="glass-card p-4 flex flex-col md:flex-1 h-[280px] md:h-auto">
-              <div className="flex items-center gap-2 mb-4">
-                 <PieChartIcon size={16} className="text-alert-red" />
-                 <span className="font-black text-white text-xs uppercase tracking-widest">{t.threatDist}</span>
-              </div>
-              <div ref={threatChartRef} className="flex-1 w-full min-h-0" />
-            </div>
-          </div>
-
-          {/* Charts Row 2 */}
-          <div className="flex flex-col md:flex-row gap-4 h-[300px] md:h-[280px] flex-shrink-0">
-            <div className="glass-card p-4 flex flex-col md:flex-1 h-full">
-              <div className="flex items-center gap-2 mb-3">
-                 <Globe size={16} className="text-primary-azure" />
-                 <span className="font-black text-white text-xs uppercase tracking-widest">{t.sourceDist}</span>
-              </div>
-              <div ref={sourceChartRef} className="flex-1 w-full min-h-0" />
-            </div>
-            <div className="glass-card p-4 flex flex-col md:flex-[2] h-full">
-              <div className="flex items-center gap-2 mb-3">
-                 <MapIcon size={16} className="text-primary-azure" />
-                 <span className="font-black text-white text-xs uppercase tracking-widest">{t.topCities}</span>
-              </div>
-              <div ref={topCitiesChartRef} className="flex-1 w-full min-h-0" />
-            </div>
+          <div className="flex flex-col md:flex-row gap-4 h-[300px]">
+             <div className="glass-card p-4 flex-1 h-full"><div ref={sourceChartRef} className="h-full w-full" /></div>
+             <div className="glass-card p-4 flex-1 h-full"><div ref={topCitiesChartRef} className="h-full w-full" /></div>
           </div>
         </div>
 
-        {/* Right Panel: Map */}
-        <div className="w-full md:w-1/4 glass-card flex flex-col overflow-hidden h-[400px] md:h-full relative flex-shrink-0 order-2 md:order-1 border-none">
-          <div className="px-5 py-3 bg-black/40 border-b border-white/5 flex justify-between items-center">
-            <span className="font-black text-white text-xs uppercase tracking-widest">{t.mapTitle}</span>
-            <button 
-                onClick={() => setMapLayer(mapLayer === 'streets' ? 'satellite' : 'streets')}
-                className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-text-muted"
-            >
-                <Layers size={14} />
-            </button>
-          </div>
-          <div 
-            id="map" 
-            className="flex-1 z-10 transition-all duration-700 grayscale-[0.5] invert-[0.1]" 
-            style={darkMode ? { filter: 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)' } : {}}
-          />
-          {geocodingStatus && (
-            <div className="absolute bottom-4 left-4 right-4 glass-card px-4 py-2 text-[10px] font-black text-primary-azure z-20 flex items-center gap-3 border-none bg-black/60 shadow-2xl">
-              <div className="mini-spinner" /> {geocodingStatus}
-            </div>
-          )}
+        <div className="w-full md:w-1/4 glass-card relative h-[400px] md:h-full">
+          <div id="map" className="h-full w-full" />
         </div>
       </main>
 
-      {/* Ticker */}
-      <footer className={`h-12 flex items-center overflow-hidden z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] transition-all duration-1000 ${liveAlert ? 'live-flash' : 'bg-black/60 backdrop-blur-xl border-t border-white/5'}`}>
-        <div className="bg-primary-deep-blue/40 backdrop-blur-md h-full px-6 flex items-center font-black text-xs uppercase tracking-widest text-white z-10 border-r border-white/10 shadow-[5px_0_15px_rgba(0,0,0,0.3)]">
-          {liveAlert ? `🚨 ${t.liveAlert}` : t.tickerTitle}
-        </div>
-        <div className="ticker-move flex-1 text-white py-1">
-          {liveAlert ? (
-            <span className="inline-block px-10 text-base font-black neon-text">
-              {liveAlert.title}: <span className="text-primary-azure">{liveAlert.cities}</span>
-            </span>
-          ) : (
-            globalData.slice(-15).reverse().map((alert, i) => (
-              <span key={i} className="inline-block px-10 text-xs font-bold opacity-80 hover:opacity-100 transition-opacity">
-                <span className="text-alert-red">●</span> {alert.operationsArray?.[0] || 'שגרה'} | <b className="text-white">{alert.cities}</b> <span className="text-text-muted font-normal">({alert.threatStr})</span>
-              </span>
-            ))
-          )}
+      <footer className="h-10 bg-black/60 flex items-center px-4 gap-4 border-t border-white/5 opacity-80 hover:opacity-100 transition-all font-mono text-[10px]">
+        <div className="text-primary-azure font-black">{t.tickerTitle} |</div>
+        <div className="flex-1 overflow-hidden whitespace-nowrap">
+           {globalData.slice(-10).reverse().map((a,i)=>(<span key={i} className="mr-8">● {a.cities} ({a.threatStr})</span>))}
         </div>
       </footer>
 
-      {/* Mobile Menu Backdrop */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] md:hidden"
-            />
-            <motion.div 
-              initial={{ x: isRtl ? '100%' : '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: isRtl ? '100%' : '-100%' }}
-              className="fixed inset-y-0 right-0 w-[85%] max-w-sm z-[100] glass-card m-4 p-8 flex flex-col gap-8 md:hidden overflow-y-auto border-none shadow-[w-full_0_50px_rgba(0,0,0,0.5)]"
-            >
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-black text-white neon-text uppercase tracking-tighter">{isRtl ? 'מסננים' : 'Filters'}</h2>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-all">
-                  <X size={24} className="text-white" />
-                </button>
-              </div>
-              
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={()=>setIsMobileMenuOpen(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]" />
+            <motion.div initial={{x:'100%'}} animate={{x:0}} exit={{x:'100%'}} className="fixed inset-y-0 right-0 w-[80%] glass-card z-[100] p-8 flex flex-col gap-8">
+              <div className="flex justify-between items-center"><h2 className="text-2xl font-black uppercase">{isRtl?'סינון':'Filter'}</h2><button onClick={()=>setIsMobileMenuOpen(false)}><X size={24}/></button></div>
               <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t.search}</label>
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      className="w-full glass-card bg-black/30 border-none px-4 py-3 text-white outline-none focus:ring-1 focus:ring-primary-azure shadow-inner"
-                      placeholder={isRtl ? "חיפוש עיר..." : "Search city..."}
-                      value={citySearch}
-                      onChange={(e) => handleCitySearchChange(e.target.value, 'mobile')}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t.operation}</label>
-                    <div className="flex flex-wrap gap-2">
-                        {["all", ...operationsDict.map(op => op.name)].map(opt => (
-                            <button 
-                                key={opt}
-                                onClick={() => {
-                                    if (opt === 'all') setOperationFilter(['all']);
-                                    else {
-                                        const newOps = operationFilter.includes(opt) 
-                                            ? operationFilter.filter(o => o !== opt)
-                                            : [...operationFilter.filter(o => o !== 'all'), opt];
-                                        setOperationFilter(newOps.length === 0 ? ['all'] : newOps);
-                                    }
-                                }}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${operationFilter.includes(opt) ? 'bg-primary-azure text-white shadow-lg' : 'bg-black/40 text-text-muted border border-white/5'}`}
-                            >
-                                {opt === 'all' ? 'הכל' : opt}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t.threat}</label>
-                    <div className="flex flex-wrap gap-2">
-                        {["all", ...Array.from(new Set(Object.values(threatDict)))].map(opt => (
-                            <button 
-                                key={opt}
-                                onClick={() => {
-                                    if (opt === 'all') setThreatFilter(['all']);
-                                    else {
-                                        const newThreats = threatFilter.includes(opt) 
-                                            ? threatFilter.filter(t => t !== opt)
-                                            : [...threatFilter.filter(t => t !== 'all'), opt];
-                                        setThreatFilter(newThreats.length === 0 ? ['all'] : newThreats);
-                                    }
-                                }}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${threatFilter.includes(opt) ? 'bg-primary-azure text-white shadow-lg' : 'bg-black/40 text-text-muted border border-white/5'}`}
-                            >
-                                {opt === 'all' ? 'הכל' : opt}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t.dateRange}</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input 
-                      type="date" 
-                      className="glass-card bg-black/30 border-none px-3 py-2 text-xs text-white"
-                      value={dateRange.start}
-                      onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                    />
-                    <input 
-                      type="date" 
-                      className="glass-card bg-black/30 border-none px-3 py-2 text-xs text-white"
-                      value={dateRange.end}
-                      onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <button 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="mt-6 bg-gradient-to-r from-primary-azure to-primary-deep-blue text-white font-black py-4 rounded-2xl shadow-[0_10px_30px_rgba(56,189,248,0.4)] active:scale-95 transition-all text-sm uppercase tracking-widest"
-                >
-                  {isRtl ? 'הצג תוצאות' : 'Show Results'}
-                </button>
+                <input type="text" className="glass-card p-4 bg-black/20 outline-none" value={citySearch} onChange={e=>setCitySearch(e.target.value)} placeholder={isRtl?"חיפוש עיר...":"Search..."} />
+                <div className="flex flex-col gap-2"><label className="text-[10px] uppercase font-black">{t.threat}</label><div className="flex flex-wrap gap-2">{threatOptions.map(o=>(<button key={o} onClick={()=>setThreatFilter([o])} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${threatFilter.includes(o)?'bg-primary-azure text-white':'bg-white/5 text-text-muted'}`}>{o}</button>))}</div></div>
+                <button onClick={()=>setIsMobileMenuOpen(false)} className="mt-auto bg-primary-azure py-4 rounded-2xl font-black shadow-lg">SHOW RESULTS</button>
               </div>
             </motion.div>
           </>
