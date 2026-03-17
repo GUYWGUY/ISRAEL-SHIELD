@@ -584,6 +584,7 @@ loadData();
 
       return matchCity && matchThreat && matchSource && matchOperation && matchDate;
     });
+    console.log("Filtering complete. Global:", globalData.length, "Filtered:", filtered.length);
     setFilteredData(filtered);
   }, [citySearch, threatFilter, sourceFilter, operationFilter, compareOperation, compareMode, dateRange, globalData]);
 
@@ -1103,7 +1104,7 @@ loadData();
         )}
       </AnimatePresence>
 
-      <div className="hidden md:flex bg-surface-color px-5 py-2 border-b border-border-color gap-4 items-center overflow-x-auto whitespace-nowrap scrollbar-hide z-20 sticky top-0 md:relative">
+      <div className="hidden md:flex bg-surface-color px-5 py-2 border-b border-border-color gap-4 items-center flex-wrap z-20 sticky top-0 md:relative">
         <div className="flex items-center gap-2 relative">
           <label className="font-semibold text-[13px] text-text-main">{t.search}</label>
           <div className="relative">
