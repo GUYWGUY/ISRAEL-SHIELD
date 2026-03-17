@@ -829,9 +829,6 @@ loadData();
     });
     
     // Click events for cross-filtering
-    topCitiesInstance.current?.on('click', (params: any) => setCitySearch(prev => prev === params.name ? "" : params.name));
-    threatInstance.current?.on('click', (params: any) => setThreatFilter(prev => prev === params.name ? "all" : params.name));
-    sourceInstance.current?.on('click', (params: any) => setSourceFilter(prev => prev === params.name ? "all" : params.name));
 
     return () => {
       observers.forEach(o => o.disconnect());
