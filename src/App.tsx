@@ -1591,7 +1591,7 @@ loadData();
 
   if (loading) {
     const loadingPhrases = {
-      he: '🛡️ מנתח נתוני בטחון...',
+      he: 'מנתח נתוני בטחון...\u200e 🛡️',
       en: '🛡️ Initializing Defense Analytics...',
       ar: '🛡️ جارٍ تحليل بيانات الدفاع...',
       fr: '🛡️ Initialisation de l’analyse...',
@@ -1599,9 +1599,9 @@ loadData();
       es: '🛡️ Iniciando análisis de defensa...',
     };
     return (
-      <div className="fixed inset-0 bg-bg-color z-50 flex flex-col justify-center items-center text-primary-deep-blue font-bold text-xl transition-colors duration-300" dir="ltr">
+      <div className="fixed inset-0 bg-bg-color z-50 flex flex-col justify-center items-center text-primary-deep-blue font-bold text-xl transition-colors duration-300">
         <div className="spinner mb-5" />
-        <div className="animate-pulse text-center">{loadingPhrases[lang] ?? loadingPhrases.he}</div>
+        <div className="animate-pulse text-center" dir="rtl">{loadingPhrases[lang] ?? loadingPhrases.he}</div>
       </div>
     );
   }
