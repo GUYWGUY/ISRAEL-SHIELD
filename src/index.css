@@ -2,22 +2,24 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
-  --bg-color: #0B1120;
-  --surface-color: rgba(255, 255, 255, 0.05);
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --primary-azure: #38bdf8;
-  --primary-deep-blue: #3b82f6;
-  --primary-light-blue: rgba(56, 189, 248, 0.1);
-  --accent-gold: #fbbf24;
-  --alert-red: #f87171;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border-radius: 20px;
-  --glow-color: rgba(56, 189, 248, 0.4);
+  /* Light Mode (Classic) */
+  --bg-color: #f8fafc;
+  --surface-color: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: #cbd5e1;
+  --primary-azure: #0038B8;
+  --primary-deep-blue: #002d96;
+  --primary-light-blue: rgba(0, 56, 184, 0.1);
+  --accent-gold: #b45309; /* Darker gold for light mode */
+  --alert-red: #dc2626;
+  --text-main: #0f172a;
+  --text-muted: #475569; /* Darker muted text for light mode */
+  --border-radius: 12px;
+  --glow-color: rgba(0, 56, 184, 0.1);
 }
 
-.dark {
+.neon {
+  /* Neon/Glass Mode (Premium) */
   --bg-color: #020617;
   --surface-color: rgba(15, 23, 42, 0.6);
   --glass-bg: rgba(15, 23, 42, 0.4);
@@ -28,7 +30,8 @@
   --accent-gold: #fbbf24;
   --alert-red: #f87171;
   --text-main: #f8fafc;
-  --text-muted: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-radius: 20px;
   --glow-color: rgba(59, 130, 246, 0.5);
 }
 
@@ -57,7 +60,7 @@ body {
 }
 
 /* Mesh Gradient Background */
-.mesh-gradient {
+.neon .mesh-gradient {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
   z-index: -1;
@@ -127,7 +130,14 @@ body {
   display: inline-block;
   white-space: nowrap;
   padding-right: 20px;
-  animation: ticker 35s linear infinite;
+  animation: ticker 60s linear infinite;
+}
+
+.ticker-footer {
+  background: linear-gradient(90deg, rgba(120,10,30,0.85) 0%, rgba(180,30,60,0.7) 40%, rgba(150,20,50,0.85) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(248,113,113,0.2);
 }
 
 .spinner {

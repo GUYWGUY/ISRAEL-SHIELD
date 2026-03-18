@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -80,46 +80,42 @@ const loadFromCache = async (): Promise<{ data: any[], lastModified: string } | 
 };
 
 // --- Constants & Dictionaries ---
-const daysHe = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const daysHe = ['Î¿ÎÉÎ®ÎòÎƒ', 'Î®ÎáÎÖ', 'Î®Î£ÎÖÎ®ÎÖ', 'Î¿ÎæÎÖÎóÎÖ', 'ÎùÎ×ÎÖÎ®ÎÖ', 'Î®ÎÖÎ®ÎÖ', 'Î®ÎæÎ¬'];
 const daysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const translations = {
   he: {
-    title: "מגן ישראל | דשבורד חקר נתונים",
-    search: "חיפוש עיר/אזור:",
-    threat: "סוג איום:",
-    source: "מקור איום:",
-    operation: "מערכה:",
-    all: "הכל",
-    loading: "טוען נתונים...",
-    totalAlerts: "סה\"כ התרעות במאגר",
-    smartInsight: "תובנה סטטיסטית חכמה 🎯",
-    lastAlert: "זמן התרעה אחרונה",
-    mapTitle: "מפת מוקדים",
-    liveAlert: "צבע אדום",
-    tickerTitle: "מבזק התרעות",
-    timeSeries: "התפלגות התרעות לאורך זמן",
-    topCities: "היישובים המותקפים ביותר (Top 15)",
-    threatDist: "התפלגות סוגי איום",
-    sourceDist: "מקור איום",
-    years: "שנים",
-    months: "חודשים",
-    days: "ימים",
-    hours: "שעות ביממה",
-    minutes: "דקות בשעה",
-    satellite: "לוויין",
-    streets: "רחובות",
-    compare: "מצב השוואה",
-    date: "לפי תאריכים",
-    showerIndex: "מדד המקלחת 🚿",
-    showerDesc: "הזמן הבטוח ביותר למקלחת שקטה",
-    generate: "ייצר תובנות",
-    generating: "מנתח נתונים...",
-    noData: "אין נתונים להצגה",
-    warningTime: "זמן התגוננות (שניות)",
-    cacheStatus: "מטמון נתונים:",
-    cacheOn: "פעיל",
-    cacheOff: "טוען...",
+    title: "Î×ÎÆÎƒ ÎÖÎ®Î¿ÎÉÎ£ | ÎôÎ®ÎæÎòÎ¿Îô ÎùÎºÎ¿ ÎáÎ¬ÎòÎáÎÖÎØ",
+    search: "ÎùÎÖÎñÎòÎ® ÎóÎÖÎ¿/ÎÉÎûÎòÎ¿:",
+    threat: "ÎíÎòÎÆ ÎÉÎÖÎòÎØ:",
+    source: "Î×ÎºÎòÎ¿ ÎÉÎÖÎòÎØ:",
+    operation: "Î×ÎóÎ¿ÎøÎö:",
+    all: "ÎöÎøÎ£",
+    loading: "ÎÿÎòÎóÎƒ ÎáÎ¬ÎòÎáÎÖÎØ...",
+    totalAlerts: "ÎíÎö\"Îø ÎöÎ¬Î¿ÎóÎòÎ¬ ÎæÎ×ÎÉÎÆÎ¿",
+    smartInsight: "Î¬ÎòÎæÎáÎö ÎíÎÿÎÿÎÖÎíÎÿÎÖÎ¬ ÎùÎøÎ×Îö ­ƒÄ»",
+    lastAlert: "ÎûÎ×Îƒ ÎöÎ¬Î¿ÎóÎö ÎÉÎùÎ¿ÎòÎáÎö",
+    mapTitle: "Î×ÎñÎ¬ Î×ÎòÎºÎôÎÖÎØ",
+    liveAlert: "ÎªÎæÎó ÎÉÎôÎòÎØ",
+    tickerTitle: "Î×ÎæÎûÎº ÎöÎ¬Î¿ÎóÎòÎ¬",
+    timeSeries: "ÎöÎ¬ÎñÎ£ÎÆÎòÎ¬ ÎöÎ¬Î¿ÎóÎòÎ¬ Î£ÎÉÎòÎ¿ÎÜ ÎûÎ×Îƒ",
+    topCities: "ÎöÎÖÎÖÎ®ÎòÎæÎÖÎØ ÎöÎ×ÎòÎ¬ÎºÎñÎÖÎØ ÎæÎÖÎòÎ¬Î¿ (Top 15)",
+    threatDist: "ÎöÎ¬ÎñÎ£ÎÆÎòÎ¬ ÎíÎòÎÆÎÖ ÎÉÎÖÎòÎØ",
+    sourceDist: "Î×ÎºÎòÎ¿ ÎÉÎÖÎòÎØ",
+    years: "Î®ÎáÎÖÎØ",
+    months: "ÎùÎòÎôÎ®ÎÖÎØ",
+    days: "ÎÖÎ×ÎÖÎØ",
+    hours: "Î®ÎóÎòÎ¬",
+    minutes: "ÎôÎºÎòÎ¬",
+    satellite: "Î£ÎòÎòÎÖÎÖÎƒ",
+    streets: "Î¿ÎùÎòÎæÎòÎ¬",
+    compare: "Î×ÎªÎæ ÎöÎ®ÎòÎòÎÉÎö",
+    showerIndex: "Î×ÎôÎô ÎöÎ×ÎºÎ£ÎùÎ¬ ­ƒÜ┐",
+    showerDesc: "ÎöÎûÎ×Îƒ ÎöÎæÎÿÎòÎù ÎæÎÖÎòÎ¬Î¿ Î£Î×ÎºÎ£ÎùÎ¬ Î®ÎºÎÿÎö",
+    generate: "ÎÖÎÖÎªÎ¿ Î¬ÎòÎæÎáÎòÎ¬",
+    generating: "Î×ÎáÎ¬Îù ÎáÎ¬ÎòÎáÎÖÎØ...",
+    noData: "ÎÉÎÖÎƒ ÎáÎ¬ÎòÎáÎÖÎØ Î£ÎöÎªÎÆÎö",
+    warningTime: "ÎûÎ×Îƒ ÎöÎ¬ÎÆÎòÎáÎáÎòÎ¬ (Î®ÎáÎÖÎòÎ¬)",
   },
   en: {
     title: "Shield of Israel | Data Analytics Dashboard",
@@ -130,7 +126,7 @@ const translations = {
     all: "All",
     loading: "Loading Data...",
     totalAlerts: "Total Alerts in Database",
-    smartInsight: "Smart Statistical Insight 🎯",
+    smartInsight: "Smart Statistical Insight ­ƒÄ»",
     lastAlert: "Last Alert Time",
     mapTitle: "Alert Hotspots Map",
     liveAlert: "Red Color",
@@ -142,241 +138,89 @@ const translations = {
     years: "Years",
     months: "Months",
     days: "Days",
-    hours: "Hour of Day",
-    minutes: "Minute of Hour",
+    hours: "Hours",
+    minutes: "Minutes",
     satellite: "Satellite",
     streets: "Streets",
     compare: "Comparison Mode",
-    date: "By Date",
-    showerIndex: "Shower Index 🚿",
+    showerIndex: "Shower Index ­ƒÜ┐",
     showerDesc: "Safest time for a quiet shower",
     generate: "Generate Insights",
     generating: "Analyzing data...",
     noData: "No data to display",
     warningTime: "Warning Time (Seconds)",
-    cacheStatus: "Data Cache:",
-    cacheOn: "Active",
-    cacheOff: "Loading...",
-  },
-  ar: {
-    title: "درع إسرائيل | لوحة تحليل البيانات",
-    search: "بحث مدينة/منطقة:",
-    threat: "نوع التهديد:",
-    source: "مصدر التهديد:",
-    operation: "العملية:",
-    all: "الكل",
-    loading: "جارٍ تحميل البيانات...",
-    totalAlerts: "إجمالي التنبيهات",
-    smartInsight: "رؤية إحصائية ذكية 🎯",
-    lastAlert: "وقت آخر تنبيه",
-    mapTitle: "خريطة البؤر الساخنة",
-    liveAlert: "إنذار حي",
-    tickerTitle: "شريط التنبيهات",
-    timeSeries: "توزيع التنبيهات عبر الزمن",
-    topCities: "أكثر المواقع استهدافاً (Top 15)",
-    threatDist: "توزيع أنواع التهديد",
-    sourceDist: "مصدر التهديد",
-    years: "سنوات",
-    months: "أشهر",
-    days: "أيام",
-    hours: "ساعات اليوم",
-    minutes: "دقائق الساعة",
-    satellite: "قمر صناعي",
-    streets: "شوارع",
-    compare: "وضع المقارنة",
-    date: "حسب التاريخ",
-    showerIndex: "مؤشر الاستحمام 🚿",
-    showerDesc: "أأمن وقت للاستحمام",
-    generate: "توليد رؤى",
-    generating: "تحليل البيانات...",
-    noData: "لا توجد بيانات",
-    warningTime: "وقت التحذير (ث)",
-    cacheStatus: "ذاكرة التخزين:",
-    cacheOn: "نشط",
-    cacheOff: "جارٍ التحميل...",
-  },
-  fr: {
-    title: "Bouclier d'Israël | Tableau de bord analytique",
-    search: "Rechercher ville/zone :",
-    threat: "Type de menace :",
-    source: "Source de menace :",
-    operation: "Campagne :",
-    all: "Tout",
-    loading: "Chargement des données...",
-    totalAlerts: "Total des alertes",
-    smartInsight: "Aperçu statistique intelligent 🎯",
-    lastAlert: "Dernière alerte",
-    mapTitle: "Carte des points chauds",
-    liveAlert: "Alerte en direct",
-    tickerTitle: "Fil d'alertes",
-    timeSeries: "Distribution des alertes dans le temps",
-    topCities: "Sites les plus ciblés (Top 15)",
-    threatDist: "Distribution des types de menace",
-    sourceDist: "Source de menace",
-    years: "Années",
-    months: "Mois",
-    days: "Jours",
-    hours: "Heure du jour",
-    minutes: "Minute de l'heure",
-    satellite: "Satellite",
-    streets: "Rues",
-    compare: "Mode comparaison",
-    date: "Par date",
-    showerIndex: "Indice douche 🚿",
-    showerDesc: "Moment le plus sûr pour une douche tranquille",
-    generate: "Générer des insights",
-    generating: "Analyse en cours...",
-    noData: "Aucune donnée",
-    warningTime: "Temps d'alerte (s)",
-    cacheStatus: "Cache :",
-    cacheOn: "Actif",
-    cacheOff: "Chargement...",
-  },
-  de: {
-    title: "Schild Israels | Daten-Dashboard",
-    search: "Stadt/Region suchen:",
-    threat: "Bedrohungstyp:",
-    source: "Bedrohungsquelle:",
-    operation: "Operation:",
-    all: "Alle",
-    loading: "Daten werden geladen...",
-    totalAlerts: "Gesamtanzahl Warnungen",
-    smartInsight: "Smarte statistische Einblicke 🎯",
-    lastAlert: "Letzte Warnung",
-    mapTitle: "Karte der Hotspots",
-    liveAlert: "Live-Alarm",
-    tickerTitle: "Warnmeldungen",
-    timeSeries: "Verteilung der Warnungen über Zeit",
-    topCities: "Meistangegriffene Orte (Top 15)",
-    threatDist: "Verteilung der Bedrohungstypen",
-    sourceDist: "Bedrohungsquelle",
-    years: "Jahre",
-    months: "Monate",
-    days: "Tage",
-    hours: "Stunde des Tages",
-    minutes: "Minute der Stunde",
-    satellite: "Satellit",
-    streets: "Straßen",
-    compare: "Vergleichsmodus",
-    date: "Nach Datum",
-    showerIndex: "Duschindex 🚿",
-    showerDesc: "Sicherste Zeit für eine ruhige Dusche",
-    generate: "Einblicke generieren",
-    generating: "Analyse läuft...",
-    noData: "Keine Daten",
-    warningTime: "Warnzeit (s)",
-    cacheStatus: "Cache:",
-    cacheOn: "Aktiv",
-    cacheOff: "Lädt...",
-  },
-  es: {
-    title: "Escudo de Israel | Panel de análisis de datos",
-    search: "Buscar ciudad/zona:",
-    threat: "Tipo de amenaza:",
-    source: "Fuente de amenaza:",
-    operation: "Campaña:",
-    all: "Todo",
-    loading: "Cargando datos...",
-    totalAlerts: "Total de alertas",
-    smartInsight: "Perspectiva estadística inteligente 🎯",
-    lastAlert: "Última alerta",
-    mapTitle: "Mapa de puntos calientes",
-    liveAlert: "Alerta en vivo",
-    tickerTitle: "Ticker de alertas",
-    timeSeries: "Distribución de alertas en el tiempo",
-    topCities: "Lugares más atacados (Top 15)",
-    threatDist: "Distribución por tipo de amenaza",
-    sourceDist: "Fuente de amenaza",
-    years: "Años",
-    months: "Meses",
-    days: "Días",
-    hours: "Hora del día",
-    minutes: "Minuto de la hora",
-    satellite: "Satélite",
-    streets: "Calles",
-    compare: "Modo comparación",
-    date: "Por fecha",
-    showerIndex: "Índice ducha 🚿",
-    showerDesc: "El momento más seguro para una ducha tranquila",
-    generate: "Generar insights",
-    generating: "Analizando datos...",
-    noData: "Sin datos",
-    warningTime: "Tiempo de alerta (s)",
-    cacheStatus: "Caché:",
-    cacheOn: "Activo",
-    cacheOff: "Cargando...",
   }
 };
 
 const threatDict: Record<string, string> = {
-  "0": "ירי רקטות וטילים",
-  "1": "ירי רקטות וטילים",
-  "2": "חדירת כלי טיס עוין",
-  "3": "רעידת אדמה",
-  "4": "אירוע רדיולוגי",
-  "5": "חדירת מחבלים",
-  "6": "צונאמי",
-  "7": "אירוע חומרים מסוכנים",
-  "8": "אירוע לא קונבנציונלי"
+  "0": "ÎÖÎ¿ÎÖ Î¿ÎºÎÿÎòÎ¬ ÎòÎÿÎÖÎ£ÎÖÎØ",
+  "1": "ÎÖÎ¿ÎÖ Î¿ÎºÎÿÎòÎ¬ ÎòÎÿÎÖÎ£ÎÖÎØ",
+  "2": "ÎùÎôÎÖÎ¿Î¬ ÎøÎ£ÎÖ ÎÿÎÖÎí ÎóÎòÎÖÎƒ",
+  "3": "Î¿ÎóÎÖÎôÎ¬ ÎÉÎôÎ×Îö",
+  "4": "ÎÉÎÖÎ¿ÎòÎó Î¿ÎôÎÖÎòÎ£ÎòÎÆÎÖ",
+  "5": "ÎùÎôÎÖÎ¿Î¬ Î×ÎùÎæÎ£ÎÖÎØ",
+  "6": "ÎªÎòÎáÎÉÎ×ÎÖ",
+  "7": "ÎÉÎÖÎ¿ÎòÎó ÎùÎòÎ×Î¿ÎÖÎØ Î×ÎíÎòÎøÎáÎÖÎØ",
+  "8": "ÎÉÎÖÎ¿ÎòÎó Î£ÎÉ ÎºÎòÎáÎæÎáÎªÎÖÎòÎáÎ£ÎÖ"
 };
 
 const operationsDict = [
-  { name: "חגורה שחורה (2019)", start: new Date("2019-11-12"), end: new Date("2019-11-14T23:59:59") },
-  { name: "שומר החומות (2021)", start: new Date("2021-05-10"), end: new Date("2021-05-21T23:59:59") },
-  { name: "עלות השחר (2022)", start: new Date("2022-08-05"), end: new Date("2022-08-07T23:59:59") },
-  { name: "מגן וחץ (2023)", start: new Date("2023-05-09"), end: new Date("2023-05-13T23:59:59") },
-  { name: "מלחמת חרבות ברזל (2023+)", start: new Date("2023-10-07"), end: new Date("2099-12-31T23:59:59") },
-  { name: "מתקפת אפריל (איראן 2024)", start: new Date("2024-04-13"), end: new Date("2024-04-14T23:59:59") },
-  { name: "מתקפת אוקטובר (איראן 2024)", start: new Date("2024-10-01"), end: new Date("2024-10-01T23:59:59") },
-  { name: "ימי תשובה (איראן 2024)", start: new Date("2024-10-26"), end: new Date("2024-10-27T23:59:59") },
-  { name: "עם כלביא (איראן 2025)", start: new Date("2025-06-13"), end: new Date("2025-06-24T23:59:59") },
-  { name: "כארי ישאג / שאגת הארי (איראן 2026)", start: new Date("2026-02-28"), end: new Date("2026-03-31T23:59:59") }
+  { name: "ÎùÎÆÎòÎ¿Îö Î®ÎùÎòÎ¿Îö (2019)", start: new Date("2019-11-12"), end: new Date("2019-11-14T23:59:59") },
+  { name: "Î®ÎòÎ×Î¿ ÎöÎùÎòÎ×ÎòÎ¬ (2021)", start: new Date("2021-05-10"), end: new Date("2021-05-21T23:59:59") },
+  { name: "ÎóÎ£ÎòÎ¬ ÎöÎ®ÎùÎ¿ (2022)", start: new Date("2022-08-05"), end: new Date("2022-08-07T23:59:59") },
+  { name: "Î×ÎÆÎƒ ÎòÎùÎÑ (2023)", start: new Date("2023-05-09"), end: new Date("2023-05-13T23:59:59") },
+  { name: "Î×Î£ÎùÎ×Î¬ ÎùÎ¿ÎæÎòÎ¬ ÎæÎ¿ÎûÎ£ (2023+)", start: new Date("2023-10-07"), end: new Date("2099-12-31T23:59:59") },
+  { name: "Î×Î¬ÎºÎñÎ¬ ÎÉÎñÎ¿ÎÖÎ£ (ÎÉÎÖÎ¿ÎÉÎƒ 2024)", start: new Date("2024-04-13"), end: new Date("2024-04-14T23:59:59") },
+  { name: "Î×Î¬ÎºÎñÎ¬ ÎÉÎòÎºÎÿÎòÎæÎ¿ (ÎÉÎÖÎ¿ÎÉÎƒ 2024)", start: new Date("2024-10-01"), end: new Date("2024-10-01T23:59:59") },
+  { name: "ÎÖÎ×ÎÖ Î¬Î®ÎòÎæÎö (ÎÉÎÖÎ¿ÎÉÎƒ 2024)", start: new Date("2024-10-26"), end: new Date("2024-10-27T23:59:59") },
+  { name: "ÎóÎØ ÎøÎ£ÎæÎÖÎÉ (ÎÉÎÖÎ¿ÎÉÎƒ 2025)", start: new Date("2025-06-13"), end: new Date("2025-06-24T23:59:59") },
+  { name: "ÎøÎÉÎ¿ÎÖ ÎÖÎ®ÎÉÎÆ / Î®ÎÉÎÆÎ¬ ÎöÎÉÎ¿ÎÖ (ÎÉÎÖÎ¿ÎÉÎƒ 2026)", start: new Date("2026-02-28"), end: new Date("2026-03-31T23:59:59") }
 ];
 
 const baseCoords: Record<string, [number, number]> = {
-  // עוטף עזה ודרום
-  "שדרות": [31.5282, 34.5956], "אשקלון": [31.6693, 34.5715], "נתיבות": [31.4167, 34.5833], "אופקים": [31.3167, 34.6167],
-  "באר שבע": [31.2518, 34.7913], "אשדוד": [31.7915, 34.6394], "אילת": [29.5577, 34.9519],
-  "כפר עזה": [31.4744, 34.5386], "בארי": [31.4244, 34.4953], "נחל עוז": [31.4700, 34.4969], "מפלסים": [31.5036, 34.5606],
-  "ניר עוז": [31.3106, 34.3942], "נירים": [31.3322, 34.3944], "עין השלושה": [31.3522, 34.3944], "כיסופים": [31.3756, 34.3958],
-  "כרם שלום": [31.2269, 34.2858], "זיקים": [31.6033, 34.5158], "כרמיה": [31.5942, 34.5458], "יד מרדכי": [31.5861, 34.5572],
-  "נתיב העשרה": [31.5961, 34.5472], "סעד": [31.4731, 34.5369], "עלומים": [31.4489, 34.5264], "רעים": [31.3853, 34.4594],
-  "מגן": [31.3000, 34.4333], "ניר יצחק": [31.2411, 34.3547], "סופה": [31.2386, 34.3417], "חולית": [31.2403, 34.3167],
-  "שדרות איבים וניר עם": [31.5282, 34.5956],
+  // ÎóÎòÎÿÎú ÎóÎûÎö ÎòÎôÎ¿ÎòÎØ
+  "Î®ÎôÎ¿ÎòÎ¬": [31.5282, 34.5956], "ÎÉÎ®ÎºÎ£ÎòÎƒ": [31.6693, 34.5715], "ÎáÎ¬ÎÖÎæÎòÎ¬": [31.4167, 34.5833], "ÎÉÎòÎñÎºÎÖÎØ": [31.3167, 34.6167],
+  "ÎæÎÉÎ¿ Î®ÎæÎó": [31.2518, 34.7913], "ÎÉÎ®ÎôÎòÎô": [31.7915, 34.6394], "ÎÉÎÖÎ£Î¬": [29.5577, 34.9519],
+  "ÎøÎñÎ¿ ÎóÎûÎö": [31.4744, 34.5386], "ÎæÎÉÎ¿ÎÖ": [31.4244, 34.4953], "ÎáÎùÎ£ ÎóÎòÎû": [31.4700, 34.4969], "Î×ÎñÎ£ÎíÎÖÎØ": [31.5036, 34.5606],
+  "ÎáÎÖÎ¿ ÎóÎòÎû": [31.3106, 34.3942], "ÎáÎÖÎ¿ÎÖÎØ": [31.3322, 34.3944], "ÎóÎÖÎƒ ÎöÎ®Î£ÎòÎ®Îö": [31.3522, 34.3944], "ÎøÎÖÎíÎòÎñÎÖÎØ": [31.3756, 34.3958],
+  "ÎøÎ¿ÎØ Î®Î£ÎòÎØ": [31.2269, 34.2858], "ÎûÎÖÎºÎÖÎØ": [31.6033, 34.5158], "ÎøÎ¿Î×ÎÖÎö": [31.5942, 34.5458], "ÎÖÎô Î×Î¿ÎôÎøÎÖ": [31.5861, 34.5572],
+  "ÎáÎ¬ÎÖÎæ ÎöÎóÎ®Î¿Îö": [31.5961, 34.5472], "ÎíÎóÎô": [31.4731, 34.5369], "ÎóÎ£ÎòÎ×ÎÖÎØ": [31.4489, 34.5264], "Î¿ÎóÎÖÎØ": [31.3853, 34.4594],
+  "Î×ÎÆÎƒ": [31.3000, 34.4333], "ÎáÎÖÎ¿ ÎÖÎªÎùÎº": [31.2411, 34.3547], "ÎíÎòÎñÎö": [31.2386, 34.3417], "ÎùÎòÎ£ÎÖÎ¬": [31.2403, 34.3167],
+  "Î®ÎôÎ¿ÎòÎ¬ ÎÉÎÖÎæÎÖÎØ ÎòÎáÎÖÎ¿ ÎóÎØ": [31.5282, 34.5956],
   
-  // צפון וקו עימות
-  "קרית שמונה": [33.2073, 35.5694], "מטולה": [33.2801, 35.5786], "צפת": [32.9646, 35.4960], "נהריה": [33.0151, 35.0941],
-  "חיפה": [32.7940, 34.9896], "עכו": [32.9271, 35.0754], "כרמיאל": [32.9167, 35.2953], "טבריה": [32.7944, 35.5333],
-  "קצרין": [32.9922, 35.6917], "שלומי": [33.0744, 35.1436], "מרגליות": [33.2206, 35.5489], "משגב עם": [33.2506, 35.5489],
-  "יפתח": [33.1119, 35.5564], "מנרה": [33.1969, 35.5414], "ערב אל עראמשה": [33.0906, 35.1953], "זרעית": [33.0844, 35.2750],
-  "שתולה": [33.0781, 35.3119], "נטועה": [33.0644, 35.3503], "מתת": [33.0458, 35.3400], "סאסא": [33.0286, 35.3942],
-  "ברעם": [33.0583, 35.4333], "יראון": [33.0758, 35.4544], "אביבים": [33.0933, 35.4644], "דובב": [33.0519, 35.3975],
-  "מלכיה": [33.0967, 35.5122], "ראש פינה": [32.9697, 35.5414], "קרית מוצקין": [32.8333, 35.0833], "קרית ביאליק": [32.8333, 35.0833],
-  "חורפיש": [33.0167, 35.3500], "מעלות תרשיחא": [33.0167, 35.2667], "מג'דל שמס": [33.2667, 35.7667], "ראג'ר": [33.2750, 35.6219],
+  // ÎªÎñÎòÎƒ ÎòÎºÎò ÎóÎÖÎ×ÎòÎ¬
+  "ÎºÎ¿ÎÖÎ¬ Î®Î×ÎòÎáÎö": [33.2073, 35.5694], "Î×ÎÿÎòÎ£Îö": [33.2801, 35.5786], "ÎªÎñÎ¬": [32.9646, 35.4960], "ÎáÎöÎ¿ÎÖÎö": [33.0151, 35.0941],
+  "ÎùÎÖÎñÎö": [32.7940, 34.9896], "ÎóÎøÎò": [32.9271, 35.0754], "ÎøÎ¿Î×ÎÖÎÉÎ£": [32.9167, 35.2953], "ÎÿÎæÎ¿ÎÖÎö": [32.7944, 35.5333],
+  "ÎºÎªÎ¿ÎÖÎƒ": [32.9922, 35.6917], "Î®Î£ÎòÎ×ÎÖ": [33.0744, 35.1436], "Î×Î¿ÎÆÎ£ÎÖÎòÎ¬": [33.2206, 35.5489], "Î×Î®ÎÆÎæ ÎóÎØ": [33.2506, 35.5489],
+  "ÎÖÎñÎ¬Îù": [33.1119, 35.5564], "Î×ÎáÎ¿Îö": [33.1969, 35.5414], "ÎóÎ¿Îæ ÎÉÎ£ ÎóÎ¿ÎÉÎ×Î®Îö": [33.0906, 35.1953], "ÎûÎ¿ÎóÎÖÎ¬": [33.0844, 35.2750],
+  "Î®Î¬ÎòÎ£Îö": [33.0781, 35.3119], "ÎáÎÿÎòÎóÎö": [33.0644, 35.3503], "Î×Î¬Î¬": [33.0458, 35.3400], "ÎíÎÉÎíÎÉ": [33.0286, 35.3942],
+  "ÎæÎ¿ÎóÎØ": [33.0583, 35.4333], "ÎÖÎ¿ÎÉÎòÎƒ": [33.0758, 35.4544], "ÎÉÎæÎÖÎæÎÖÎØ": [33.0933, 35.4644], "ÎôÎòÎæÎæ": [33.0519, 35.3975],
+  "Î×Î£ÎøÎÖÎö": [33.0967, 35.5122], "Î¿ÎÉÎ® ÎñÎÖÎáÎö": [32.9697, 35.5414], "ÎºÎ¿ÎÖÎ¬ Î×ÎòÎªÎºÎÖÎƒ": [32.8333, 35.0833], "ÎºÎ¿ÎÖÎ¬ ÎæÎÖÎÉÎ£ÎÖÎº": [32.8333, 35.0833],
+  "ÎùÎòÎ¿ÎñÎÖÎ®": [33.0167, 35.3500], "Î×ÎóÎ£ÎòÎ¬ Î¬Î¿Î®ÎÖÎùÎÉ": [33.0167, 35.2667], "Î×ÎÆ'ÎôÎ£ Î®Î×Îí": [33.2667, 35.7667], "Î¿ÎÉÎÆ'Î¿": [33.2750, 35.6219],
 
-  // אזורים כלליים
-  "עוטף עזה": [31.4200, 34.4500], "גליל עליון": [33.0500, 35.5000], "גליל מערבי": [33.0300, 35.2000],
-  "גולן": [33.1000, 35.7000], "העמקים": [32.6000, 35.3000], "שרון": [32.2500, 34.9000], 
-  "דן": [32.0800, 34.7800], "שפלה": [31.9000, 34.8500], "לכיש": [31.5500, 34.7000], "נגב": [31.2000, 34.8000],
+  // ÎÉÎûÎòÎ¿ÎÖÎØ ÎøÎ£Î£ÎÖÎÖÎØ
+  "ÎóÎòÎÿÎú ÎóÎûÎö": [31.4200, 34.4500], "ÎÆÎ£ÎÖÎ£ ÎóÎ£ÎÖÎòÎƒ": [33.0500, 35.5000], "ÎÆÎ£ÎÖÎ£ Î×ÎóÎ¿ÎæÎÖ": [33.0300, 35.2000],
+  "ÎÆÎòÎ£Îƒ": [33.1000, 35.7000], "ÎöÎóÎ×ÎºÎÖÎØ": [32.6000, 35.3000], "Î®Î¿ÎòÎƒ": [32.2500, 34.9000], 
+  "ÎôÎƒ": [32.0800, 34.7800], "Î®ÎñÎ£Îö": [31.9000, 34.8500], "Î£ÎøÎÖÎ®": [31.5500, 34.7000], "ÎáÎÆÎæ": [31.2000, 34.8000],
 
-  // מרכז
-  "תל אביב": [32.0853, 34.7818], "תל אביב - יפו": [32.0853, 34.7818], "ירושלים": [31.7683, 35.2137], "ראשון לציון": [31.9730, 34.7925], 
-  "פתח תקווה": [32.0833, 34.8833], "חולון": [32.0167, 34.7667], "בת ים": [32.0167, 34.7333], "רמת גן": [32.0833, 34.8167],
-  "הרצליה": [32.1667, 34.8333], "נתניה": [32.3329, 34.8599], "חדרה": [32.4333, 34.9167], "רעננה": [32.1833, 34.8667],
-  "כפר סבא": [32.1750, 34.9069], "הוד השרון": [32.1500, 34.8833], "מודיעין": [31.8969, 35.0086], "רחובות": [31.8944, 34.8119],
-  "בית שמש": [31.7456, 34.9867], "לוד": [31.9511, 34.8881], "רמלה": [31.9272, 34.8625], "קרית גת": [31.6081, 34.7644],
-  "קרית מלאכי": [31.7275, 34.7447], "בני ברק": [32.0833, 34.8333], "גבעתיים": [32.0722, 34.8125],
-  "רמת השרון": [32.1397, 34.8397], "נס ציונה": [31.9281, 34.7981], "יבנה": [31.8778, 34.7394],
-  "גדרה": [31.8119, 34.7778], "מזכרת בתיה": [31.8539, 34.8433], "גן יבנה": [31.7856, 34.6942], 
-  "ערד": [31.2608, 35.2125], "דימונה": [31.0667, 35.0333], "ירוחם": [30.9881, 34.9303], "מצפה רמון": [30.6083, 34.8028],
-  "סח'נין": [32.8614, 35.3031], "שפרעם": [32.8053, 35.1706], "טמרה": [32.8536, 35.2014], "נצרת": [32.7019, 35.3033],
-  "נוף הגליל": [32.7, 35.31], "עפולה": [32.6078, 35.2892], "מגדל העמק": [32.6733, 35.2417], "בית שאן": [32.4972, 35.4972],
-  "אום אל-פחם": [32.5167, 35.1500], "טייבה": [32.2667, 35.0167], "קלנסווה": [32.2833, 35.0333], "באקה אל-גרביה": [32.4167, 35.0333],
-  "מרחב דן": [32.0800, 34.7800], "מרחב ירקון": [32.1000, 34.8500], "מרחב לכיש": [31.6000, 34.7500], "מרחב שפלה": [31.9000, 34.8500],
-  "מרחב נגב": [31.2000, 34.8000], "מרחב חיפה": [32.8000, 34.9900], "מרחב אשר": [32.9500, 35.1000], "מרחב עמקים": [32.6000, 35.3000],
-  "מרחב גליל": [33.0000, 35.4000], "מרחב גולן": [33.1000, 35.7000], "מרחב יהודה": [31.5000, 35.0500], "מרחב שומרון": [32.2000, 35.2000],
-  "מרחב אילת": [29.5577, 34.9519], "אלוני הבשן": [33.0444, 35.8361], "קשת": [33.0000, 35.8000], "נטור": [32.8500, 35.7500],
-  "חספין": [32.8200, 35.7700], "מבוא חמה": [32.7300, 35.6500], "עין גב": [32.8100, 35.6400], "כנרת": [32.7200, 35.5800],
+  // Î×Î¿ÎøÎû
+  "Î¬Î£ ÎÉÎæÎÖÎæ": [32.0853, 34.7818], "Î¬Î£ ÎÉÎæÎÖÎæ - ÎÖÎñÎò": [32.0853, 34.7818], "ÎÖÎ¿ÎòÎ®Î£ÎÖÎØ": [31.7683, 35.2137], "Î¿ÎÉÎ®ÎòÎƒ Î£ÎªÎÖÎòÎƒ": [31.9730, 34.7925], 
+  "ÎñÎ¬Îù Î¬ÎºÎòÎòÎö": [32.0833, 34.8833], "ÎùÎòÎ£ÎòÎƒ": [32.0167, 34.7667], "ÎæÎ¬ ÎÖÎØ": [32.0167, 34.7333], "Î¿Î×Î¬ ÎÆÎƒ": [32.0833, 34.8167],
+  "ÎöÎ¿ÎªÎ£ÎÖÎö": [32.1667, 34.8333], "ÎáÎ¬ÎáÎÖÎö": [32.3329, 34.8599], "ÎùÎôÎ¿Îö": [32.4333, 34.9167], "Î¿ÎóÎáÎáÎö": [32.1833, 34.8667],
+  "ÎøÎñÎ¿ ÎíÎæÎÉ": [32.1750, 34.9069], "ÎöÎòÎô ÎöÎ®Î¿ÎòÎƒ": [32.1500, 34.8833], "Î×ÎòÎôÎÖÎóÎÖÎƒ": [31.8969, 35.0086], "Î¿ÎùÎòÎæÎòÎ¬": [31.8944, 34.8119],
+  "ÎæÎÖÎ¬ Î®Î×Î®": [31.7456, 34.9867], "Î£ÎòÎô": [31.9511, 34.8881], "Î¿Î×Î£Îö": [31.9272, 34.8625], "ÎºÎ¿ÎÖÎ¬ ÎÆÎ¬": [31.6081, 34.7644],
+  "ÎºÎ¿ÎÖÎ¬ Î×Î£ÎÉÎøÎÖ": [31.7275, 34.7447], "ÎæÎáÎÖ ÎæÎ¿Îº": [32.0833, 34.8333], "ÎÆÎæÎóÎ¬ÎÖÎÖÎØ": [32.0722, 34.8125],
+  "Î¿Î×Î¬ ÎöÎ®Î¿ÎòÎƒ": [32.1397, 34.8397], "ÎáÎí ÎªÎÖÎòÎáÎö": [31.9281, 34.7981], "ÎÖÎæÎáÎö": [31.8778, 34.7394],
+  "ÎÆÎôÎ¿Îö": [31.8119, 34.7778], "Î×ÎûÎøÎ¿Î¬ ÎæÎ¬ÎÖÎö": [31.8539, 34.8433], "ÎÆÎƒ ÎÖÎæÎáÎö": [31.7856, 34.6942], 
+  "ÎóÎ¿Îô": [31.2608, 35.2125], "ÎôÎÖÎ×ÎòÎáÎö": [31.0667, 35.0333], "ÎÖÎ¿ÎòÎùÎØ": [30.9881, 34.9303], "Î×ÎªÎñÎö Î¿Î×ÎòÎƒ": [30.6083, 34.8028],
+  "ÎíÎù'ÎáÎÖÎƒ": [32.8614, 35.3031], "Î®ÎñÎ¿ÎóÎØ": [32.8053, 35.1706], "ÎÿÎ×Î¿Îö": [32.8536, 35.2014], "ÎáÎªÎ¿Î¬": [32.7019, 35.3033],
+  "ÎáÎòÎú ÎöÎÆÎ£ÎÖÎ£": [32.7, 35.31], "ÎóÎñÎòÎ£Îö": [32.6078, 35.2892], "Î×ÎÆÎôÎ£ ÎöÎóÎ×Îº": [32.6733, 35.2417], "ÎæÎÖÎ¬ Î®ÎÉÎƒ": [32.4972, 35.4972],
+  "ÎÉÎòÎØ ÎÉÎ£-ÎñÎùÎØ": [32.5167, 35.1500], "ÎÿÎÖÎÖÎæÎö": [32.2667, 35.0167], "ÎºÎ£ÎáÎíÎòÎòÎö": [32.2833, 35.0333], "ÎæÎÉÎºÎö ÎÉÎ£-ÎÆÎ¿ÎæÎÖÎö": [32.4167, 35.0333],
+  "Î×Î¿ÎùÎæ ÎôÎƒ": [32.0800, 34.7800], "Î×Î¿ÎùÎæ ÎÖÎ¿ÎºÎòÎƒ": [32.1000, 34.8500], "Î×Î¿ÎùÎæ Î£ÎøÎÖÎ®": [31.6000, 34.7500], "Î×Î¿ÎùÎæ Î®ÎñÎ£Îö": [31.9000, 34.8500],
+  "Î×Î¿ÎùÎæ ÎáÎÆÎæ": [31.2000, 34.8000], "Î×Î¿ÎùÎæ ÎùÎÖÎñÎö": [32.8000, 34.9900], "Î×Î¿ÎùÎæ ÎÉÎ®Î¿": [32.9500, 35.1000], "Î×Î¿ÎùÎæ ÎóÎ×ÎºÎÖÎØ": [32.6000, 35.3000],
+  "Î×Î¿ÎùÎæ ÎÆÎ£ÎÖÎ£": [33.0000, 35.4000], "Î×Î¿ÎùÎæ ÎÆÎòÎ£Îƒ": [33.1000, 35.7000], "Î×Î¿ÎùÎæ ÎÖÎöÎòÎôÎö": [31.5000, 35.0500], "Î×Î¿ÎùÎæ Î®ÎòÎ×Î¿ÎòÎƒ": [32.2000, 35.2000],
+  "Î×Î¿ÎùÎæ ÎÉÎÖÎ£Î¬": [29.5577, 34.9519], "ÎÉÎ£ÎòÎáÎÖ ÎöÎæÎ®Îƒ": [33.0444, 35.8361], "ÎºÎ®Î¬": [33.0000, 35.8000], "ÎáÎÿÎòÎ¿": [32.8500, 35.7500],
+  "ÎùÎíÎñÎÖÎƒ": [32.8200, 35.7700], "Î×ÎæÎòÎÉ ÎùÎ×Îö": [32.7300, 35.6500], "ÎóÎÖÎƒ ÎÆÎæ": [32.8100, 35.6400], "ÎøÎáÎ¿Î¬": [32.7200, 35.5800],
 };
 
 interface AlertData {
@@ -396,12 +240,12 @@ interface AlertData {
 
 const getWarningTime = (city: string) => {
   const normalized = city.trim();
-  if (normalized.includes("שדרות") || normalized.includes("עוטף עזה") || normalized.includes("נתיב העשרה")) return "15 שניות";
-  if (normalized.includes("אשקלון") || normalized.includes("נתיבות") || normalized.includes("זיקים")) return "30 שניות";
-  if (normalized.includes("אשדוד") || normalized.includes("באר שבע") || normalized.includes("גן יבנה")) return "45-60 שניות";
-  if (normalized.includes("תל אביב") || normalized.includes("ירושלים") || normalized.includes("רמת גן")) return "90 שניות";
-  if (normalized.includes("חיפה") || normalized.includes("קריות")) return "60 שניות";
-  return "דקה וחצי";
+  if (normalized.includes("Î®ÎôÎ¿ÎòÎ¬") || normalized.includes("ÎóÎòÎÿÎú ÎóÎûÎö") || normalized.includes("ÎáÎ¬ÎÖÎæ ÎöÎóÎ®Î¿Îö")) return "15 Î®ÎáÎÖÎòÎ¬";
+  if (normalized.includes("ÎÉÎ®ÎºÎ£ÎòÎƒ") || normalized.includes("ÎáÎ¬ÎÖÎæÎòÎ¬") || normalized.includes("ÎûÎÖÎºÎÖÎØ")) return "30 Î®ÎáÎÖÎòÎ¬";
+  if (normalized.includes("ÎÉÎ®ÎôÎòÎô") || normalized.includes("ÎæÎÉÎ¿ Î®ÎæÎó") || normalized.includes("ÎÆÎƒ ÎÖÎæÎáÎö")) return "45-60 Î®ÎáÎÖÎòÎ¬";
+  if (normalized.includes("Î¬Î£ ÎÉÎæÎÖÎæ") || normalized.includes("ÎÖÎ¿ÎòÎ®Î£ÎÖÎØ") || normalized.includes("Î¿Î×Î¬ ÎÆÎƒ")) return "90 Î®ÎáÎÖÎòÎ¬";
+  if (normalized.includes("ÎùÎÖÎñÎö") || normalized.includes("ÎºÎ¿ÎÖÎòÎ¬")) return "60 Î®ÎáÎÖÎòÎ¬";
+  return "ÎôÎºÎö ÎòÎùÎªÎÖ";
 };
 
 const customTooltipPosition = (point: any, params: any, dom: any, rect: any, size: any) => {
@@ -410,54 +254,17 @@ const customTooltipPosition = (point: any, params: any, dom: any, rect: any, siz
   return obj;
 };
 
-const MONTH_NAMES_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
-const MONTH_NAMES_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-const getGroupedData = (data: any[], res: string, lang: string) => {
+const getGroupedData = (data: any[], res: string) => {
   const grouped: Record<string, number> = {};
   data.forEach(d => {
     let key = "";
     if (res === 'year') key = d.year;
-    else if (res === 'month') {
-      // Generic month distribution: aggregate all years by month name
-      const monthIdx = d.dateObj.getMonth();
-      key = lang === 'he' ? MONTH_NAMES_HE[monthIdx] : MONTH_NAMES_EN[monthIdx];
-    }
+    else if (res === 'month') key = d.month;
     else if (res === 'weekday') key = daysHe[d.dayOfWeek];
     else if (res === 'hour') key = String(d.hour).padStart(2, '0') + ":00";
-    // 'minute' = distribution within the hour, each minute 0-59 as a separate bin
-    else if (res === 'minute') {
-      const min = d.dateObj.getMinutes();
-      key = String(min).padStart(2, '0');
-    }
-    else if (res === 'date') {
-      // YYYY-MM-DD for correct chronological sorting
-      const y = d.dateObj.getFullYear();
-      const mo = String(d.dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(d.dateObj.getDate()).padStart(2, '0');
-      key = `${y}-${mo}-${day}`;
-    }
+    else if (res === 'minute') key = String(d.hour).padStart(2, '0') + ":" + String(Math.floor(d.dateObj.getMinutes()/10)*10).padStart(2, '0');
     grouped[key] = (grouped[key] || 0) + 1;
   });
-
-  // Fill in all missing bins with 0 for fixed-range resolutions
-  if (res === 'hour') {
-    for (let h = 0; h < 24; h++) {
-      const k = String(h).padStart(2, '0') + ':00';
-      if (!(k in grouped)) grouped[k] = 0;
-    }
-  } else if (res === 'minute') {
-    for (let m = 0; m < 60; m++) {
-      const k = String(m).padStart(2, '0');
-      if (!(k in grouped)) grouped[k] = 0;
-    }
-  } else if (res === 'weekday') {
-    daysHe.forEach(day => { if (!(day in grouped)) grouped[day] = 0; });
-  } else if (res === 'month') {
-    const names = lang === 'he' ? MONTH_NAMES_HE : MONTH_NAMES_EN;
-    names.forEach(name => { if (!(name in grouped)) grouped[name] = 0; });
-  }
-
   return grouped;
 };
 
@@ -484,7 +291,7 @@ const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: 
         <div className="flex items-center gap-2">
           {Icon && <Icon size={14} className="text-primary-azure" />}
           <span className="truncate max-w-[80px]">
-            {selected.includes('all') ? label : `${selected.length} ${isRtl ? 'נבחרו' : 'Selected'}`}
+            {selected.includes('all') ? label : `${selected.length} ${isRtl ? 'ÎáÎæÎùÎ¿Îò' : 'Selected'}`}
           </span>
         </div>
         <ChevronDown size={12} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
@@ -497,14 +304,13 @@ const MultiSelect = ({ label, options, selected, onChange, icon: Icon, isRtl }: 
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className={`absolute top-full mt-2 ${isRtl ? 'right-0' : 'left-0'} z-50 p-2 min-w-[220px] max-h-[300px] overflow-y-auto shadow-2xl rounded-2xl border border-white/15 backdrop-blur-xl`}
-              style={{ background: 'rgba(10,15,30,0.88)' }}
+              className={`absolute top-full mt-2 ${isRtl ? 'right-0' : 'left-0'} glass-card z-50 p-2 min-w-[220px] max-h-[300px] overflow-y-auto shadow-2xl border border-white/10 backdrop-blur-3xl`}
             >
               <div 
                 className={`flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors ${selected.includes('all') ? 'text-primary-azure bg-white/5' : 'text-white/70'}`}
                 onClick={() => { toggle('all'); setIsOpen(false); }}
               >
-                <span className="text-xs font-black uppercase tracking-widest">{isRtl ? 'הכל' : 'ALL'}</span>
+                <span className="text-xs font-black uppercase tracking-widest">{isRtl ? 'ÎöÎøÎ£' : 'ALL'}</span>
                 {selected.includes('all') && <Check size={14} />}
               </div>
               <div className="h-[1px] bg-white/5 my-1" />
@@ -539,11 +345,11 @@ export default function App() {
   const [threatFilter, setThreatFilter] = useState<string[]>(['all']);
   const [sourceFilter, setSourceFilter] = useState<string[]>(['all']);
   const [operationFilter, setOperationFilter] = useState<string[]>(['all']);
-  const [timeResolution, setTimeResolution] = useState<'year' | 'month' | 'weekday' | 'hour' | 'minute' | 'date'>('date');
+  const [timeResolution, setTimeResolution] = useState<'year' | 'month' | 'weekday' | 'hour' | 'minute'>('month');
 
   // New Features State
-  const [darkMode, setDarkMode] = useState(true);
-  const [lang, setLang] = useState<'he' | 'en' | 'ar' | 'fr' | 'de' | 'es'>('he');
+  const [darkMode, setDarkMode] = useState(false);
+  const [lang, setLang] = useState<'he' | 'en'>('he');
   const [mapLayer, setMapLayer] = useState<'streets' | 'satellite'>('streets');
   const [compareMode, setCompareMode] = useState(false);
   const [compareOperation, setCompareOperation] = useState<string[]>(['all']);
@@ -551,16 +357,10 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isFromCache, setIsFromCache] = useState(false);
   const [activeSearchSource, setActiveSearchSource] = useState<'desktop' | 'mobile' | null>(null);
 
-  useEffect(() => {
-    if (darkMode) document.documentElement.classList.add('neon');
-    else document.documentElement.classList.remove('neon');
-  }, [darkMode]);
-
   const t = translations[lang];
-  const isRtl = lang === 'he' || lang === 'ar';
+  const isRtl = lang === 'he';
 
   // Refs for charts and map
   const mapRef = useRef<L.Map | null>(null);
@@ -577,17 +377,11 @@ export default function App() {
   const threatInstance = useRef<echarts.ECharts | null>(null);
   const sourceInstance = useRef<echarts.ECharts | null>(null);
 
-  const geoCache = useRef<any>(null);
-  if (geoCache.current === null) {
-    try {
-      const saved = typeof window !== 'undefined' ? localStorage.getItem('alertsGeoCache') : null;
-      geoCache.current = saved ? JSON.parse(saved) : {};
-    } catch (e) {
-      geoCache.current = {};
-    }
-  }
+  const geoCache = useRef<Record<string, [number, number] | "NOT_FOUND">>(
+    JSON.parse(localStorage.getItem('alertsGeoCache') || '{}')
+  );
 
-  const operationOptions = useMemo(() => [...operationsDict.map(op => op.name), "שגרה (ללא מערכה)"], []);
+  const operationOptions = useMemo(() => [...operationsDict.map(op => op.name), "Î®ÎÆÎ¿Îö (Î£Î£ÎÉ Î×ÎóÎ¿ÎøÎö)"], []);
   const threatOptions = useMemo(() => Array.from(new Set(Object.values(threatDict))), []);
   const sourceOptions = useMemo(() => Array.from(new Set(globalData.map(d => d.sourceStr))), [globalData]);
   const allCities = useMemo(() => {
@@ -615,7 +409,7 @@ export default function App() {
         matchedOps.push(op.name);
       }
     }
-    return matchedOps.length > 0 ? matchedOps : ["שגרה (ללא מערכה)"];
+    return matchedOps.length > 0 ? matchedOps : ["Î®ÎÆÎ¿Îö (Î£Î£ÎÉ Î×ÎóÎ¿ÎøÎö)"];
   };
 
   const getCityCoords = (cityStr: string) => {
@@ -694,36 +488,18 @@ export default function App() {
           (remoteVersion === '' && cached.data && cached.data.length > 0)
         );
 
-        if (!cacheIsGood) {
-          console.log("Cache status: Outdated or Missing.", {
-            hasCache: !!cached,
-            remoteVersion,
-            cachedVersion: cached?.lastModified,
-            match: cached?.lastModified === remoteVersion
-          });
-        }
-
         if (cacheIsGood && cached) {
           console.log("Cache hit! Loading", cached.data.length, "rows from local storage.");
-          setLoadingStatus(lang === 'he' ? "טוען מהמטמון (מהיר)..." : "Loading from cache (fast)...");
-          
-          // CRITICAL: Hydrate Date objects and ensure structure
-          const hydrated = cached.data.map((d: any) => ({
-            ...d,
-            dateObj: new Date(d.dateObj || d.time),
-            operationsArray: d.operationsArray || []
-          }));
-          
-          setGlobalData(hydrated);
-          setFilteredData(hydrated);
-          setIsFromCache(true);
+          setLoadingStatus(lang === 'he' ? "ÎÿÎòÎóÎƒ Î×ÎöÎ×ÎÿÎ×ÎòÎƒ (Î×ÎöÎÖÎ¿)..." : "Loading from cache (fast)...");
+          setGlobalData(cached.data);
+          setFilteredData(cached.data);
           setLoading(false);
           return;
         }
 
         // 3. Fallback to download if cache miss or outdated
         console.log("Cache miss or outdated. Downloading CSV...");
-        setLoadingStatus(lang === 'he' ? "מוריד נתונים מ-GitHub..." : "Downloading data from GitHub...");
+        setLoadingStatus(lang === 'he' ? "Î×ÎòÎ¿ÎÖÎô ÎáÎ¬ÎòÎáÎÖÎØ Î×-GitHub..." : "Downloading data from GitHub...");
         Papa.parse(csvUrl, {
           download: true,
           header: true,
@@ -736,29 +512,29 @@ export default function App() {
               const opsArray = getOperationNames(dt);
               const rawStr = Object.values(d).join(" ").toLowerCase();
               const city = (d.cities || "").toLowerCase();
-              let extractedSource = "מעורב / לא סווג";
+              let extractedSource = "Î×ÎóÎòÎ¿Îæ / Î£ÎÉ ÎíÎòÎòÎÆ";
               
-              if (rawStr.includes("איראן") || rawStr.includes("iran")) extractedSource = "איראן";
-              else if (rawStr.includes("תימן") || rawStr.includes("yemen") || rawStr.includes("חות'ים")) extractedSource = "תימן";
-              else if (rawStr.includes("עיראק") || rawStr.includes("iraq")) extractedSource = "עיראק";
-              else if (rawStr.includes("סוריה") || rawStr.includes("syria")) extractedSource = "סוריה";
-              else if (rawStr.includes("לבנון") || rawStr.includes("lebanon") || rawStr.includes("חיזבאללה")) extractedSource = "לבנון";
-              else if (rawStr.includes("עזה") || rawStr.includes("gaza") || rawStr.includes("חמאס") || rawStr.includes("ג'יהאד")) extractedSource = "רצועת עזה";
-              else if (opsArray.some(op => op.includes("איראן"))) {
-                if (city.includes("קרית שמונה") || city.includes("מטולה")) extractedSource = "לבנון";
-                else extractedSource = "איראן";
+              if (rawStr.includes("ÎÉÎÖÎ¿ÎÉÎƒ") || rawStr.includes("iran")) extractedSource = "ÎÉÎÖÎ¿ÎÉÎƒ";
+              else if (rawStr.includes("Î¬ÎÖÎ×Îƒ") || rawStr.includes("yemen") || rawStr.includes("ÎùÎòÎ¬'ÎÖÎØ")) extractedSource = "Î¬ÎÖÎ×Îƒ";
+              else if (rawStr.includes("ÎóÎÖÎ¿ÎÉÎº") || rawStr.includes("iraq")) extractedSource = "ÎóÎÖÎ¿ÎÉÎº";
+              else if (rawStr.includes("ÎíÎòÎ¿ÎÖÎö") || rawStr.includes("syria")) extractedSource = "ÎíÎòÎ¿ÎÖÎö";
+              else if (rawStr.includes("Î£ÎæÎáÎòÎƒ") || rawStr.includes("lebanon") || rawStr.includes("ÎùÎÖÎûÎæÎÉÎ£Î£Îö")) extractedSource = "Î£ÎæÎáÎòÎƒ";
+              else if (rawStr.includes("ÎóÎûÎö") || rawStr.includes("gaza") || rawStr.includes("ÎùÎ×ÎÉÎí") || rawStr.includes("ÎÆ'ÎÖÎöÎÉÎô")) extractedSource = "Î¿ÎªÎòÎóÎ¬ ÎóÎûÎö";
+              else if (opsArray.some(op => op.includes("ÎÉÎÖÎ¿ÎÉÎƒ"))) {
+                if (city.includes("ÎºÎ¿ÎÖÎ¬ Î®Î×ÎòÎáÎö") || city.includes("Î×ÎÿÎòÎ£Îö")) extractedSource = "Î£ÎæÎáÎòÎƒ";
+                else extractedSource = "ÎÉÎÖÎ¿ÎÉÎƒ";
               } else {
-                if (city.includes("שדרות") || city.includes("אשקלון") || city.includes("עוטף")) extractedSource = "רצועת עזה";
-                else if (city.includes("קרית שמונה") || city.includes("מטולה") || city.includes("צפת")) extractedSource = "לבנון";
-                else if (city.includes("אילת")) extractedSource = "תימן / עיראק";
+                if (city.includes("Î®ÎôÎ¿ÎòÎ¬") || city.includes("ÎÉÎ®ÎºÎ£ÎòÎƒ") || city.includes("ÎóÎòÎÿÎú")) extractedSource = "Î¿ÎªÎòÎóÎ¬ ÎóÎûÎö";
+                else if (city.includes("ÎºÎ¿ÎÖÎ¬ Î®Î×ÎòÎáÎö") || city.includes("Î×ÎÿÎòÎ£Îö") || city.includes("ÎªÎñÎ¬")) extractedSource = "Î£ÎæÎáÎòÎƒ";
+                else if (city.includes("ÎÉÎÖÎ£Î¬")) extractedSource = "Î¬ÎÖÎ×Îƒ / ÎóÎÖÎ¿ÎÉÎº";
               }
 
               let rawThreatVal = String(d.threat || d.category || '').trim();
-              let extractedThreat = threatDict[rawThreatVal] || rawThreatVal || 'אחר';
-              if (rawStr.includes("כלי טיס") || rawStr.includes("כטב\"מ")) extractedThreat = "חדירת כלי טיס עוין";
-              else if (rawStr.includes("מחבלים")) extractedThreat = "חדירת מחבלים";
-              else if (rawStr.includes("חומרים מסוכנים")) extractedThreat = "אירוע חומרים מסוכנים";
-              else if (rawStr.includes("רקטות") || rawStr.includes("טילים")) extractedThreat = "ירי רקטות וטילים";
+              let extractedThreat = threatDict[rawThreatVal] || rawThreatVal || 'ÎÉÎùÎ¿';
+              if (rawStr.includes("ÎøÎ£ÎÖ ÎÿÎÖÎí") || rawStr.includes("ÎøÎÿÎæ\"Î×")) extractedThreat = "ÎùÎôÎÖÎ¿Î¬ ÎøÎ£ÎÖ ÎÿÎÖÎí ÎóÎòÎÖÎƒ";
+              else if (rawStr.includes("Î×ÎùÎæÎ£ÎÖÎØ")) extractedThreat = "ÎùÎôÎÖÎ¿Î¬ Î×ÎùÎæÎ£ÎÖÎØ";
+              else if (rawStr.includes("ÎùÎòÎ×Î¿ÎÖÎØ Î×ÎíÎòÎøÎáÎÖÎØ")) extractedThreat = "ÎÉÎÖÎ¿ÎòÎó ÎùÎòÎ×Î¿ÎÖÎØ Î×ÎíÎòÎøÎáÎÖÎØ";
+              else if (rawStr.includes("Î¿ÎºÎÿÎòÎ¬") || rawStr.includes("ÎÿÎÖÎ£ÎÖÎØ")) extractedThreat = "ÎÖÎ¿ÎÖ Î¿ÎºÎÿÎòÎ¬ ÎòÎÿÎÖÎ£ÎÖÎØ";
 
               return {
                 ...d,
@@ -800,7 +576,7 @@ loadData();
               if (rawData.contents.trim().startsWith('{') || rawData.contents.trim().startsWith('[')) {
                 const alertData = JSON.parse(rawData.contents);
                 if (alertData?.data?.length > 0) {
-                  setLiveAlert({ cities: alertData.data.join(', '), title: alertData.title || 'התרעה' });
+                  setLiveAlert({ cities: alertData.data.join(', '), title: alertData.title || 'ÎöÎ¬Î¿ÎóÎö' });
                   return;
                 }
               }
@@ -885,9 +661,9 @@ loadData();
         let matchCity = true, matchThreat = true, matchSource = true, matchOperation = true, matchDate = true;
         if (citySearch) matchCity = d.cities && d.cities.toLowerCase().includes(citySearch.toLowerCase());
         
-        const dThreat = d.threatStr || 'אחר';
-        const dSource = d.sourceStr || 'מעורב / לא סווג';
-        const dOps = d.operationsArray || ['שגרה'];
+        const dThreat = d.threatStr || 'ÎÉÎùÎ¿';
+        const dSource = d.sourceStr || 'Î×ÎóÎòÎ¿Îæ / Î£ÎÉ ÎíÎòÎòÎÆ';
+        const dOps = d.operationsArray || ['Î®ÎÆÎ¿Îö'];
 
         if (!threatFilter.includes('all')) matchThreat = threatFilter.includes(dThreat);
         if (!sourceFilter.includes('all')) matchSource = sourceFilter.includes(dSource);
@@ -907,7 +683,7 @@ loadData();
       
       // Avoid infinite loop if results haven't changed in length
       // For large datasets, a more robust check might be needed, but length + console log for debug
-      if (filtered.length !== filteredData.length || (filtered.length > 0 && filteredData.length > 0 && filtered[0].time !== filteredData[0].time)) {
+      if (filtered.length !== filteredData.length || (filtered.length > 0 && filteredData.length > 0 && filtered[0] !== filteredData[0])) {
          console.log("Filtering complete. Result size:", filtered.length);
          setFilteredData(filtered);
       }
@@ -972,7 +748,7 @@ loadData();
           opacity: 1,
           fillOpacity: 0.6
         }).addTo(mapRef.current)
-          .bindTooltip(`<b>${city}</b><br>${lang === 'he' ? 'התרעות' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'top' });
+          .bindTooltip(`<b>${city}</b><br>${lang === 'he' ? 'ÎöÎ¬Î¿ÎóÎòÎ¬' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'top' });
         markersRef.current.push(marker);
       } else if (!geoCache.current.hasOwnProperty(city)) {
         queue.push({ city, count: cityCounts[city] });
@@ -981,7 +757,7 @@ loadData();
 
     if (queue.length > 0) {
       const processQueue = async () => {
-        setGeocodingStatus("מאתר מיקומים...");
+        setGeocodingStatus("Î×ÎÉÎ¬Î¿ Î×ÎÖÎºÎòÎ×ÎÖÎØ...");
         // Limit geocoding to prevent long 'stuck' processes
         const limit = 20;
         const toProcess = queue.slice(0, limit);
@@ -989,9 +765,9 @@ loadData();
         for (let i = 0; i < toProcess.length; i++) {
           if (isCancelled) break;
           const item = toProcess[i];
-          const cleanName = item.city.replace(/[0-9]/g, '').replace('מרחב', '').split('-')[0].trim();
+          const cleanName = item.city.replace(/[0-9]/g, '').replace('Î×Î¿ÎùÎæ', '').split('-')[0].trim();
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}, ישראל`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanName)}, ÎÖÎ®Î¿ÎÉÎ£`);
             if (!res.ok) throw new Error("Fetch failed");
             const data = await res.json();
             if (data?.[0]) {
@@ -1006,7 +782,7 @@ loadData();
             break; 
           }
           await new Promise(r => setTimeout(r, 1000));
-          if (!isCancelled) setGeocodingStatus(`מאתר ${Math.round(((i + 1) / toProcess.length) * 100)}%`);
+          if (!isCancelled) setGeocodingStatus(`Î×ÎÉÎ¬Î¿ ${Math.round(((i + 1) / toProcess.length) * 100)}%`);
         }
         if (!isCancelled) setGeocodingStatus("");
       };
@@ -1046,21 +822,12 @@ loadData();
       if (ref.current) {
         const observer = new ResizeObserver(() => {
           inst.current?.resize();
-    });
+        });
         observer.observe(ref.current);
         observers.push(observer);
       }
     });
     
-    const chartTextColor = darkMode ? '#e2e8f0' : '#475569';
-    const chartAxisColor = darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-
-    const commonAxis = {
-      axisLabel: { color: chartTextColor, fontSize: 10, fontFamily: 'Assistant' },
-      axisLine: { lineStyle: { color: chartAxisColor } },
-      splitLine: { lineStyle: { color: chartAxisColor, type: 'dashed' } }
-    };
-
     // Click events for cross-filtering
 
     return () => {
@@ -1074,20 +841,13 @@ loadData();
       threatInstance.current = null;
       sourceInstance.current = null;
     };
-  }, [loading, darkMode]); // Added darkMode to dependencies for chart re-initialization
+  }, [loading]);
+
+
 
   useEffect(() => {
     if (!timeSeriesInstance.current) return;
     
-    const chartTextColor = darkMode ? '#e2e8f0' : '#475569';
-    const chartAxisColor = darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-
-    const commonAxis = {
-      axisLabel: { color: chartTextColor, fontSize: 10, fontFamily: 'Assistant' },
-      axisLine: { lineStyle: { color: chartAxisColor } },
-      splitLine: { lineStyle: { color: chartAxisColor, type: 'dashed' } }
-    };
-
     const datasets: { name: string; data: any[]; color: string }[] = [];
     
     if (compareMode && !compareOperation.includes('all')) {
@@ -1095,11 +855,11 @@ loadData();
       const op1Data = filteredData.filter(d => d.operationsArray.some(op => operationFilter.includes(op)));
       const op2Data = filteredData.filter(d => d.operationsArray.some(op => compareOperation.includes(op)));
       
-      const g1 = getGroupedData(op1Data, timeResolution, lang);
-      const g2 = getGroupedData(op2Data, timeResolution, lang);
+      const g1 = getGroupedData(op1Data, timeResolution);
+      const g2 = getGroupedData(op2Data, timeResolution);
       
       const allKeys = Array.from(new Set([...Object.keys(g1), ...Object.keys(g2)]));
-      if (['year', 'month', 'hour', 'minute', 'date'].includes(timeResolution)) allKeys.sort();
+      if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) allKeys.sort();
       else if (timeResolution === 'weekday') allKeys.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
 
       datasets.push({ 
@@ -1114,37 +874,14 @@ loadData();
       });
 
       timeSeriesInstance.current.setOption({
-        legend: { show: true, bottom: 0, textStyle: { color: chartTextColor } },
-        tooltip: { 
-          trigger: 'axis', 
-          axisPointer: { type: 'cross', label: { backgroundColor: '#0f172a' } }, 
-          appendToBody: true, 
-          position: customTooltipPosition,
-          backgroundColor: darkMode ? '#1e293b' : '#ffffff',
-          borderColor: 'rgba(56,189,248,0.2)',
-          textStyle: { color: chartTextColor }
-        },
-        grid: { top: '10%', bottom: (compareMode || timeResolution === 'date') ? '25%' : '5%', left: '2%', right: '2%', containLabel: true },
-        dataZoom: timeResolution === 'date' ? [
-          { type: 'slider', show: true, bottom: 20, height: 15, borderColor: 'transparent', backgroundColor: 'rgba(0,0,0,0.1)', fillerColor: 'rgba(56,189,248,0.2)', handleStyle: { color: '#38bdf8' }, textStyle: { color: chartTextColor, fontSize: 10 } },
-          { type: 'inside' }
-        ] : [],
-        xAxis: { 
-          data: allKeys,
-          ...commonAxis,
-          axisLabel: { ...commonAxis.axisLabel, rotate: (timeResolution === 'hour' || timeResolution === 'date') ? 45 : 0 }
-        },
-        yAxis: { 
-          type: 'value', 
-          ...commonAxis
-        },
+        legend: { show: true, bottom: 0, textStyle: { color: '#94a3b8' } },
+        xAxis: { data: allKeys },
         series: datasets.map(ds => ({
           name: ds.name,
           type: 'line',
           smooth: true,
           data: ds.data,
           itemStyle: { color: ds.color },
-          lineStyle: { width: 3, color: ds.color, shadowBlur: 10, shadowColor: `${ds.color}80` },
           areaStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
               { offset: 0, color: ds.color + '66' },
@@ -1152,74 +889,21 @@ loadData();
             ])
           }
         }))
-      }, true);
+      });
     } else {
-      const grouped = getGroupedData(filteredData, timeResolution, lang);
-      let xData = Object.keys(grouped);
-      if (timeResolution === 'month') {
-        // Sort by canonical month order
-        const monthOrder = lang === 'he' ? MONTH_NAMES_HE : MONTH_NAMES_EN;
-        xData.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-      } else if (['year', 'hour', 'minute', 'date'].includes(timeResolution)) {
-        xData.sort();
-      } else if (timeResolution === 'weekday') {
-        xData.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
-      }
+      const grouped = getGroupedData(filteredData, timeResolution);
+      const xData = Object.keys(grouped);
+      if (['year', 'month', 'hour', 'minute'].includes(timeResolution)) xData.sort();
+      else if (timeResolution === 'weekday') xData.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
       
       const yData = xData.map(k => grouped[k]);
-
-      // Highlight top 15% most frequent bins in pinkish color
-      const sortedVals = [...yData].sort((a, b) => b - a);
-      const threshold15 = sortedVals[Math.max(0, Math.floor(sortedVals.length * 0.15) - 1)] || 0;
-      const isBarType = ['hour', 'weekday', 'minute', 'month'].includes(timeResolution);
-
-      // For date display on X-axis: convert YYYY-MM-DD back to readable DD/MM
-      const displayXData = timeResolution === 'date'
-        ? xData.map(k => { const [y,m,d] = k.split('-'); return `${d}/${m}/${y.slice(2)}`; })
-        : xData;
-
       timeSeriesInstance.current.setOption({
         legend: { show: false },
-        tooltip: { 
-          trigger: 'axis', 
-          axisPointer: { type: 'cross', label: { backgroundColor: '#0f172a' } }, 
-          appendToBody: true, 
-          position: customTooltipPosition,
-          backgroundColor: darkMode ? '#1e293b' : '#ffffff',
-          borderColor: 'rgba(56,189,248,0.2)',
-          textStyle: { color: chartTextColor }
-        },
-        grid: { top: '10%', bottom: timeResolution === 'date' ? '25%' : '5%', left: '2%', right: '2%', containLabel: true },
-        dataZoom: timeResolution === 'date' ? [
-          { type: 'slider', show: true, bottom: 20, height: 15, borderColor: 'transparent', backgroundColor: 'rgba(0,0,0,0.1)', fillerColor: 'rgba(56,189,248,0.2)', handleStyle: { color: '#38bdf8' }, textStyle: { color: chartTextColor, fontSize: 10 } },
-          { type: 'inside' }
-        ] : [],
-        xAxis: { 
-          data: displayXData,
-          ...commonAxis,
-          axisLabel: { ...commonAxis.axisLabel, rotate: (timeResolution === 'hour' || timeResolution === 'date') ? 45 : 0 }
-        },
-        yAxis: { 
-          type: 'value', 
-          ...commonAxis
-        },
+        xAxis: { data: xData },
         series: [{
-          name: 'התרעות',
-          data: yData.map((v, i) => ({
-            value: v,
-            itemStyle: v >= threshold15 && yData.filter(x => x >= threshold15).length > 0 ? {
-              color: isBarType
-                ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: '#f472b6' },
-                    { offset: 1, color: '#ec4899' }
-                  ])
-                : '#f472b6',
-              borderRadius: [8,8,0,0],
-              shadowBlur: 12,
-              shadowColor: 'rgba(244,114,182,0.5)'
-            } : null
-          })),
-          type: isBarType ? 'bar' : 'line',
+          name: 'ÎöÎ¬Î¿ÎóÎòÎ¬',
+          data: yData,
+          type: ['hour', 'weekday', 'minute'].includes(timeResolution) ? 'bar' : 'line',
           smooth: true,
           itemStyle: { 
             color: '#38bdf8',
@@ -1234,8 +918,15 @@ loadData();
             ])
           }
         }]
-      }, true);
+      });
     }
+
+    timeSeriesInstance.current.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'cross', label: { backgroundColor: '#0f172a' } }, appendToBody: true, position: customTooltipPosition },
+      grid: { top: '10%', bottom: compareMode ? '15%' : '5%', left: '2%', right: '2%', containLabel: true },
+      yAxis: { type: 'value', axisLabel: { color: '#64748b', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } } },
+      xAxis: { axisLabel: { color: '#94a3b8', fontSize: 10, rotate: timeResolution === 'hour' ? 45 : 0 } },
+    });
   }, [filteredData, globalData, timeResolution, compareMode, compareOperation, operationFilter, darkMode]);
 
   useEffect(() => {
@@ -1244,63 +935,39 @@ loadData();
     filteredData.forEach(d => { if (d.cities) counts[d.cities] = (counts[d.cities] || 0) + 1; });
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 15);
     
-    const chartTextColor = darkMode ? '#e2e8f0' : '#475569';
-    const chartAxisColor = darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-
-    const commonAxis = {
-      axisLabel: { color: chartTextColor, fontSize: 10, fontFamily: 'Assistant' },
-      axisLine: { lineStyle: { color: chartAxisColor } },
-      splitLine: { lineStyle: { color: chartAxisColor, type: 'dashed' } }
-    };
-
     topCitiesInstance.current.setOption({
       tooltip: { 
         trigger: 'axis', 
         axisPointer: { type: 'shadow' }, 
         appendToBody: true,
-        backgroundColor: darkMode ? '#1e293b' : '#ffffff',
+        backgroundColor: 'rgba(15, 23, 42, 0.9)',
         borderWidth: 0,
-        textStyle: { color: chartTextColor },
+        textStyle: { color: '#fff' },
         position: customTooltipPosition
       },
       grid: { top: '15%', bottom: '15%', left: '2%', right: '2%', containLabel: true },
       xAxis: {
         type: 'category',
         data: sorted.map(s => s[0]),
-        ...commonAxis,
         axisLabel: {
-          ...commonAxis.axisLabel,
-          interval: 0, rotate: 30,
+          interval: 0, rotate: 30, fontSize: 10,
+          color: '#94a3b8',
           formatter: (v: string) => v.length > 8 ? v.substring(0, 8) + '...' : v
         }
       },
-      yAxis: { 
-        type: 'value', 
-        ...commonAxis,
-        axisLabel: { show: false } 
-      },
+      yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)', type: 'dashed' } }, axisLabel: { show: false } },
       series: [{
         type: 'bar',
-        data: sorted.map((s, i) => ({
-          value: s[1],
-          itemStyle: i < Math.ceil(sorted.length * 0.15) ? {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#f472b6' },
-              { offset: 1, color: '#ec4899' }
-            ]),
-            borderRadius: [6, 6, 0, 0],
-            shadowBlur: 14,
-            shadowColor: 'rgba(244,114,182,0.5)'
-          } : {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(56,189,248,0.12)' },
-              { offset: 1, color: 'rgba(59,130,246,0.06)' }
-            ]),
-            borderRadius: [6, 6, 0, 0],
-            shadowBlur: 6,
-            shadowColor: 'rgba(56,189,248,0.15)'
-          }
-        })),
+        data: sorted.map(s => s[1]),
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#38bdf8' },
+            { offset: 1, color: '#3b82f6' }
+          ]),
+          borderRadius: [6, 6, 0, 0],
+          shadowBlur: 10,
+          shadowColor: 'rgba(56, 189, 248, 0.3)'
+        },
         label: { 
           show: true, 
           position: 'top', 
@@ -1310,7 +977,7 @@ loadData();
           formatter: '{c}'
         }
       }]
-    }, true);
+    });
   }, [filteredData, darkMode]);
 
   useEffect(() => {
@@ -1318,8 +985,8 @@ loadData();
     const tCounts: Record<string, number> = {};
     const sCounts: Record<string, number> = {};
     filteredData.forEach(d => {
-      const t = d.threatStr || 'אחר';
-      const s = d.sourceStr || 'מעורב / לא סווג';
+      const t = d.threatStr || 'ÎÉÎùÎ¿';
+      const s = d.sourceStr || 'Î×ÎóÎòÎ¿Îæ / Î£ÎÉ ÎíÎòÎòÎÆ';
       tCounts[t] = (tCounts[t] || 0) + 1;
       sCounts[s] = (sCounts[s] || 0) + 1;
     });
@@ -1332,7 +999,7 @@ loadData();
         borderWidth: 0,
         textStyle: { color: '#fff' },
         position: customTooltipPosition,
-        formatter: '{b}: <br/><b>{c} התרעות</b> ({d}%)'
+        formatter: '{b}: <br/><b>{c} ÎöÎ¬Î¿ÎóÎòÎ¬</b> ({d}%)'
       },
       series: [{
         type: 'pie', 
@@ -1360,43 +1027,34 @@ loadData();
     });
 
     const neonColors = ['#f87171', '#38bdf8', '#fbbf24', '#3b82f6', '#94a3b8', '#10b981'];
-    const classicColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6'];
-    const currentColors = darkMode ? neonColors : classicColors;
-
-    threatInstance.current.setOption(pieOpt(Object.entries(tCounts).map(([n, v]) => ({ name: n, value: v })), currentColors), true);
-    sourceInstance.current.setOption(pieOpt(Object.entries(sCounts).map(([n, v]) => ({ name: n, value: v })), currentColors), true);
+    threatInstance.current.setOption(pieOpt(Object.entries(tCounts).map(([n, v]) => ({ name: n, value: v })), neonColors));
+    sourceInstance.current.setOption(pieOpt(Object.entries(sCounts).map(([n, v]) => ({ name: n, value: v })), neonColors));
 
     // Interactive Filtering
     threatInstance.current.off('click');
     threatInstance.current.on('click', (params: any) => {
-      if (params.name) setThreatFilter((prev: string[]) => {
-        if (prev.includes(params.name)) return prev.filter((s: string) => s !== params.name);
-        return [...prev.filter((s: string) => s !== 'all'), params.name];
-      });
+      if (params.name) setThreatFilter([params.name]);
     });
     sourceInstance.current.off('click');
     sourceInstance.current.on('click', (params: any) => {
-      if (params.name) setSourceFilter((prev: string[]) => {
-        if (prev.includes(params.name)) return prev.filter((s: string) => s !== params.name);
-        return [...prev.filter((s: string) => s !== 'all'), params.name];
-      });
+      if (params.name) setSourceFilter([params.name]);
     });
   }, [filteredData, darkMode]);
 
   // --- Insights ---
   const insight = useMemo(() => {
-    if (filteredData.length < 5) return "מעט מדי נתונים להפקת תובנה.";
+    if (filteredData.length < 5) return "Î×ÎóÎÿ Î×ÎôÎÖ ÎáÎ¬ÎòÎáÎÖÎØ Î£ÎöÎñÎºÎ¬ Î¬ÎòÎæÎáÎö.";
     const total = filteredData.length;
     const dateCounts: Record<string, number> = {};
     filteredData.forEach(d => { const s = d.time.split(' ')[0]; dateCounts[s] = (dateCounts[s] || 0) + 1; });
     const maxDate = Object.keys(dateCounts).reduce((a, b) => dateCounts[a] > dateCounts[b] ? a : b);
     const maxDateCount = dateCounts[maxDate];
-    if ((maxDateCount / total) > 0.1) return `<b>שיא תקיפה:</b><br>${maxDate} עם ${maxDateCount.toLocaleString()} התרעות.`;
+    if ((maxDateCount / total) > 0.1) return `<b>Î®ÎÖÎÉ Î¬ÎºÎÖÎñÎö:</b><br>${maxDate} ÎóÎØ ${maxDateCount.toLocaleString()} ÎöÎ¬Î¿ÎóÎòÎ¬.`;
     
     const nightCount = filteredData.filter(d => d.hour >= 23 || d.hour < 6).length;
-    if (nightCount / total > 0.3) return `<b>פעילות לילית:</b><br>${Math.round((nightCount/total)*100)}% מההתרעות בלילה.`;
+    if (nightCount / total > 0.3) return `<b>ÎñÎóÎÖÎ£ÎòÎ¬ Î£ÎÖÎ£ÎÖÎ¬:</b><br>${Math.round((nightCount/total)*100)}% Î×ÎöÎöÎ¬Î¿ÎóÎòÎ¬ ÎæÎ£ÎÖÎ£Îö.`;
     
-    return "שגרת ביטחון יחסית בחתך זה.";
+    return "Î®ÎÆÎ¿Î¬ ÎæÎÖÎÿÎùÎòÎƒ ÎÖÎùÎíÎÖÎ¬ ÎæÎùÎ¬ÎÜ ÎûÎö.";
   }, [filteredData]);
 
   if (loading) {
@@ -1409,7 +1067,7 @@ loadData();
   }
 
   return (
-    <div className={`flex flex-col h-screen bg-bg-color font-sans transition-colors duration-500 overflow-hidden relative ${darkMode ? 'neon' : 'light'}`} dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className={`flex flex-col h-screen bg-bg-color font-sans transition-colors duration-500 overflow-hidden relative ${darkMode ? 'dark' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="mesh-gradient" />
       
       {/* Header */}
@@ -1423,12 +1081,12 @@ loadData();
             <Shield size={24} className="text-white" />
           </motion.div>
           <div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary-azure to-primary-deep-blue neon-text">
+            <h1 className="text-xl md:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-primary-azure neon-text">
               {t.title}
             </h1>
             <div className="hidden md:flex items-center gap-2 mt-0.5">
               <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{isRtl ? 'מחובר לנתוני אמת' : 'CONNECTED TO LIVE DATA'}</span>
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{isRtl ? 'Î×ÎùÎòÎæÎ¿ Î£ÎáÎ¬ÎòÎáÎÖ ÎÉÎ×Î¬' : 'CONNECTED TO LIVE DATA'}</span>
             </div>
           </div>
         </div>
@@ -1447,8 +1105,8 @@ loadData();
                 <div className="relative">
                   <input 
                     type="text" 
-                    className="bg-transparent border-none text-sm outline-none w-32 md:w-44 text-text-main placeholder:text-text-muted/50"
-                    placeholder={isRtl ? "חיפוש עיר..." : "Search city..."}
+                    className="bg-transparent border-none text-sm outline-none w-32 md:w-44 text-white placeholder:text-text-muted/50"
+                    placeholder={isRtl ? "ÎùÎÖÎñÎòÎ® ÎóÎÖÎ¿..." : "Search city..."}
                     value={citySearch}
                     onChange={(e) => handleCitySearchChange(e.target.value, 'desktop')}
                     onFocus={() => {
@@ -1467,7 +1125,7 @@ loadData();
                         {citySuggestions.map((city, idx) => (
                           <div 
                             key={idx} 
-                            className="px-4 py-2 hover:bg-white/10 rounded-lg cursor-pointer text-text-main text-sm transition-colors"
+                            className="px-4 py-2 hover:bg-white/10 rounded-lg cursor-pointer text-white text-sm transition-colors"
                             onClick={() => selectCity(city)}
                           >
                             {city}
@@ -1491,7 +1149,7 @@ loadData();
              {compareMode && (
                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
                  <MultiSelect 
-                    label={isRtl ? "להשוות מול..." : "Compare vs..."} 
+                    label={isRtl ? "Î£ÎöÎ®ÎòÎòÎ¬ Î×ÎòÎ£..." : "Compare vs..."} 
                     options={operationOptions}
                     selected={compareOperation}
                     onChange={setCompareOperation}
@@ -1522,40 +1180,29 @@ loadData();
 
           <div className="h-8 w-[1px] bg-white/10 hidden md:block" />
 
-          {/* Icon group: evenly spaced — dark/light + 6 language flags */}
-          <div className="hidden md:flex items-center gap-3">
-            <button 
-              onClick={() => {
-                setDarkMode(!darkMode);
-                document.documentElement.classList.toggle('neon');
-              }}
-              className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-text-main glass-card border-none flex-shrink-0"
-              title={darkMode ? 'Light mode' : 'Dark mode'}
-            >
-              {darkMode ? <Moon size={20} className="text-accent-gold neon-text" /> : <Sun size={20} className="text-primary-azure" />}
-            </button>
+          <button 
+            onClick={() => {
+              setDarkMode(!darkMode);
+              document.documentElement.classList.toggle('dark');
+            }}
+            className="p-2.5 hover:bg-white/10 rounded-xl transition-all text-text-main glass-card border-none"
+          >
+            {darkMode ? <Moon size={20} className="text-accent-gold neon-text" /> : <Sun size={20} className="text-white" />}
+          </button>
 
-            {([
-              { code: 'he', flag: 'il', label: 'עברית' },
-              { code: 'en', flag: 'us', label: 'English' },
-              { code: 'ar', flag: 'sa', label: 'العربية' },
-              { code: 'fr', flag: 'fr', label: 'Français' },
-              { code: 'de', flag: 'de', label: 'Deutsch' },
-              { code: 'es', flag: 'es', label: 'Español' },
-            ] as const).map(({ code, flag, label }) => (
-              <button
-                key={code}
-                onClick={() => setLang(code)}
-                className={`w-7 h-7 rounded-lg transition-all flex-shrink-0 ${
-                  lang === code
-                    ? 'ring-2 ring-primary-azure ring-offset-1 ring-offset-transparent opacity-100 shadow-[0_0_8px_rgba(56,189,248,0.5)]'
-                    : 'opacity-35 hover:opacity-80'
-                }`}
-                title={label}
-              >
-                <img src={`https://flagcdn.com/w40/${flag}.png`} alt={code.toUpperCase()} className="w-full h-full object-cover rounded-md" />
-              </button>
-            ))}
+          <div className="flex items-center gap-1 glass-card p-1 border-none">
+            <button 
+              onClick={() => setLang('he')}
+              className={`w-7 h-7 rounded-lg transition-all ${lang === 'he' ? 'ring-2 ring-primary-azure ring-offset-2 ring-offset-transparent' : 'opacity-40 hover:opacity-100'}`}
+            >
+              <img src="https://flagcdn.com/w40/il.png" alt="IL" className="w-full h-full object-cover rounded-md" />
+            </button>
+            <button 
+              onClick={() => setLang('en')}
+              className={`w-7 h-7 rounded-lg transition-all ${lang === 'en' ? 'ring-2 ring-primary-azure ring-offset-2 ring-offset-transparent' : 'opacity-40 hover:opacity-100'}`}
+            >
+              <img src="https://flagcdn.com/w40/us.png" alt="US" className="w-full h-full object-cover rounded-md" />
+            </button>
           </div>
         </div>
       </header>
@@ -1564,125 +1211,105 @@ loadData();
       <main className="flex-1 flex flex-col md:flex-row md:overflow-hidden p-4 gap-4">
         
         {/* Left Panel: Analytics */}
-        <div className="w-full md:w-3/4 flex flex-col gap-4 md:h-full order-1 md:order-2">
+        <div className="w-full md:w-3/4 flex flex-col gap-4 md:overflow-y-auto order-1 md:order-2 scrollbar-hide">
           
           {/* KPI Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 flex-shrink-0">
-            {/* ... KPIs ... */}
-            <motion.div whileHover={{ y: -5 }} className="glass-card p-3 relative overflow-hidden group">
+            <motion.div whileHover={{ y: -5 }} className="glass-card p-4 relative overflow-hidden group">
               <div className="absolute top-0 bottom-0 left-0 w-1 bg-primary-azure group-hover:w-2 transition-all shadow-[0_0_15px_var(--primary-azure)]" />
-              <div className="text-[10px] text-text-muted font-bold tracking-widest uppercase mb-1">{t.totalAlerts}</div>
-              <div className="text-2xl font-black text-text-main neon-text">{filteredData.length.toLocaleString()}</div>
+              <div className="text-xs text-text-muted font-bold tracking-widest uppercase mb-1">{t.totalAlerts}</div>
+              <div className="text-3xl font-black text-white neon-text">{filteredData.length.toLocaleString()}</div>
             </motion.div>
             
-            <motion.div whileHover={{ y: -5 }} className="glass-card p-3 relative overflow-hidden group">
+            <motion.div whileHover={{ y: -5 }} className="glass-card p-4 relative overflow-hidden group">
               <div className="absolute top-0 bottom-0 left-0 w-1 bg-sky-400 shadow-[0_0_15px_#38bdf8]" />
               <div className="flex justify-between items-center mb-1">
-                <div className="text-[10px] text-text-muted font-bold tracking-widest uppercase">{t.showerIndex}</div>
-                <div className="relative group/tooltip">
-                  <Info size={14} className="text-sky-400 cursor-help" />
-                  <div className="absolute bottom-full right-0 mb-2 w-52 bg-slate-900/95 border border-sky-400/30 text-sky-100 text-[10px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-50 leading-relaxed">
-                    {isRtl
-                      ? 'חלון זמן של 30 דקות שבו מספר ההתרעות ההיסטורי נמוך ביותר — הזמן הבטוח ביותר למקלחת שקטה.'
-                      : 'A 30-minute window with the historically lowest alert frequency — the safest time for a quiet shower.'}
-                  </div>
-                </div>
+                <div className="text-xs text-text-muted font-bold tracking-widest uppercase">{t.showerIndex}</div>
+                <Info size={14} className="text-sky-400" />
               </div>
               <div className="flex flex-col">
                 {showerIndex ? (
                   <>
-                    <div className="text-xl font-black text-text-main leading-none">{showerIndex.time}</div>
-                    <div className="text-[9px] text-text-muted font-bold mt-1.5 flex items-center gap-2">
+                    <div className="text-2xl font-black text-white leading-none">{showerIndex.time}</div>
+                    <div className="text-[10px] text-text-muted font-bold mt-2 flex items-center gap-2">
                        <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                        {showerIndex.probability}% {isRtl ? 'סיכוי לשקט' : 'Quiet Chance'}
+                        {showerIndex.probability}% {isRtl ? 'ÎíÎÖÎøÎòÎÖ Î£Î®ÎºÎÿ' : 'Quiet Chance'}
                        </span>
                     </div>
                   </>
                 ) : (
-                  <span className="text-xs italic opacity-50">{t.noData}</span>
+                  <span className="text-sm italic opacity-50">{t.noData}</span>
                 )}
               </div>
             </motion.div>
 
-            <motion.div whileHover={{ y: -5 }} className="glass-card p-3 relative overflow-hidden group sm:col-span-2 md:col-span-1">
+            <motion.div whileHover={{ y: -5 }} className="glass-card p-4 relative overflow-hidden group sm:col-span-2 md:col-span-1">
               <div className="absolute top-0 bottom-0 left-0 w-1 bg-alert-red shadow-[0_0_15px_#f87171]" />
-              <div className="text-[10px] text-text-muted font-bold tracking-widest uppercase mb-1">{t.lastAlert}</div>
-              <div className="flex flex-col">
-                {filteredData.length > 0 ? (() => {
-                  const lastD = filteredData[filteredData.length-1].dateObj;
-                  const dateStr = lastD.toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                  const timeStr = lastD.toLocaleTimeString(lang === 'he' ? 'he-IL' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
-                  return (
-                    <>
-                      <div className="text-xl font-black text-text-main leading-none">{timeStr}</div>
-                      <div className="text-[10px] text-text-muted mt-1">{dateStr}</div>
-                    </>
-                  );
-                })() : <span className="text-xl font-black text-text-main">-</span>}
+              <div className="text-xs text-text-muted font-bold tracking-widest uppercase mb-1">{t.lastAlert}</div>
+              <div className="text-xl font-black text-white">
+                {filteredData.length > 0 ? filteredData[filteredData.length-1].time : "-"}
               </div>
             </motion.div>
           </div>
 
-          <div className="flex-1 flex flex-col gap-4 min-h-0">
-            {/* Charts Row 1 */}
-            <div className="flex flex-col md:flex-row gap-4 flex-[1.5] min-h-0">
-              <div className="glass-card p-4 flex flex-col md:flex-[2.5] h-full neon-border overflow-hidden">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex gap-1 p-0.5 bg-black/20 rounded-xl border border-white/5">
-                    {(['date', 'year', 'month', 'weekday', 'hour', 'minute'] as const).map(res => (
-                      <button 
-                        key={res}
-                        className={`px-2.5 py-0.5 rounded-lg text-[9px] font-bold transition-all ${timeResolution === res ? 'bg-primary-azure text-text-main shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-text-muted hover:text-text-main'}`}
-                        onClick={() => setTimeResolution(res)}
-                      >
-                        {res === 'year' ? t.years : res === 'month' ? t.months : res === 'date' ? t.date : res === 'weekday' ? t.days : res === 'hour' ? t.hours : t.minutes}
-                      </button>
-                    ))}
-                  </div>
-                  <button 
-                      onClick={() => setCompareMode(!compareMode)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-xl text-[9px] font-black transition-all ${compareMode ? 'bg-accent-gold text-text-main shadow-[0_0_10px_#fbbf24]' : 'bg-black/20 text-text-muted border border-white/5 hover:border-white/20'}`}
-                  >
-                      <TrendingUp size={11} />
-                      {t.compare}
-                  </button>
+          {/* Charts Row 1 */}
+          <div className="flex flex-col md:flex-row gap-4 md:flex-1 min-h-[350px]">
+            <div className="glass-card p-5 flex flex-col md:flex-[2.5] h-[350px] md:h-auto neon-border">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex gap-1.5 p-1 bg-black/30 rounded-xl border border-white/5">
+                  {(['year', 'month', 'weekday', 'hour', 'minute'] as const).map(res => (
+                    <button 
+                      key={res}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${timeResolution === res ? 'bg-primary-azure text-white shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-text-muted hover:text-white'}`}
+                      onClick={() => setTimeResolution(res)}
+                    >
+                      {res === 'year' ? t.years : res === 'month' ? t.months : res === 'weekday' ? t.days : res === 'hour' ? t.hours : t.minutes}
+                    </button>
+                  ))}
                 </div>
-                <div ref={timeSeriesChartRef} className="flex-1 w-full min-h-0" />
+                <button 
+                    onClick={() => setCompareMode(!compareMode)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${compareMode ? 'bg-accent-gold text-white shadow-[0_0_10px_#fbbf24]' : 'bg-black/20 text-text-muted border border-white/5 hover:border-white/20'}`}
+                >
+                    <TrendingUp size={12} />
+                    {t.compare}
+                </button>
               </div>
-
-              <div className="glass-card p-3 flex flex-col md:flex-1 h-full overflow-hidden">
-                <div className="flex items-center gap-2 mb-3">
-                   <PieChartIcon size={14} className="text-alert-red" />
-                   <span className="font-black text-text-main text-[10px] uppercase tracking-widest">{t.threatDist}</span>
-                </div>
-                <div ref={threatChartRef} className="flex-1 w-full min-h-0" />
-              </div>
+              <div ref={timeSeriesChartRef} className="flex-1 w-full min-h-0" />
             </div>
 
-            {/* Charts Row 2 */}
-            <div className="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
-              <div className="glass-card p-4 flex flex-col md:flex-1 h-full overflow-hidden">
-                <div className="flex items-center gap-2 mb-3">
-                   <Globe size={16} className="text-primary-azure" />
-                   <span className="font-black text-text-main text-xs uppercase tracking-widest">{t.sourceDist}</span>
-                </div>
-                <div ref={sourceChartRef} className="flex-1 w-full min-h-0" />
+            <div className="glass-card p-4 flex flex-col md:flex-1 h-[280px] md:h-auto">
+              <div className="flex items-center gap-2 mb-4">
+                 <PieChartIcon size={16} className="text-alert-red" />
+                 <span className="font-black text-white text-xs uppercase tracking-widest">{t.threatDist}</span>
               </div>
-              <div className="glass-card p-4 flex flex-col md:flex-[2] h-full overflow-hidden">
-                <div className="flex items-center gap-2 mb-3">
-                   <MapIcon size={16} className="text-primary-azure" />
-                   <span className="font-black text-text-main text-xs uppercase tracking-widest">{t.topCities}</span>
-                </div>
-                <div ref={topCitiesChartRef} className="flex-1 w-full min-h-0" />
+              <div ref={threatChartRef} className="flex-1 w-full min-h-0" />
+            </div>
+          </div>
+
+          {/* Charts Row 2 */}
+          <div className="flex flex-col md:flex-row gap-4 h-[300px] md:h-[280px] flex-shrink-0">
+            <div className="glass-card p-4 flex flex-col md:flex-1 h-full">
+              <div className="flex items-center gap-2 mb-3">
+                 <Globe size={16} className="text-primary-azure" />
+                 <span className="font-black text-white text-xs uppercase tracking-widest">{t.sourceDist}</span>
               </div>
+              <div ref={sourceChartRef} className="flex-1 w-full min-h-0" />
+            </div>
+            <div className="glass-card p-4 flex flex-col md:flex-[2] h-full">
+              <div className="flex items-center gap-2 mb-3">
+                 <MapIcon size={16} className="text-primary-azure" />
+                 <span className="font-black text-white text-xs uppercase tracking-widest">{t.topCities}</span>
+              </div>
+              <div ref={topCitiesChartRef} className="flex-1 w-full min-h-0" />
             </div>
           </div>
         </div>
 
         {/* Right Panel: Map */}
-        <div className="w-full md:w-1/4 glass-card flex flex-col overflow-hidden h-[400px] md:h-full relative flex-shrink-0 order-2 md:order-1 border-none shadow-xl">
-          <div className="px-5 py-2 bg-black/20 border-b border-white/5 flex justify-between items-center">
-            <span className="font-black text-text-main text-[10px] uppercase tracking-widest">{t.mapTitle}</span>
+        <div className="w-full md:w-1/4 glass-card flex flex-col overflow-hidden h-[400px] md:h-full relative flex-shrink-0 order-2 md:order-1 border-none">
+          <div className="px-5 py-3 bg-black/40 border-b border-white/5 flex justify-between items-center">
+            <span className="font-black text-white text-xs uppercase tracking-widest">{t.mapTitle}</span>
             <button 
                 onClick={() => setMapLayer(mapLayer === 'streets' ? 'satellite' : 'streets')}
                 className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-text-muted"
@@ -1704,38 +1331,22 @@ loadData();
       </main>
 
       {/* Ticker */}
-      <footer className={`h-12 flex items-center overflow-hidden z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] transition-all duration-1000 ${liveAlert ? 'live-flash' : 'ticker-footer'}`}>
-        <div className="bg-black/30 backdrop-blur-md h-full px-6 flex items-center font-black text-xs uppercase tracking-widest text-white z-10 border-r border-white/10 shadow-[5px_0_15px_rgba(0,0,0,0.3)]">
-          {liveAlert ? `🚨 ${t.liveAlert}` : t.tickerTitle}
+      <footer className={`h-12 flex items-center overflow-hidden z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] transition-all duration-1000 ${liveAlert ? 'live-flash' : 'bg-black/60 backdrop-blur-xl border-t border-white/5'}`}>
+        <div className="bg-primary-deep-blue/40 backdrop-blur-md h-full px-6 flex items-center font-black text-xs uppercase tracking-widest text-white z-10 border-r border-white/10 shadow-[5px_0_15px_rgba(0,0,0,0.3)]">
+          {liveAlert ? `­ƒÜ¿ ${t.liveAlert}` : t.tickerTitle}
         </div>
         <div className="ticker-move flex-1 text-white py-1">
           {liveAlert ? (
             <span className="inline-block px-10 text-base font-black neon-text">
-              {liveAlert.title}: <span className="text-pink-300">{liveAlert.cities}</span>
+              {liveAlert.title}: <span className="text-primary-azure">{liveAlert.cities}</span>
             </span>
           ) : (
-            globalData.slice(-20).reverse().map((alert, i) => {
-              const d = alert.dateObj;
-              const shortDate = d.toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB', { day: '2-digit', month: '2-digit' });
-              const timeStr = d.toLocaleTimeString(lang === 'he' ? 'he-IL' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
-              return (
-                <span key={i} className="inline-block px-8 text-xs font-semibold opacity-90 hover:opacity-100 transition-opacity">
-                  <span className="text-pink-400">●</span>{' '}
-                  <b className="text-white">{alert.cities}</b>
-                  <span className="text-pink-200/70 font-normal"> · {shortDate} · {timeStr}</span>
-                </span>
-              );
-            })
+            globalData.slice(-15).reverse().map((alert, i) => (
+              <span key={i} className="inline-block px-10 text-xs font-bold opacity-80 hover:opacity-100 transition-opacity">
+                <span className="text-alert-red">ÔùÅ</span> {alert.operationsArray?.[0] || 'Î®ÎÆÎ¿Îö'} | <b className="text-white">{alert.cities}</b> <span className="text-text-muted font-normal">({alert.threatStr})</span>
+              </span>
+            ))
           )}
-        </div>
-        
-        {/* Cache Indicator */}
-        <div className="hidden md:flex items-center gap-2 px-6 h-full border-l border-white/10 text-[9px] font-bold tracking-widest uppercase">
-          <span className="text-pink-200/60">{t.cacheStatus}</span>
-          <span className={isFromCache ? "text-emerald-400" : "text-amber-400"}>
-            {isFromCache ? t.cacheOn : t.cacheOff}
-          </span>
-          <div className={`w-2 h-2 rounded-full ${isFromCache ? "bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-amber-400 animate-pulse"}`} />
         </div>
       </footer>
 
@@ -1757,7 +1368,7 @@ loadData();
               className="fixed inset-y-0 right-0 w-[85%] max-w-sm z-[100] glass-card m-4 p-8 flex flex-col gap-8 md:hidden overflow-y-auto border-none shadow-[w-full_0_50px_rgba(0,0,0,0.5)]"
             >
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-black text-white neon-text uppercase tracking-tighter">{isRtl ? 'מסננים' : 'Filters'}</h2>
+                <h2 className="text-2xl font-black text-white neon-text uppercase tracking-tighter">{isRtl ? 'Î×ÎíÎáÎáÎÖÎØ' : 'Filters'}</h2>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-all">
                   <X size={24} className="text-white" />
                 </button>
@@ -1770,34 +1381,10 @@ loadData();
                     <input 
                       type="text" 
                       className="w-full glass-card bg-black/30 border-none px-4 py-3 text-white outline-none focus:ring-1 focus:ring-primary-azure shadow-inner"
-                      placeholder={isRtl ? "חיפוש עיר..." : "Search city..."}
+                      placeholder={isRtl ? "ÎùÎÖÎñÎòÎ® ÎóÎÖÎ¿..." : "Search city..."}
                       value={citySearch}
                       onChange={(e) => handleCitySearchChange(e.target.value, 'mobile')}
-                      onFocus={() => {
-                        if (citySearch.trim().length > 0) setShowSuggestions(true);
-                        setActiveSearchSource('mobile');
-                      }}
                     />
-                    <AnimatePresence>
-                      {showSuggestions && activeSearchSource === 'mobile' && citySuggestions.length > 0 && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          className="absolute top-full left-0 right-0 glass-card mt-2 p-2 z-[110] max-h-40 overflow-y-auto"
-                        >
-                          {citySuggestions.map((city, idx) => (
-                            <div 
-                              key={idx} 
-                              className="px-4 py-3 hover:bg-white/10 rounded-lg cursor-pointer text-white text-sm"
-                              onClick={() => selectCity(city)}
-                            >
-                              {city}
-                            </div>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
                 </div>
 
@@ -1818,7 +1405,7 @@ loadData();
                                 }}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${operationFilter.includes(opt) ? 'bg-primary-azure text-white shadow-lg' : 'bg-black/40 text-text-muted border border-white/5'}`}
                             >
-                                {opt === 'all' ? 'הכל' : opt}
+                                {opt === 'all' ? 'ÎöÎøÎ£' : opt}
                             </button>
                         ))}
                     </div>
@@ -1841,7 +1428,7 @@ loadData();
                                 }}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${threatFilter.includes(opt) ? 'bg-primary-azure text-white shadow-lg' : 'bg-black/40 text-text-muted border border-white/5'}`}
                             >
-                                {opt === 'all' ? 'הכל' : opt}
+                                {opt === 'all' ? 'ÎöÎøÎ£' : opt}
                             </button>
                         ))}
                     </div>
@@ -1869,7 +1456,7 @@ loadData();
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="mt-6 bg-gradient-to-r from-primary-azure to-primary-deep-blue text-white font-black py-4 rounded-2xl shadow-[0_10px_30px_rgba(56,189,248,0.4)] active:scale-95 transition-all text-sm uppercase tracking-widest"
                 >
-                  {isRtl ? 'הצג תוצאות' : 'Show Results'}
+                  {isRtl ? 'ÎöÎªÎÆ Î¬ÎòÎªÎÉÎòÎ¬' : 'Show Results'}
                 </button>
               </div>
             </motion.div>
