@@ -107,9 +107,10 @@ const translations = {
     days: "ימים",
     hours: "שעות ביממה",
     minutes: "דקות בשעה",
+    daytime: "זמן ביממה",
     satellite: "לוויין",
     streets: "רחובות",
-    compare: "מצב השוואה",
+    compare: "השוואה",
     date: "לפי תאריכים",
     showerIndex: "מדד המקלחת 🚿",
     showerDesc: "הזמן הבטוח ביותר למקלחת שקטה",
@@ -143,10 +144,11 @@ const translations = {
     months: "Months",
     days: "Days",
     hours: "Hour of Day",
-    minutes: "Minute of Hour",
+    minutes: "Min in Hour",
+    daytime: "Daytime (HH:MM)",
     satellite: "Satellite",
     streets: "Streets",
-    compare: "Comparison Mode",
+    compare: "Compare",
     date: "By Date",
     showerIndex: "Shower Index 🚿",
     showerDesc: "Safest time for a quiet shower",
@@ -181,9 +183,10 @@ const translations = {
     days: "أيام",
     hours: "ساعات اليوم",
     minutes: "دقائق الساعة",
+    daytime: "وقت اليوم",
     satellite: "قمر صناعي",
     streets: "شوارع",
-    compare: "وضع المقارنة",
+    compare: "مقارنة",
     date: "حسب التاريخ",
     showerIndex: "مؤشر الاستحمام 🚿",
     showerDesc: "أأمن وقت للاستحمام",
@@ -217,10 +220,11 @@ const translations = {
     months: "Mois",
     days: "Jours",
     hours: "Heure du jour",
-    minutes: "Minute de l'heure",
+    minutes: "Mod. Minute",
+    daytime: "Heure du jour",
     satellite: "Satellite",
     streets: "Rues",
-    compare: "Mode comparaison",
+    compare: "Comparer",
     date: "Par date",
     showerIndex: "Indice douche 🚿",
     showerDesc: "Moment le plus sûr pour une douche tranquille",
@@ -254,10 +258,11 @@ const translations = {
     months: "Monate",
     days: "Tage",
     hours: "Stunde des Tages",
-    minutes: "Minute der Stunde",
+    minutes: "Min. in Std.",
+    daytime: "Tageszeit",
     satellite: "Satellit",
     streets: "Straßen",
-    compare: "Vergleichsmodus",
+    compare: "Vergleichen",
     date: "Nach Datum",
     showerIndex: "Duschindex 🚿",
     showerDesc: "Sicherste Zeit für eine ruhige Dusche",
@@ -292,9 +297,10 @@ const translations = {
     days: "Días",
     hours: "Hora del día",
     minutes: "Minuto de la hora",
+    daytime: "Hora del día",
     satellite: "Satélite",
     streets: "Calles",
-    compare: "Modo comparación",
+    compare: "Comparar",
     date: "Por fecha",
     showerIndex: "Índice ducha 🚿",
     showerDesc: "El momento más seguro para una ducha tranquila",
@@ -421,7 +427,7 @@ const threatTranslations: Record<string, Partial<Record<LangCode, string>>> = {
   "ירי רקטות וטילים":    { en: "Rocket & Missile Fire",          ar: "إطلاق صواريخ",          fr: "Tirs de roquettes",       de: "Raketen-/Raketenbeschuss",  es: "Fuego de cohetes y misiles" },
   "חדירת כלי טיס עוין":   { en: "Hostile Aircraft Intrusion",     ar: "اختراق طائرة معادية",   fr: "Intrusion aéronef hostile", de: "Feindlicher Luftangriff",   es: "Intrusión de aeronave hostil" },
   "רעידת אדמה":          { en: "Earthquake",                     ar: "زلزال",                  fr: "Séisme",                  de: "Erdbeben",                  es: "Terremoto" },
-  "אירוע רדיולוגי":       { en: "Radiological Incident",          ar: "حادث إشعاعي",           fr: "Incident radiologique",   de: "Radiologischer Vorfall",    es: "Incidente radiológico" },
+  "אירוע רדיולוגי":       { en: "Radiological Incident",          ar: "حادث إشعاعي",           fr: "Incident radiologique",   de: "Radiologischer Vorfall",    es: "Incidente de materiales peligrosos" },
   "חדירת מחבלים":         { en: "Terrorist Infiltration",         ar: "تسلل إرهابي",           fr: "Infiltration terroriste",  de: "Terroristeneindringen",     es: "Infiltración terrorista" },
   "צונאמי":              { en: "Tsunami",                        ar: "تسونامي",               fr: "Tsunami",                 de: "Tsunami",                   es: "Tsunami" },
   "אירוע חומרים מסוכנים": { en: "Hazardous Materials Incident",   ar: "حادث مواد خطرة",        fr: "Incident matières dangereuses", de: "Gefahrstoffvorfall",    es: "Incidente de materiales peligrosos" },
@@ -1319,6 +1325,13 @@ loadData();
       } else if (timeResolution === 'minute') {
         // Always output exactly 60 bins 00–59 in order
         xData = Array.from({ length: 60 }, (_, m) => String(m).padStart(2, '0'));
+      } else if (timeResolution === 'daytime') {
+        // Full day minutes: 00:00 - 23:59
+        xData = Array.from({ length: 1440 }, (_, i) => {
+          const h = Math.floor(i / 60);
+          const m = i % 60;
+          return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        });
       } else if (timeResolution === 'weekday') {
         xData = daysHe.filter(d => d in grouped);
         daysHe.forEach(d => { if (!(d in grouped)) grouped[d] = 0; });
@@ -1352,14 +1365,18 @@ loadData();
           textStyle: { color: chartTextColor }
         },
         grid: { top: '10%', bottom: timeResolution === 'date' ? '25%' : '5%', left: '2%', right: '2%', containLabel: true },
-        dataZoom: timeResolution === 'date' ? [
+        dataZoom: (timeResolution === 'date' || timeResolution === 'daytime') ? [
           { type: 'slider', show: true, bottom: 20, height: 15, borderColor: 'transparent', backgroundColor: 'rgba(0,0,0,0.1)', fillerColor: 'rgba(56,189,248,0.2)', handleStyle: { color: '#38bdf8' }, textStyle: { color: chartTextColor, fontSize: 10 } },
           { type: 'inside' }
         ] : [],
         xAxis: { 
           data: displayXData,
           ...commonAxis,
-          axisLabel: { ...commonAxis.axisLabel, rotate: (timeResolution === 'hour' || timeResolution === 'date') ? 45 : 0 }
+          axisLabel: { 
+            ...commonAxis.axisLabel, 
+            rotate: (timeResolution === 'hour' || timeResolution === 'date' || timeResolution === 'daytime') ? 45 : 0,
+            interval: timeResolution === 'daytime' ? 59 : 'auto' // show only hours on daytime
+          }
         },
         yAxis: { 
           type: 'value', 
@@ -1389,9 +1406,9 @@ loadData();
             shadowBlur: 10,
             shadowColor: 'rgba(56, 189, 248, 0.4)'
           },
-          areaStyle: {
+          areaStyle: isBarType ? undefined : {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(56,189,248,0.4)' },
+              { offset: 0, color: 'rgba(56,189,248,0.45)' },
               { offset: 1, color: 'rgba(56,189,248,0)' }
             ])
           }
@@ -1573,10 +1590,18 @@ loadData();
   }, [filteredData]);
 
   if (loading) {
+    const loadingPhrases = {
+      he: '🛡️ מנתח נתוני בטחון...',
+      en: '🛡️ Initializing Defense Analytics...',
+      ar: '🛡️ جارٍ تحليل بيانات الدفاع...',
+      fr: '🛡️ Initialisation de l’analyse...',
+      de: '🛡️ Verteidigungs-Analyse wird geladen...',
+      es: '🛡️ Iniciando análisis de defensa...',
+    };
     return (
-      <div className="fixed inset-0 bg-bg-color z-50 flex flex-col justify-center items-center text-primary-deep-blue font-bold text-xl transition-colors duration-300">
+      <div className="fixed inset-0 bg-bg-color z-50 flex flex-col justify-center items-center text-primary-deep-blue font-bold text-xl transition-colors duration-300" dir="ltr">
         <div className="spinner mb-5" />
-        <div className="animate-pulse">{t.loading}</div>
+        <div className="animate-pulse text-center">{loadingPhrases[lang] ?? loadingPhrases.he}</div>
       </div>
     );
   }
@@ -1802,13 +1827,13 @@ loadData();
               <div className="glass-card p-4 flex flex-col md:flex-[2.5] h-full neon-border overflow-hidden">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex gap-1 p-0.5 bg-black/20 rounded-xl border border-white/5">
-                    {(['date', 'year', 'month', 'weekday', 'hour', 'minute'] as const).map(res => (
+                    {(['date', 'year', 'month', 'weekday', 'hour', 'minute', 'daytime'] as const).map(res => (
                       <button 
                         key={res}
                         className={`px-2.5 py-0.5 rounded-lg text-[9px] font-bold transition-all ${timeResolution === res ? 'bg-primary-azure text-text-main shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-text-muted hover:text-text-main'}`}
                         onClick={() => setTimeResolution(res)}
                       >
-                        {res === 'year' ? t.years : res === 'month' ? t.months : res === 'date' ? t.date : res === 'weekday' ? t.days : res === 'hour' ? t.hours : t.minutes}
+                        {res === 'year' ? t.years : res === 'month' ? t.months : res === 'date' ? t.date : res === 'weekday' ? t.days : res === 'hour' ? t.hours : res === 'minute' ? t.minutes : t.daytime}
                       </button>
                     ))}
                   </div>
