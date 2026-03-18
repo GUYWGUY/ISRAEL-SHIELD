@@ -413,6 +413,156 @@ const customTooltipPosition = (point: any, params: any, dom: any, rect: any, siz
 const MONTH_NAMES_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 const MONTH_NAMES_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+// --- Multi-language Data Dictionaries ---
+type LangCode = 'he' | 'en' | 'ar' | 'fr' | 'de' | 'es';
+
+// Threat type translations (Hebrew key → translations)
+const threatTranslations: Record<string, Partial<Record<LangCode, string>>> = {
+  "ירי רקטות וטילים":    { en: "Rocket & Missile Fire",          ar: "إطلاق صواريخ",          fr: "Tirs de roquettes",       de: "Raketen-/Raketenbeschuss",  es: "Fuego de cohetes y misiles" },
+  "חדירת כלי טיס עוין":   { en: "Hostile Aircraft Intrusion",     ar: "اختراق طائرة معادية",   fr: "Intrusion aéronef hostile", de: "Feindlicher Luftangriff",   es: "Intrusión de aeronave hostil" },
+  "רעידת אדמה":          { en: "Earthquake",                     ar: "زلزال",                  fr: "Séisme",                  de: "Erdbeben",                  es: "Terremoto" },
+  "אירוע רדיולוגי":       { en: "Radiological Incident",          ar: "حادث إشعاعي",           fr: "Incident radiologique",   de: "Radiologischer Vorfall",    es: "Incidente radiológico" },
+  "חדירת מחבלים":         { en: "Terrorist Infiltration",         ar: "تسلل إرهابي",           fr: "Infiltration terroriste",  de: "Terroristeneindringen",     es: "Infiltración terrorista" },
+  "צונאמי":              { en: "Tsunami",                        ar: "تسونامي",               fr: "Tsunami",                 de: "Tsunami",                   es: "Tsunami" },
+  "אירוע חומרים מסוכנים": { en: "Hazardous Materials Incident",   ar: "حادث مواد خطرة",        fr: "Incident matières dangereuses", de: "Gefahrstoffvorfall",    es: "Incidente de materiales peligrosos" },
+  "אירוע לא קונבנציונלי": { en: "Non-Conventional Event",         ar: "حدث غير تقليدي",        fr: "Événement non-conventionnel", de: "Nicht-konventionelles Ereignis", es: "Evento no convencional" },
+  "אחר":                  { en: "Other",                          ar: "أخرى",                  fr: "Autre",                   de: "Sonstige",                  es: "Otro" },
+};
+
+// Threat source translations
+const sourceTranslations: Record<string, Partial<Record<LangCode, string>>> = {
+  "רצועת עזה":         { en: "Gaza Strip",      ar: "قطاع غزة",   fr: "Bande de Gaza",   de: "Gazastreifen",       es: "Franja de Gaza" },
+  "לבנון":             { en: "Lebanon",          ar: "لبنان",      fr: "Liban",           de: "Libanon",            es: "Líbano" },
+  "איראן":             { en: "Iran",             ar: "إيران",      fr: "Iran",            de: "Iran",               es: "Irán" },
+  "תימן":              { en: "Yemen",            ar: "اليمن",      fr: "Yémen",           de: "Jemen",              es: "Yemen" },
+  "תימן / עיראק":      { en: "Yemen / Iraq",    ar: "اليمن/العراق", fr: "Yémen / Irak",   de: "Jemen / Irak",       es: "Yemen / Irak" },
+  "עיראק":             { en: "Iraq",             ar: "العراق",     fr: "Irak",            de: "Irak",               es: "Irak" },
+  "סוריה":             { en: "Syria",            ar: "سوريا",      fr: "Syrie",           de: "Syrien",             es: "Siria" },
+  "מעורב / לא סווג":   { en: "Mixed / Unclassified", ar: "مختلط / غير مصنف", fr: "Mixte / Non classé", de: "Gemischt / Unklassifiziert", es: "Mixto / No clasificado" },
+};
+
+// Operation name translations
+const operationTranslations: Record<string, Partial<Record<LangCode, string>>> = {
+  "חגורה שחורה (2019)":                      { en: "Black Belt (2019)",           ar: "الحزام الأسود (2019)",        fr: "Ceinture Noire (2019)",         de: "Schwarzer Gürtel (2019)",      es: "Cinturón Negro (2019)" },
+  "שומר החומות (2021)":                      { en: "Guardian of the Walls (2021)", ar: "حارس الأسوار (2021)",         fr: "Gardien des Murs (2021)",        de: "Hüter der Mauern (2021)",      es: "Guardián de los Muros (2021)" },
+  "עלות השחר (2022)":                        { en: "Breaking Dawn (2022)",        ar: "الفجر المنبثق (2022)",         fr: "Aube Naissante (2022)",          de: "Aufbruch der Morgendämmerung (2022)", es: "Amanecer (2022)" },
+  "מגן וחץ (2023)":                          { en: "Shield and Arrow (2023)",     ar: "الدرع والسهم (2023)",          fr: "Bouclier et Flèche (2023)",      de: "Schild und Pfeil (2023)",      es: "Escudo y Flecha (2023)" },
+  "מלחמת חרבות ברזל (2023+)":               { en: "Iron Swords War (2023+)",     ar: "حرب السيوف الحديدية (2023+)", fr: "Guerre des Épées de Fer (2023+)", de: "Eisenschwerter-Krieg (2023+)", es: "Guerra de Espadas de Hierro (2023+)" },
+  "מתקפת אפריל (איראן 2024)":               { en: "April Attack – Iran (2024)",  ar: "هجوم أبريل – إيران (2024)",   fr: "Attaque d'Avril – Iran (2024)",  de: "April-Angriff – Iran (2024)",  es: "Ataque de Abril – Irán (2024)" },
+  "מתקפת אוקטובר (איראן 2024)":             { en: "October Attack – Iran (2024)", ar: "هجوم أكتوبر – إيران (2024)", fr: "Attaque d'Octobre – Iran (2024)", de: "Oktober-Angriff – Iran (2024)", es: "Ataque de Octubre – Irán (2024)" },
+  "ימי תשובה (איראן 2024)":                 { en: "Days of Repentance – Iran (2024)", ar: "أيام التوبة – إيران (2024)", fr: "Jours de Repentir – Iran (2024)", de: "Bußtage – Iran (2024)", es: "Días de Arrepentimiento – Irán (2024)" },
+  "עם כלביא (איראן 2025)":                  { en: "True Promise II – Iran (2025)", ar: "الوعد الصادق 2 (2025)",     fr: "Vraie Promesse II (2025)",       de: "Wahres Versprechen II (2025)", es: "Promesa Verdadera II (2025)" },
+  "כארי ישאג / שאגת הארי (איראן 2026)":     { en: "Lion's Roar – Iran (2026)",   ar: "زئير الأسد – إيران (2026)",   fr: "Rugissement du Lion (2026)",     de: "Löwengebrüll (2026)",          es: "Rugido del León (2026)" },
+  "שגרה (ללא מערכה)":                        { en: "Routine (No Operation)",      ar: "روتين (بدون عملية)",          fr: "Routine (Hors opération)",       de: "Routine (Keine Operation)",    es: "Rutina (Sin operación)" },
+};
+
+// City name translations: Hebrew → {en (also FR/DE/ES fallback), ar}
+const cityTranslations: Record<string, { en: string; ar?: string }> = {
+  // Major cities
+  "תל אביב": { en: "Tel Aviv", ar: "تل أبيب" },
+  "תל אביב - יפו": { en: "Tel Aviv–Jaffa", ar: "تل أبيب–يافا" },
+  "ירושלים": { en: "Jerusalem", ar: "القدس" },
+  "חיפה": { en: "Haifa", ar: "حيفا" },
+  "באר שבע": { en: "Be'er Sheva", ar: "بئر السبع" },
+  "אשדוד": { en: "Ashdod", ar: "أشدود" },
+  "אשקלון": { en: "Ashkelon", ar: "عسقلان" },
+  "נתניה": { en: "Netanya", ar: "نتانيا" },
+  "ראשון לציון": { en: "Rishon LeZion", ar: "ريشون ليتسيون" },
+  "פתח תקווה": { en: "Petah Tikva", ar: "بتاح تكفا" },
+  "בני ברק": { en: "Bnei Brak", ar: "بني براك" },
+  "חולון": { en: "Holon", ar: "حولون" },
+  "בת ים": { en: "Bat Yam", ar: "بات يام" },
+  "רמת גן": { en: "Ramat Gan", ar: "رمات غان" },
+  "הרצליה": { en: "Herzliya", ar: "هرتسليا" },
+  "רחובות": { en: "Rehovot", ar: "رحوبوت" },
+  "מודיעין": { en: "Modi'in", ar: "موديعين" },
+  "לוד": { en: "Lod", ar: "اللد" },
+  "רמלה": { en: "Ramla", ar: "الرملة" },
+  "כפר סבא": { en: "Kfar Saba", ar: "كفار سابا" },
+  "רעננה": { en: "Ra'anana", ar: "راعنانا" },
+  "הוד השרון": { en: "Hod HaSharon", ar: "هود هاشارون" },
+  "נס ציונה": { en: "Nes Ziona", ar: "نيس تسيونا" },
+  "יבנה": { en: "Yavne", ar: "يبنة" },
+  "גבעתיים": { en: "Givatayim", ar: "غيفعتايم" },
+  "רמת השרון": { en: "Ramat HaSharon", ar: "رامات هاشارون" },
+  "קרית גת": { en: "Kiryat Gat", ar: "كريات جات" },
+  "קרית מלאכי": { en: "Kiryat Malakhi", ar: "كريات ملاخي" },
+  "בית שמש": { en: "Beit Shemesh", ar: "بيت شيمش" },
+  // South
+  "שדרות": { en: "Sderot", ar: "سديروت" },
+  "נתיבות": { en: "Netivot", ar: "نتيفوت" },
+  "אופקים": { en: "Ofakim", ar: "أوفاكيم" },
+  "אילת": { en: "Eilat", ar: "إيلات" },
+  "דימונה": { en: "Dimona", ar: "ديمونا" },
+  "ערד": { en: "Arad", ar: "عراد" },
+  "ירוחם": { en: "Yeruham", ar: "يروحام" },
+  "מצפה רמון": { en: "Mitzpe Ramon", ar: "متسبي رامون" },
+  "עוטף עזה": { en: "Gaza Envelope", ar: "غلاف غزة" },
+  "כפר עזה": { en: "Kfar Aza", ar: "كفار عزة" },
+  "בארי": { en: "Be'eri", ar: "بئيري" },
+  "נחל עוז": { en: "Nahal Oz", ar: "ناحال عوز" },
+  "ניר עוז": { en: "Nir Oz", ar: "نير عوز" },
+  "רעים": { en: "Re'im", ar: "ريئيم" },
+  "גן יבנה": { en: "Gan Yavne", ar: "غان يبنة" },
+  "זיקים": { en: "Zikim", ar: "زيكيم" },
+  "יד מרדכי": { en: "Yad Mordechai", ar: "ياد مردخاي" },
+  // North
+  "קרית שמונה": { en: "Kiryat Shmona", ar: "كريات شمونة" },
+  "מטולה": { en: "Metula", ar: "متولا" },
+  "צפת": { en: "Safed", ar: "صفد" },
+  "נהריה": { en: "Nahariya", ar: "نهاريا" },
+  "עכו": { en: "Acre", ar: "عكا" },
+  "כרמיאל": { en: "Karmiel", ar: "كرميئيل" },
+  "טבריה": { en: "Tiberias", ar: "طبريا" },
+  "ראש פינה": { en: "Rosh Pinna", ar: "روش بينا" },
+  "קרית מוצקין": { en: "Kiryat Motzkin", ar: "كريات موتسكين" },
+  "קרית ביאליק": { en: "Kiryat Bialik", ar: "كريات بياليك" },
+  "מעלות תרשיחא": { en: "Ma'alot-Tarshiha", ar: "معلوت-ترشيحا" },
+  "שלומי": { en: "Shlomi", ar: "شلومي" },
+  "קצרין": { en: "Katzrin", ar: "كتسرين" },
+  // Center/North
+  "חדרה": { en: "Hadera", ar: "خضيرة" },
+  "נצרת": { en: "Nazareth", ar: "الناصرة" },
+  "נוף הגליל": { en: "Nof HaGalil", ar: "نوف هغاليل" },
+  "עפולה": { en: "Afula", ar: "عفولة" },
+  "בית שאן": { en: "Beit She'an", ar: "بيت شان" },
+  "מגדל העמק": { en: "Migdal HaEmek", ar: "مجدل هاعيمق" },
+  "אום אל-פחם": { en: "Umm al-Fahm", ar: "أم الفحم" },
+  "סח'נין": { en: "Sakhnin", ar: "سخنين" },
+  "שפרעם": { en: "Shfar'am", ar: "شفاعمرو" },
+  "טמרה": { en: "Tamra", ar: "طمرة" },
+  // Regions
+  "גליל עליון": { en: "Upper Galilee", ar: "الجليل الأعلى" },
+  "גליל מערבי": { en: "Western Galilee", ar: "الجليل الغربي" },
+  "גולן": { en: "Golan Heights", ar: "هضبة الجولان" },
+  "העמקים": { en: "The Valleys", ar: "الأودية" },
+  "שרון": { en: "Sharon", ar: "شارون" },
+  "שפלה": { en: "Shephelah", ar: "السهل الساحلي" },
+  "נגב": { en: "Negev", ar: "النقب" },
+  "לכיש": { en: "Lachish", ar: "لخيش" },
+};
+
+// Helper: get localized string from a translation map, with EN fallback, then original
+const localizeStr = (
+  heStr: string,
+  dict: Record<string, Partial<Record<LangCode, string>>>,
+  lang: LangCode
+): string => {
+  if (lang === 'he') return heStr;
+  const entry = dict[heStr];
+  if (!entry) return entry?.en ?? heStr;
+  return entry[lang] ?? entry.en ?? heStr;
+};
+
+// Helper: get city display name for non-Hebrew languages
+const localizeCity = (heCity: string, lang: LangCode): string => {
+  if (lang === 'he') return heCity;
+  const entry = cityTranslations[heCity];
+  if (!entry) return heCity; // Untranslated: keep Hebrew (readable in non-Arabic) or fallback
+  if (lang === 'ar') return entry.ar ?? entry.en ?? heCity;
+  return entry.en ?? heCity; // FR/DE/ES use English transliteration
+};
+
 const getGroupedData = (data: any[], res: string, lang: string) => {
   const grouped: Record<string, number> = {};
   data.forEach(d => {
@@ -972,7 +1122,7 @@ loadData();
           opacity: 1,
           fillOpacity: 0.6
         }).addTo(mapRef.current)
-          .bindTooltip(`<b>${city}</b><br>${lang === 'he' ? 'התרעות' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'top' });
+          .bindTooltip(`<b>${localizeCity(city, lang as LangCode)}</b><br>${lang === 'he' ? 'התרעות' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'top' });
         markersRef.current.push(marker);
       } else if (!geoCache.current.hasOwnProperty(city)) {
         queue.push({ city, count: cityCounts[city] });
@@ -1243,6 +1393,8 @@ loadData();
     const counts: Record<string, number> = {};
     filteredData.forEach(d => { if (d.cities) counts[d.cities] = (counts[d.cities] || 0) + 1; });
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 15);
+    // Localized labels for display (X-axis), keeping Hebrew keys for filter logic
+    const sortedDisplay = sorted.map(([heName, count]) => [localizeCity(heName, lang as LangCode), count] as [string, number]);
     
     const chartTextColor = darkMode ? '#e2e8f0' : '#475569';
     const chartAxisColor = darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
@@ -1266,7 +1418,7 @@ loadData();
       grid: { top: '15%', bottom: '15%', left: '2%', right: '2%', containLabel: true },
       xAxis: {
         type: 'category',
-        data: sorted.map(s => s[0]),
+        data: sortedDisplay.map(s => s[0]),
         ...commonAxis,
         axisLabel: {
           ...commonAxis.axisLabel,
@@ -1323,6 +1475,13 @@ loadData();
       tCounts[t] = (tCounts[t] || 0) + 1;
       sCounts[s] = (sCounts[s] || 0) + 1;
     });
+    // Localized pie data — names shown in UI, but click filter still uses Hebrew via heKey property
+    const localizeEntries = (counts: Record<string, number>, dict: Record<string, Partial<Record<LangCode, string>>>) =>
+      Object.entries(counts).map(([heKey, v]) => ({
+        name: localizeStr(heKey, dict, lang as LangCode),
+        value: v,
+        heKey // keep for click filtering
+      }));
 
     const pieOpt = (data: any[], colors: string[]) => ({
       tooltip: { 
@@ -1332,7 +1491,7 @@ loadData();
         borderWidth: 0,
         textStyle: { color: '#fff' },
         position: customTooltipPosition,
-        formatter: '{b}: <br/><b>{c} התרעות</b> ({d}%)'
+        formatter: (p: any) => `${p.name}:<br/><b>${p.value} ${lang === 'he' ? 'התרעות' : 'alerts'}</b> (${p.percent}%)`
       },
       series: [{
         type: 'pie', 
@@ -1363,22 +1522,24 @@ loadData();
     const classicColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6'];
     const currentColors = darkMode ? neonColors : classicColors;
 
-    threatInstance.current.setOption(pieOpt(Object.entries(tCounts).map(([n, v]) => ({ name: n, value: v })), currentColors), true);
-    sourceInstance.current.setOption(pieOpt(Object.entries(sCounts).map(([n, v]) => ({ name: n, value: v })), currentColors), true);
+    threatInstance.current.setOption(pieOpt(localizeEntries(tCounts, threatTranslations), currentColors), true);
+    sourceInstance.current.setOption(pieOpt(localizeEntries(sCounts, sourceTranslations), currentColors), true);
 
-    // Interactive Filtering
+    // Interactive Filtering — use heKey to match Hebrew filter values
     threatInstance.current.off('click');
     threatInstance.current.on('click', (params: any) => {
-      if (params.name) setThreatFilter((prev: string[]) => {
-        if (prev.includes(params.name)) return prev.filter((s: string) => s !== params.name);
-        return [...prev.filter((s: string) => s !== 'all'), params.name];
+      const heKey = params.data?.heKey ?? params.name;
+      if (heKey) setThreatFilter((prev: string[]) => {
+        if (prev.includes(heKey)) return prev.filter((s: string) => s !== heKey);
+        return [...prev.filter((s: string) => s !== 'all'), heKey];
       });
     });
     sourceInstance.current.off('click');
     sourceInstance.current.on('click', (params: any) => {
-      if (params.name) setSourceFilter((prev: string[]) => {
-        if (prev.includes(params.name)) return prev.filter((s: string) => s !== params.name);
-        return [...prev.filter((s: string) => s !== 'all'), params.name];
+      const heKey = params.data?.heKey ?? params.name;
+      if (heKey) setSourceFilter((prev: string[]) => {
+        if (prev.includes(heKey)) return prev.filter((s: string) => s !== heKey);
+        return [...prev.filter((s: string) => s !== 'all'), heKey];
       });
     });
   }, [filteredData, darkMode]);
@@ -1721,7 +1882,7 @@ loadData();
               return (
                 <span key={i} className="inline-block px-8 text-xs font-semibold opacity-90 hover:opacity-100 transition-opacity">
                   <span className="text-pink-400">●</span>{' '}
-                  <b className="text-white">{alert.cities}</b>
+                  <b className="text-white">{localizeCity(alert.cities, lang as LangCode)}</b>
                   <span className="text-pink-200/70 font-normal"> · {shortDate} · {timeStr}</span>
                 </span>
               );
