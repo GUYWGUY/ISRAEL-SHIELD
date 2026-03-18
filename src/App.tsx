@@ -1305,15 +1305,27 @@ loadData();
       }, true);
     } else {
       const grouped = getGroupedData(filteredData, timeResolution, lang);
-      let xData = Object.keys(grouped);
+      let xData: string[];
       if (timeResolution === 'month') {
         // Sort by canonical month order
         const monthOrder = lang === 'he' ? MONTH_NAMES_HE : MONTH_NAMES_EN;
-        xData.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-      } else if (['year', 'hour', 'minute', 'date'].includes(timeResolution)) {
-        xData.sort();
+        xData = monthOrder.filter(m => m in grouped);
+        // fill any missing months with 0
+        monthOrder.forEach(m => { if (!(m in grouped)) grouped[m] = 0; });
+        xData = monthOrder; // full 12 months always
+      } else if (timeResolution === 'hour') {
+        // Always output exactly 24 bins 00:00–23:00 in order
+        xData = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0') + ':00');
+      } else if (timeResolution === 'minute') {
+        // Always output exactly 60 bins 00–59 in order
+        xData = Array.from({ length: 60 }, (_, m) => String(m).padStart(2, '0'));
       } else if (timeResolution === 'weekday') {
-        xData.sort((a, b) => daysHe.indexOf(a) - daysHe.indexOf(b));
+        xData = daysHe.filter(d => d in grouped);
+        daysHe.forEach(d => { if (!(d in grouped)) grouped[d] = 0; });
+        xData = daysHe;
+      } else {
+        xData = Object.keys(grouped);
+        if (['year', 'date'].includes(timeResolution)) xData.sort();
       }
       
       const yData = xData.map(k => grouped[k]);
