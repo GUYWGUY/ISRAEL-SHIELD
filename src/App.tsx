@@ -1386,7 +1386,7 @@ loadData();
         }]
       }, true);
     }
-  }, [filteredData, globalData, timeResolution, compareMode, compareOperation, operationFilter, darkMode]);
+  }, [filteredData, globalData, timeResolution, compareMode, compareOperation, operationFilter, darkMode, lang]);
 
   useEffect(() => {
     if (!topCitiesInstance.current) return;
@@ -1463,7 +1463,7 @@ loadData();
         }
       }]
     }, true);
-  }, [filteredData, darkMode]);
+  }, [filteredData, darkMode, lang]);
 
   useEffect(() => {
     if (!threatInstance.current || !sourceInstance.current) return;
@@ -1542,7 +1542,7 @@ loadData();
         return [...prev.filter((s: string) => s !== 'all'), heKey];
       });
     });
-  }, [filteredData, darkMode]);
+  }, [filteredData, darkMode, lang]);
 
   // --- Insights ---
   const insight = useMemo(() => {
