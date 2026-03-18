@@ -580,15 +580,14 @@ const getGroupedData = (data: any[], res: string, lang: string) => {
       key = lang === 'he' ? MONTH_NAMES_HE[monthIdx] : MONTH_NAMES_EN[monthIdx];
     }
     else if (res === 'weekday') key = daysHe[d.dayOfWeek];
-    else if (res === 'hour') key = String(d.hour).padStart(2, '0') + ":00";
-    // 'minute' = distribution within the hour, each minute 0-59 as a separate bin
+    else if (res === 'hour') key = String(d.dateObj.getHours()).padStart(2, '0') + ":00";
     else if (res === 'minute') {
       const min = d.dateObj.getMinutes();
       key = String(min).padStart(2, '0');
     }
     else if (res === 'daytime') {
-      const h = String(d.hour).padStart(2, '0');
-      const m = String(d.minute).padStart(2, '0');
+      const h = String(d.dateObj.getHours()).padStart(2, '0');
+      const m = String(d.dateObj.getMinutes()).padStart(2, '0');
       key = `${h}:${m}`;
     }
     else if (res === 'date') {
@@ -876,11 +875,16 @@ export default function App() {
           setLoadingStatus(lang === 'he' ? "טוען מהמטמון (מהיר)..." : "Loading from cache (fast)...");
           
           // CRITICAL: Hydrate Date objects and ensure structure
-          const hydrated = cached.data.map((d: any) => ({
-            ...d,
-            dateObj: new Date(d.dateObj || d.time),
-            operationsArray: d.operationsArray || []
-          }));
+          const hydrated = cached.data.map((d: any) => {
+            const dt = new Date(d.dateObj || d.time);
+            return {
+              ...d,
+              dateObj: dt,
+              hour: dt.getHours(),
+              minute: dt.getMinutes(),
+              operationsArray: d.operationsArray || []
+            };
+          });
           
           setGlobalData(hydrated);
           setFilteredData(hydrated);
@@ -935,6 +939,7 @@ export default function App() {
                 month: dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0'),
                 dayOfWeek: dt.getDay(),
                 hour: dt.getHours(),
+                minute: dt.getMinutes(),
                 threatStr: extractedThreat,
                 sourceStr: extractedSource,
                 operationsArray: opsArray 
@@ -1400,10 +1405,13 @@ loadData();
             value: v,
             itemStyle: v >= threshold15 && yData.filter(x => x >= threshold15).length > 0 ? {
               color: isBarType
-                ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: '#f472b6' },
-                    { offset: 1, color: '#ec4899' }
-                  ])
+                ? {
+                    type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+                    colorStops: [
+                      { offset: 0, color: '#f472b6' },
+                      { offset: 1, color: '#ec4899' }
+                    ]
+                  }
                 : '#f472b6',
               borderRadius: [8,8,0,0],
               shadowBlur: 12,
@@ -1419,10 +1427,13 @@ loadData();
             shadowColor: 'rgba(56, 189, 248, 0.4)'
           },
           areaStyle: isBarType ? undefined : {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(56,189,248,0.45)' },
-              { offset: 1, color: 'rgba(56,189,248,0)' }
-            ])
+            color: {
+              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(56,189,248,0.45)' },
+                { offset: 1, color: 'rgba(56,189,248,0)' }
+              ]
+            }
           }
         }]
       }, true);
