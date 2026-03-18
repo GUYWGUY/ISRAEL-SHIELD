@@ -586,6 +586,11 @@ const getGroupedData = (data: any[], res: string, lang: string) => {
       const min = d.dateObj.getMinutes();
       key = String(min).padStart(2, '0');
     }
+    else if (res === 'daytime') {
+      const h = String(d.hour).padStart(2, '0');
+      const m = String(d.minute).padStart(2, '0');
+      key = `${h}:${m}`;
+    }
     else if (res === 'date') {
       // YYYY-MM-DD for correct chronological sorting
       const y = d.dateObj.getFullYear();
@@ -612,6 +617,13 @@ const getGroupedData = (data: any[], res: string, lang: string) => {
   } else if (res === 'month') {
     const names = lang === 'he' ? MONTH_NAMES_HE : MONTH_NAMES_EN;
     names.forEach(name => { if (!(name in grouped)) grouped[name] = 0; });
+  } else if (res === 'daytime') {
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m++) {
+        const k = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        if (!(k in grouped)) grouped[k] = 0;
+      }
+    }
   }
 
   return grouped;
