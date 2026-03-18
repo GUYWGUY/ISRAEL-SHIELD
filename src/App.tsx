@@ -1736,13 +1736,13 @@ loadData();
               <div className="text-2xl font-black text-text-main neon-text">{filteredData.length.toLocaleString()}</div>
             </motion.div>
             
-            <motion.div whileHover={{ y: -5 }} className="glass-card p-3 relative overflow-hidden group">
+            <motion.div whileHover={{ y: -5 }} className="glass-card p-3 relative group z-10 hover:z-50">
               <div className="absolute top-0 bottom-0 left-0 w-1 bg-sky-400 shadow-[0_0_15px_#38bdf8]" />
               <div className="flex justify-between items-center mb-1">
                 <div className="text-[10px] text-text-muted font-bold tracking-widest uppercase">{t.showerIndex}</div>
                 <div className="relative group/tooltip">
                   <Info size={14} className="text-sky-400 cursor-help" />
-                  <div className="absolute bottom-full right-0 mb-2 w-52 bg-slate-900/95 border border-sky-400/30 text-sky-100 text-[10px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-50 leading-relaxed">
+                  <div className="absolute bottom-full right-0 mb-2 w-52 bg-slate-900/95 border border-sky-400/30 text-sky-100 text-[10px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-[100] leading-relaxed">
                     {isRtl
                       ? 'חלון זמן של 30 דקות שבו מספר ההתרעות ההיסטורי נמוך ביותר — הזמן הבטוח ביותר למקלחת שקטה.'
                       : 'A 30-minute window with the historically lowest alert frequency — the safest time for a quiet shower.'}
@@ -1751,14 +1751,14 @@ loadData();
               </div>
               <div className="flex flex-col">
                 {showerIndex ? (
-                  <>
+                   <>
                     <div className="text-xl font-black text-text-main leading-none">{showerIndex.time}</div>
                     <div className="text-[9px] text-text-muted font-bold mt-1.5 flex items-center gap-2">
                        <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
                         {showerIndex.probability}% {isRtl ? 'סיכוי לשקט' : 'Quiet Chance'}
                        </span>
                     </div>
-                  </>
+                   </>
                 ) : (
                   <span className="text-xs italic opacity-50">{t.noData}</span>
                 )}
