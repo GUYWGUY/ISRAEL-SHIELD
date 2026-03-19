@@ -1,7 +1,7 @@
 {
-  "name": "מגן ישראל | דשבורד נתונים",
-  "short_name": "מגן ישראל",
-  "description": "דשבורד ניתוח נתוני התרעות, חקר נתונים ביטחוניים בזמן אמת.",
+  "name": "Shield of Israel | מגן ישראל",
+  "short_name": "Shield of Israel",
+  "description": "Real-time security data analytics dashboard | דשבורד ניתוח נתוני התרעות",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#020617",
