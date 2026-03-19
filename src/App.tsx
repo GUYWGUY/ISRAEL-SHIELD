@@ -1286,6 +1286,14 @@ loadData();
         color: '#fbbf24' 
       });
 
+      let zoomStart = 0;
+      if (timeResolution === 'date' && allKeys.length > 0) {
+         const d = new Date(); d.setFullYear(d.getFullYear() - 1);
+         const thr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+         const idx = allKeys.findIndex(k => k >= thr);
+         if (idx !== -1) zoomStart = (idx / allKeys.length) * 100;
+      }
+
       timeSeriesInstance.current.setOption({
         legend: { show: true, bottom: 0, textStyle: { color: chartTextColor } },
         tooltip: { 
@@ -1299,8 +1307,8 @@ loadData();
         },
         grid: { top: '10%', bottom: (compareMode || timeResolution === 'date') ? '25%' : '5%', left: '2%', right: '2%', containLabel: true },
         dataZoom: timeResolution === 'date' ? [
-          { type: 'slider', show: true, bottom: 20, height: 15, borderColor: 'transparent', backgroundColor: 'rgba(0,0,0,0.1)', fillerColor: 'rgba(56,189,248,0.2)', handleStyle: { color: '#38bdf8' }, textStyle: { color: chartTextColor, fontSize: 10 } },
-          { type: 'inside' }
+          { type: 'slider', show: true, bottom: 20, height: 15, borderColor: 'transparent', backgroundColor: 'rgba(0,0,0,0.1)', fillerColor: 'rgba(56,189,248,0.2)', handleStyle: { color: '#38bdf8' }, textStyle: { color: chartTextColor, fontSize: 10 }, start: zoomStart, end: 100 },
+          { type: 'inside', start: zoomStart, end: 100 }
         ] : [],
         xAxis: { 
           data: allKeys,
@@ -1319,10 +1327,13 @@ loadData();
           itemStyle: { color: ds.color },
           lineStyle: { width: 3, color: ds.color, shadowBlur: 10, shadowColor: `${ds.color}80` },
           areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: ds.color + '66' },
-              { offset: 1, color: ds.color + '00' }
-            ])
+            color: {
+              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: ds.color + '66' },
+                { offset: 1, color: ds.color + '00' }
+              ]
+            }
           }
         }))
       }, true);
@@ -1370,6 +1381,14 @@ loadData();
         ? xData.map(k => { const [y,m,d] = k.split('-'); return `${d}/${m}/${y.slice(2)}`; })
         : xData;
 
+      let zoomStart = 0;
+      if (timeResolution === 'date' && xData.length > 0) {
+         const d = new Date(); d.setFullYear(d.getFullYear() - 1);
+         const thr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+         const idx = xData.findIndex(k => k >= thr);
+         if (idx !== -1) zoomStart = (idx / xData.length) * 100;
+      }
+
       timeSeriesInstance.current.setOption({
         legend: { show: false },
         tooltip: { 
@@ -1393,12 +1412,10 @@ loadData();
              fillerColor: 'rgba(56,189,248,0.2)', 
              handleStyle: { color: '#38bdf8' }, 
              textStyle: { color: chartTextColor, fontSize: 10 },
-             startValue: timeResolution === 'date' ? (() => { 
-                const d = new Date(); d.setFullYear(d.getFullYear() - 1); 
-                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-             })() : undefined
+             start: timeResolution === 'date' ? zoomStart : 0,
+             end: 100
           },
-          { type: 'inside' }
+          { type: 'inside', start: timeResolution === 'date' ? zoomStart : 0, end: 100 }
         ] : [],
         xAxis: { 
           data: displayXData,
@@ -1514,18 +1531,24 @@ loadData();
         data: sorted.map((s, i) => ({
           value: s[1],
           itemStyle: i < Math.ceil(sorted.length * 0.15) ? {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#f472b6' },
-              { offset: 1, color: '#ec4899' }
-            ]),
+            color: {
+              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: '#f472b6' },
+                { offset: 1, color: '#ec4899' }
+              ]
+            },
             borderRadius: [6, 6, 0, 0],
             shadowBlur: 14,
             shadowColor: 'rgba(244,114,182,0.5)'
           } : {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(56,189,248,0.12)' },
-              { offset: 1, color: 'rgba(59,130,246,0.06)' }
-            ]),
+            color: {
+              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(56,189,248,0.12)' },
+                { offset: 1, color: 'rgba(59,130,246,0.06)' }
+              ]
+            },
             borderRadius: [6, 6, 0, 0],
             shadowBlur: 6,
             shadowColor: 'rgba(56,189,248,0.15)'
