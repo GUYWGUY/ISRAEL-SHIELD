@@ -72,6 +72,8 @@ body {
     radial-gradient(at 0% 100%, rgba(20, 184, 166, 0.05) 0, transparent 50%),
     radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0, transparent 50%);
   filter: blur(80px);
+  -webkit-filter: blur(80px);
+  transform: translateZ(0);
   animation: meshMove 20s ease infinite alternate;
 }
 

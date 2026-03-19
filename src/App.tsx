@@ -1383,7 +1383,21 @@ loadData();
         },
         grid: { top: '10%', bottom: timeResolution === 'date' ? '25%' : '5%', left: '2%', right: '2%', containLabel: true },
         dataZoom: (timeResolution === 'date' || timeResolution === 'daytime') ? [
-          { type: 'slider', show: true, bottom: 20, height: 15, borderColor: 'transparent', backgroundColor: 'rgba(0,0,0,0.1)', fillerColor: 'rgba(56,189,248,0.2)', handleStyle: { color: '#38bdf8' }, textStyle: { color: chartTextColor, fontSize: 10 } },
+          { 
+             type: 'slider', 
+             show: true, 
+             bottom: 20, 
+             height: 15, 
+             borderColor: 'transparent', 
+             backgroundColor: 'rgba(0,0,0,0.1)', 
+             fillerColor: 'rgba(56,189,248,0.2)', 
+             handleStyle: { color: '#38bdf8' }, 
+             textStyle: { color: chartTextColor, fontSize: 10 },
+             startValue: timeResolution === 'date' ? (() => { 
+                const d = new Date(); d.setFullYear(d.getFullYear() - 1); 
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+             })() : undefined
+          },
           { type: 'inside' }
         ] : [],
         xAxis: { 
@@ -1437,6 +1451,18 @@ loadData();
           }
         }]
       }, true);
+
+      timeSeriesInstance.current.off('click');
+      timeSeriesInstance.current.on('click', (params: any) => {
+        if (timeResolution === 'date' && params.name) {
+           const parts = params.name.split('/');
+           if (parts.length === 3) {
+             const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+             const dateStr = `${year}-${parts[1]}-${parts[0]}`;
+             setDateRange(prev => prev.start === dateStr && prev.end === dateStr ? { start: "", end: "" } : { start: dateStr, end: dateStr });
+           }
+        }
+      });
     }
   }, [filteredData, globalData, timeResolution, compareMode, compareOperation, operationFilter, darkMode, lang]);
 
@@ -1515,6 +1541,14 @@ loadData();
         }
       }]
     }, true);
+
+    topCitiesInstance.current.off('click');
+    topCitiesInstance.current.on('click', (params: any) => {
+      if (params.dataIndex !== undefined && sorted[params.dataIndex]) {
+         const heCity = sorted[params.dataIndex][0];
+         setCitySearch(prev => prev === heCity ? "" : heCity);
+      }
+    });
   }, [filteredData, darkMode, lang]);
 
   useEffect(() => {
@@ -1582,16 +1616,20 @@ loadData();
     threatInstance.current.on('click', (params: any) => {
       const heKey = params.data?.heKey ?? params.name;
       if (heKey) setThreatFilter((prev: string[]) => {
-        if (prev.includes(heKey)) return prev.filter((s: string) => s !== heKey);
-        return [...prev.filter((s: string) => s !== 'all'), heKey];
+        let newF;
+        if (prev.includes(heKey)) newF = prev.filter((s: string) => s !== heKey);
+        else newF = [...prev.filter((s: string) => s !== 'all'), heKey];
+        return newF.length === 0 ? ['all'] : newF;
       });
     });
     sourceInstance.current.off('click');
     sourceInstance.current.on('click', (params: any) => {
       const heKey = params.data?.heKey ?? params.name;
       if (heKey) setSourceFilter((prev: string[]) => {
-        if (prev.includes(heKey)) return prev.filter((s: string) => s !== heKey);
-        return [...prev.filter((s: string) => s !== 'all'), heKey];
+        let newF;
+        if (prev.includes(heKey)) newF = prev.filter((s: string) => s !== heKey);
+        else newF = [...prev.filter((s: string) => s !== 'all'), heKey];
+        return newF.length === 0 ? ['all'] : newF;
       });
     });
   }, [filteredData, darkMode, lang]);
@@ -1782,11 +1820,36 @@ loadData();
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 flex flex-col md:flex-row md:overflow-hidden p-4 gap-4">
+      <main className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden p-4 gap-4">
         
         {/* Left Panel: Analytics */}
-        <div className="w-full md:w-3/4 flex flex-col gap-4 md:h-full order-1 md:order-2">
+        <div className="w-full md:w-3/4 flex flex-col gap-4 md:h-full order-1 md:order-2 min-h-min">
           
+          {/* Mobile Language Switcher */}
+          <div className="md:hidden flex items-center justify-center gap-3 mb-2 flex-shrink-0 w-full overflow-x-auto pb-2 px-2">
+            {([
+              { code: 'he', flag: 'il', label: 'עברית' },
+              { code: 'en', flag: 'us', label: 'English' },
+              { code: 'ar', flag: 'sa', label: 'العربية' },
+              { code: 'fr', flag: 'fr', label: 'Français' },
+              { code: 'de', flag: 'de', label: 'Deutsch' },
+              { code: 'es', flag: 'es', label: 'Español' },
+            ] as const).map(({ code, flag, label }) => (
+              <button
+                key={`mobile-${code}`}
+                onClick={() => setLang(code)}
+                className={`w-9 h-9 rounded-lg transition-all flex-shrink-0 ${
+                  lang === code
+                    ? 'ring-2 ring-primary-azure ring-offset-1 ring-offset-transparent opacity-100 shadow-[0_0_8px_rgba(56,189,248,0.5)]'
+                    : 'opacity-50 hover:opacity-100'
+                }`}
+                title={label}
+              >
+                <img src={`https://flagcdn.com/w40/${flag}.png`} alt={code.toUpperCase()} className="w-full h-full object-cover rounded-md" />
+              </button>
+            ))}
+          </div>
+
           {/* KPI Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 flex-shrink-0">
             {/* ... KPIs ... */}
@@ -1802,7 +1865,7 @@ loadData();
                 <div className="text-[10px] text-text-muted font-bold tracking-widest uppercase">{t.showerIndex}</div>
                 <div className="relative group/tooltip">
                   <Info size={14} className="text-sky-400 cursor-help" />
-                  <div className="absolute bottom-full right-0 mb-2 w-52 bg-slate-900/95 border border-sky-400/30 text-sky-100 text-[10px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-[100] leading-relaxed">
+                  <div className="absolute top-full right-0 mt-2 w-52 bg-slate-900/95 border border-sky-400/30 text-sky-100 text-[10px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-[100] leading-relaxed">
                     {isRtl
                       ? 'חלון זמן של 30 דקות שבו מספר ההתרעות ההיסטורי נמוך ביותר — הזמן הבטוח ביותר למקלחת שקטה.'
                       : 'A 30-minute window with the historically lowest alert frequency — the safest time for a quiet shower.'}
@@ -1844,10 +1907,9 @@ loadData();
             </motion.div>
           </div>
 
-          <div className="flex-1 flex flex-col gap-4 min-h-0">
-            {/* Charts Row 1 */}
-            <div className="flex flex-col md:flex-row gap-4 flex-[1.5] min-h-0">
-              <div className="glass-card p-4 flex flex-col md:flex-[2.5] h-full neon-border overflow-hidden">
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-12 md:grid-rows-5 gap-4 min-h-0 overflow-visible md:overflow-hidden pb-4 md:pb-0">
+            {/* Time Series */}
+            <div className="glass-card p-4 flex flex-col col-span-2 md:col-span-8 md:row-span-3 h-[300px] md:h-full neon-border overflow-hidden">
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex gap-1 p-0.5 bg-black/20 rounded-xl border border-white/5">
                     {(['date', 'year', 'month', 'weekday', 'hour', 'minute', 'daytime'] as const).map(res => (
@@ -1871,37 +1933,36 @@ loadData();
                 <div ref={timeSeriesChartRef} className="flex-1 w-full min-h-0" />
               </div>
 
-              <div className="glass-card p-3 flex flex-col md:flex-1 h-full overflow-hidden">
+            {/* Threat */}
+            <div className="glass-card p-3 flex flex-col col-span-1 md:col-span-4 md:row-span-3 h-[250px] md:h-full overflow-hidden">
                 <div className="flex items-center gap-2 mb-3">
                    <PieChartIcon size={14} className="text-alert-red" />
                    <span className="font-black text-text-main text-[10px] uppercase tracking-widest">{t.threatDist}</span>
                 </div>
                 <div ref={threatChartRef} className="flex-1 w-full min-h-0" />
-              </div>
             </div>
 
-            {/* Charts Row 2 */}
-            <div className="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
-              <div className="glass-card p-4 flex flex-col md:flex-1 h-full overflow-hidden">
+            {/* Source */}
+            <div className="glass-card p-4 flex flex-col col-span-1 md:col-span-4 md:row-span-2 h-[250px] md:h-full overflow-hidden">
                 <div className="flex items-center gap-2 mb-3">
                    <Globe size={16} className="text-primary-azure" />
                    <span className="font-black text-text-main text-xs uppercase tracking-widest">{t.sourceDist}</span>
                 </div>
                 <div ref={sourceChartRef} className="flex-1 w-full min-h-0" />
               </div>
-              <div className="glass-card p-4 flex flex-col md:flex-[2] h-full overflow-hidden">
+            {/* Top Cities */}
+            <div className="glass-card p-4 flex flex-col col-span-2 md:col-span-8 md:row-span-2 h-[300px] md:h-full overflow-hidden">
                 <div className="flex items-center gap-2 mb-3">
                    <MapIcon size={16} className="text-primary-azure" />
                    <span className="font-black text-text-main text-xs uppercase tracking-widest">{t.topCities}</span>
                 </div>
                 <div ref={topCitiesChartRef} className="flex-1 w-full min-h-0" />
-              </div>
             </div>
           </div>
         </div>
 
         {/* Right Panel: Map */}
-        <div className="w-full md:w-1/4 glass-card flex flex-col overflow-hidden h-[400px] md:h-full relative flex-shrink-0 order-2 md:order-1 border-none shadow-xl">
+        <div className="w-full md:w-1/4 glass-card flex flex-col overflow-hidden h-[400px] md:h-full relative flex-shrink-0 order-last md:order-1 border-none shadow-xl mb-6 md:mt-0 mt-4">
           <div className="px-5 py-2 bg-black/20 border-b border-white/5 flex justify-between items-center">
             <span className="font-black text-text-main text-[10px] uppercase tracking-widest">{t.mapTitle}</span>
             <button 
