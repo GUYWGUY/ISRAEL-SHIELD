@@ -1691,8 +1691,9 @@ loadData();
   }
 
   return (
+    <>
+    <div className="mesh-gradient" />
     <div className={`flex flex-col h-screen bg-bg-color font-sans transition-colors duration-500 overflow-hidden relative ${darkMode ? 'neon' : 'light'}`} dir={isRtl ? 'rtl' : 'ltr'}>
-      <div className="mesh-gradient" />
       
       {/* Header */}
       <header className="glass-card mx-4 mt-4 px-6 py-3 flex justify-between items-center z-30 flex-shrink-0 border-none shadow-2xl">
@@ -2182,5 +2183,6 @@ loadData();
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }
