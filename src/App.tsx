@@ -720,6 +720,25 @@ export default function App() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isFromCache, setIsFromCache] = useState(false);
   const [activeSearchSource, setActiveSearchSource] = useState<'desktop' | 'mobile' | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('neon');
@@ -1327,14 +1346,12 @@ loadData();
           itemStyle: { color: ds.color },
           lineStyle: { width: 3, color: ds.color, shadowBlur: 10, shadowColor: `${ds.color}80` },
           areaStyle: {
-            color: {
-              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                { offset: 0, color: ds.color + '66' },
-                { offset: 1, color: ds.color + '00' }
-              ]
-            }
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: ds.color + '66' },
+              { offset: 1, color: ds.color + '00' }
+            ])
           }
+
         }))
       }, true);
     } else {
@@ -1458,14 +1475,12 @@ loadData();
             shadowColor: 'rgba(56, 189, 248, 0.4)'
           },
           areaStyle: isBarType ? undefined : {
-            color: {
-              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-              colorStops: [
-                { offset: 0, color: 'rgba(56,189,248,0.45)' },
-                { offset: 1, color: 'rgba(56,189,248,0)' }
-              ]
-            }
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(56,189,248,0.45)' },
+              { offset: 1, color: 'rgba(56,189,248,0)' }
+            ])
           }
+
         }]
       }, true);
 
@@ -1807,6 +1822,20 @@ loadData();
 
           {/* Icon group: evenly spaced — dark/light + 6 language flags */}
           <div className="hidden md:flex items-center gap-3">
+            {deferredPrompt && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleInstallClick}
+                className="flex items-center gap-2 bg-primary-azure/20 text-primary-azure border border-primary-azure/30 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-primary-azure/30 transition-all mr-2"
+              >
+                <Bell size={14} className="animate-bounce" />
+                {lang === 'he' ? 'התקן אפליקציה' : 'Install App'}
+              </motion.button>
+            )}
+
             <button 
               onClick={() => {
                 setDarkMode(!darkMode);
@@ -1817,6 +1846,7 @@ loadData();
             >
               {darkMode ? <Moon size={20} className="text-accent-gold neon-text" /> : <Sun size={20} className="text-primary-azure" />}
             </button>
+
 
             {([
               { code: 'he', flag: 'il', label: 'עברית' },
@@ -2177,6 +2207,17 @@ loadData();
                 >
                   {isRtl ? 'הצג תוצאות' : 'Show Results'}
                 </button>
+
+                {deferredPrompt && (
+                  <button 
+                    onClick={handleInstallClick}
+                    className="mt-4 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black py-3 rounded-2xl shadow-lg active:scale-95 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                  >
+                    <Bell size={18} className="animate-bounce" />
+                    {lang === 'he' ? 'התקן אפליקציה' : 'Install App'}
+                  </button>
+                )}
+
               </div>
             </motion.div>
           </>
