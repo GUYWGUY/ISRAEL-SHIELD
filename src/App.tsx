@@ -829,10 +829,12 @@ export default function App() {
       setShowSuggestions(true);
     } else {
       const activeRegions = popularRegions.filter(r => allCities.includes(r));
-      setCitySuggestions(["כלל הארץ (איפוס)", ...activeRegions, "---"]);
+      const remainingCities = allCities.filter(c => !activeRegions.includes(c) && !selectedCities.includes(c));
+      setCitySuggestions(["כלל הארץ (איפוס)", ...activeRegions, "---", ...remainingCities]);
       setShowSuggestions(true);
     }
   };
+
 
   const regionToCities: Record<string, string[]> = {
     "מרחב דן": ["תל אביב", "תל אביב - יפו", "רמת גן", "בני ברק", "גבעתיים", "חולון", "בת ים", "קרית אונו", "אור יהודה"],
@@ -1142,7 +1144,7 @@ loadData();
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [citySearch, threatFilter, sourceFilter, operationFilter, compareOperation, compareMode, dateRange, globalData]);
+  }, [citySearch, selectedCities, threatFilter, sourceFilter, operationFilter, compareOperation, compareMode, dateRange, globalData]);
 
 
 
