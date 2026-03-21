@@ -703,6 +703,7 @@ export default function App() {
   
   // Filters
   const [citySearch, setCitySearch] = useState("");
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [threatFilter, setThreatFilter] = useState<string[]>(['all']);
   const [sourceFilter, setSourceFilter] = useState<string[]>(['all']);
   const [operationFilter, setOperationFilter] = useState<string[]>(['all']);
@@ -828,16 +829,44 @@ export default function App() {
       setShowSuggestions(true);
     } else {
       const activeRegions = popularRegions.filter(r => allCities.includes(r));
-      setCitySuggestions(activeRegions.length > 0 ? [...activeRegions, "---"] : []);
+      setCitySuggestions(["כלל הארץ (איפוס)", ...activeRegions, "---"]);
       setShowSuggestions(true);
     }
   };
 
+  const regionToCities: Record<string, string[]> = {
+    "מרחב דן": ["תל אביב", "תל אביב - יפו", "רמת גן", "בני ברק", "גבעתיים", "חולון", "בת ים", "קרית אונו", "אור יהודה"],
+    "מרחב ירושלים": ["ירושלים", "בית שמש", "מעלה אדומים", "מבשרת ציון", "אבו גוש"],
+    "מרחב חיפה": ["חיפה", "טירת כרמל", "נשר", "קרית אתא", "קרית ביאליק", "קרית מוצקין", "קרית ים"],
+    "עוטף עזה": ["שדרות", "נתיבות", "כפר עזה", "בארי", "נחל עוז", "ניר עוז", "זיקים", "כרמיה", "סעד", "עלומים", "כיסופים", "מגן", "נירים", "עין השלושה", "נתיב העשרה", "יד מרדכי", "ניר יצחק", "סופה", "חולית", "רעים", "כרם שלום", "אופקים"],
+    "גליל עליון": ["קרית שמונה", "מטולה", "צפת", "ראש פינה", "מרגליות", "משגב עם", "יפתח", "מנרה", "ברעם", "יראון", "אביבים", "דובב", "מלכיה", "סאסא"],
+    "גליל מערבי": ["נהריה", "עכו", "שלומי", "ערב אל עראמשה", "זרעית", "שתולה", "נטועה", "מתת", "חורפיש", "מעלות תרשיחא", "כרמיאל"],
+    "גולן": ["קצרין", "מג'דל שמס", "אלוני הבשן", "קשת", "נטור", "חספין", "מבוא חמה", "עין גב", "ראג'ר"],
+    "מרחב נגב": ["באר שבע", "ערד", "דימונה", "ירוחם", "מצפה רמון"],
+    "מרחב לכיש": ["אשדוד", "אשקלון", "קרית גת", "קרית מלאכי"],
+    "מרחב השפלה": ["ראשון לציון", "נס ציונה", "רחובות", "יבנה", "לוד", "רמלה", "מודיעין", "מזכרת בתיה", "גדרה", "גן יבנה", "בית דגן"],
+    "מרחב ירקון": ["נתניה", "הרצליה", "כפר סבא", "רעננה", "הוד השרון", "רמת השרון", "חדרה", "פתח תקווה"],
+    "העמקים": ["עפולה", "מגדל העמק", "בית שאן", "טבריה", "נצרת", "נוף הגליל"]
+  };
+
   const selectCity = (city: string) => {
-    setCitySearch(city);
+    if (city === "כלל הארץ (איפוס)") {
+      setSelectedCities([]);
+    } else if (regionToCities[city]) {
+      const citiesToAdd = regionToCities[city].filter(c => !selectedCities.includes(c));
+      setSelectedCities(prev => [...prev, ...citiesToAdd]);
+    } else {
+      if (!selectedCities.includes(city)) setSelectedCities(prev => [...prev, city]);
+    }
+    setCitySearch("");
     setShowSuggestions(false);
     setActiveSearchSource(null);
   };
+
+  const removeCity = (cityToRemove: string) => {
+    setSelectedCities(prev => prev.filter(c => c !== cityToRemove));
+  };
+
 
   // --- Data Fetching ---
   useEffect(() => {
@@ -1078,7 +1107,12 @@ loadData();
     const timer = setTimeout(() => {
       const filtered = globalData.filter(d => {
         let matchCity = true, matchThreat = true, matchSource = true, matchOperation = true, matchDate = true;
-        if (citySearch) matchCity = d.cities && d.cities.toLowerCase().includes(citySearch.toLowerCase());
+        
+        if (selectedCities.length > 0) {
+          matchCity = selectedCities.some(sc => d.cities && d.cities.toLowerCase().includes(sc.toLowerCase()));
+        } else if (citySearch.trim()) {
+          matchCity = d.cities && d.cities.toLowerCase().includes(citySearch.trim().toLowerCase());
+        }
         
         const dThreat = d.threatStr || 'אחר';
         const dSource = d.sourceStr || 'מעורב / לא סווג';
@@ -1879,8 +1913,32 @@ loadData();
         </div>
       </header>
 
+      {/* Selected Cities Chips */}
+      {selectedCities.length > 0 && (
+        <div className="mx-4 mt-2 mb-0 flex flex-wrap gap-2 items-center bg-black/20 p-2.5 rounded-xl border border-white/5 shadow-inner">
+          <span className="text-[10px] text-text-muted font-bold tracking-widest uppercase">{t.search}:</span>
+          {selectedCities.map(c => (
+            <motion.span 
+              initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              key={c} 
+              className="bg-primary-azure text-white text-[10px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-md shadow-primary-azure/20"
+            >
+              {c}
+              <X size={12} className="cursor-pointer hover:text-red-200 transition-colors" onClick={() => removeCity(c)} />
+            </motion.span>
+          ))}
+          <button 
+            onClick={() => setSelectedCities([])} 
+            className="text-[10px] text-red-400 hover:text-red-300 font-bold px-2 py-1 underline underline-offset-2 transition-colors ml-auto md:ml-0 rtl:mr-auto rtl:md:mr-0"
+          >
+            {isRtl ? 'נקה הכל' : 'Clear All'}
+          </button>
+        </div>
+      )}
+
       {/* Main Container */}
       <main className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden p-4 gap-4">
+
         
         {/* Left Panel: Analytics */}
         <div className="w-full md:w-3/4 flex flex-col gap-4 md:h-full order-1 md:order-2 min-h-min">
@@ -1938,7 +1996,7 @@ loadData();
                 <div className="text-[10px] text-text-muted font-bold tracking-widest uppercase">{t.showerIndex}</div>
                 <div className="relative group/tooltip">
                   <Info size={14} className="text-sky-400 cursor-help" />
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 bg-slate-900/95 border border-sky-400/30 text-sky-100 text-[10px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-[100] leading-relaxed">
+                  <div className={`absolute top-full ${isRtl ? 'left-0' : 'right-0'} mt-2 w-52 bg-slate-900/95 border border-sky-400/30 text-sky-100 text-[10px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-[100] leading-relaxed`}>
                     {isRtl
                       ? 'חלון זמן של 30 דקות שבו מספר ההתרעות ההיסטורי נמוך ביותר — הזמן הבטוח ביותר למקלחת שקטה.'
                       : 'A 30-minute window with the historically lowest alert frequency — the safest time for a quiet shower.'}
