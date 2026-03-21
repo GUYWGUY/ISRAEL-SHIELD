@@ -817,6 +817,8 @@ export default function App() {
     return null;
   };
 
+  const popularRegions = ["מרחב דן", "מרחב ירושלים", "מרחב חיפה", "מרחב נגב", "מרחב השפלה", "מרחב לכיש", "מרחב ירקון", "עוטף עזה", "גליל עליון", "גליל מערבי", "גולן"];
+
   const handleCitySearchChange = (val: string, source: 'desktop' | 'mobile') => {
     setCitySearch(val);
     setActiveSearchSource(source);
@@ -825,8 +827,9 @@ export default function App() {
       setCitySuggestions(filtered);
       setShowSuggestions(true);
     } else {
-      setCitySuggestions([]);
-      setShowSuggestions(false);
+      const activeRegions = popularRegions.filter(r => allCities.includes(r));
+      setCitySuggestions(activeRegions.length > 0 ? [...activeRegions, "---"] : []);
+      setShowSuggestions(true);
     }
   };
 
@@ -1750,8 +1753,7 @@ loadData();
                     value={citySearch}
                     onChange={(e) => handleCitySearchChange(e.target.value, 'desktop')}
                     onFocus={() => {
-                        if (citySearch.trim().length > 0) setShowSuggestions(true);
-                        setActiveSearchSource('desktop');
+                        handleCitySearchChange(citySearch, 'desktop');
                     }}
                   />
                   <AnimatePresence>
@@ -1763,13 +1765,17 @@ loadData();
                         className="absolute top-full left-0 right-0 glass-card mt-2 p-2 z-50 max-h-60 overflow-y-auto min-w-[200px]"
                       >
                         {citySuggestions.map((city, idx) => (
-                          <div 
-                            key={idx} 
-                            className="px-4 py-2 hover:bg-white/10 rounded-lg cursor-pointer text-text-main text-sm transition-colors"
-                            onClick={() => selectCity(city)}
-                          >
-                            {city}
-                          </div>
+                          city === "---" ? (
+                            <div key={idx} className="my-1 border-t border-white/20" />
+                          ) : (
+                            <div 
+                              key={idx} 
+                              className="px-4 py-2 hover:bg-white/10 rounded-lg cursor-pointer text-text-main text-sm transition-colors"
+                              onClick={() => selectCity(city)}
+                            >
+                              {city}
+                            </div>
+                          )
                         ))}
                       </motion.div>
                     )}
@@ -1879,29 +1885,42 @@ loadData();
         {/* Left Panel: Analytics */}
         <div className="w-full md:w-3/4 flex flex-col gap-4 md:h-full order-1 md:order-2 min-h-min">
           
-          {/* Mobile Language Switcher */}
-          <div className="md:hidden flex items-center justify-center gap-3 mb-2 flex-shrink-0 w-full overflow-x-auto pb-2 px-2">
-            {([
-              { code: 'he', flag: 'il', label: 'עברית' },
-              { code: 'en', flag: 'us', label: 'English' },
-              { code: 'ar', flag: 'sa', label: 'العربية' },
-              { code: 'fr', flag: 'fr', label: 'Français' },
-              { code: 'de', flag: 'de', label: 'Deutsch' },
-              { code: 'es', flag: 'es', label: 'Español' },
-            ] as const).map(({ code, flag, label }) => (
-              <button
-                key={`mobile-${code}`}
-                onClick={() => setLang(code)}
-                className={`w-9 h-9 rounded-lg transition-all flex-shrink-0 ${
-                  lang === code
-                    ? 'ring-2 ring-primary-azure ring-offset-1 ring-offset-transparent opacity-100 shadow-[0_0_8px_rgba(56,189,248,0.5)]'
-                    : 'opacity-50 hover:opacity-100'
-                }`}
-                title={label}
-              >
-                <img src={`https://flagcdn.com/w40/${flag}.png`} alt={code.toUpperCase()} className="w-full h-full object-cover rounded-md" />
-              </button>
-            ))}
+          {/* Mobile Header Icons: Language & Theme */}
+          <div className="md:hidden flex items-center justify-between gap-3 mb-2 flex-shrink-0 w-full overflow-x-auto pb-2 px-2">
+            <div className="flex items-center gap-3">
+              {([
+                { code: 'he', flag: 'il', label: 'עברית' },
+                { code: 'en', flag: 'us', label: 'English' },
+                { code: 'ar', flag: 'sa', label: 'العربية' },
+                { code: 'fr', flag: 'fr', label: 'Français' },
+                { code: 'de', flag: 'de', label: 'Deutsch' },
+                { code: 'es', flag: 'es', label: 'Español' },
+              ] as const).map(({ code, flag, label }) => (
+                <button
+                  key={`mobile-${code}`}
+                  onClick={() => setLang(code)}
+                  className={`w-9 h-9 rounded-lg transition-all flex-shrink-0 ${
+                    lang === code
+                      ? 'ring-2 ring-primary-azure ring-offset-1 ring-offset-transparent opacity-100 shadow-[0_0_8px_rgba(56,189,248,0.5)]'
+                      : 'opacity-50 hover:opacity-100'
+                  }`}
+                  title={label}
+                >
+                  <img src={`https://flagcdn.com/w40/${flag}.png`} alt={code.toUpperCase()} className="w-full h-full object-cover rounded-md" />
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => {
+                setDarkMode(!darkMode);
+                document.documentElement.classList.toggle('neon');
+              }}
+              className="p-2 hover:bg-white/10 rounded-xl transition-all text-text-main glass-card border-none flex-shrink-0"
+              title={darkMode ? 'Light mode' : 'Dark mode'}
+            >
+              {darkMode ? <Moon size={20} className="text-accent-gold neon-text" /> : <Sun size={20} className="text-primary-azure" />}
+            </button>
           </div>
 
           {/* KPI Grid */}
@@ -1919,7 +1938,7 @@ loadData();
                 <div className="text-[10px] text-text-muted font-bold tracking-widest uppercase">{t.showerIndex}</div>
                 <div className="relative group/tooltip">
                   <Info size={14} className="text-sky-400 cursor-help" />
-                  <div className="absolute top-full right-0 mt-2 w-52 bg-slate-900/95 border border-sky-400/30 text-sky-100 text-[10px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-[100] leading-relaxed">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 bg-slate-900/95 border border-sky-400/30 text-sky-100 text-[10px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-[100] leading-relaxed">
                     {isRtl
                       ? 'חלון זמן של 30 דקות שבו מספר ההתרעות ההיסטורי נמוך ביותר — הזמן הבטוח ביותר למקלחת שקטה.'
                       : 'A 30-minute window with the historically lowest alert frequency — the safest time for a quiet shower.'}
@@ -2110,8 +2129,7 @@ loadData();
                       value={citySearch}
                       onChange={(e) => handleCitySearchChange(e.target.value, 'mobile')}
                       onFocus={() => {
-                        if (citySearch.trim().length > 0) setShowSuggestions(true);
-                        setActiveSearchSource('mobile');
+                        handleCitySearchChange(citySearch, 'mobile');
                       }}
                     />
                     <AnimatePresence>
@@ -2120,16 +2138,20 @@ loadData();
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 10 }}
-                          className="absolute top-full left-0 right-0 glass-card mt-2 p-2 z-[110] max-h-40 overflow-y-auto"
+                          className="absolute top-full left-0 right-0 bg-slate-900 shadow-2xl border border-white/10 rounded-xl mt-2 p-2 z-[110] max-h-40 overflow-y-auto"
                         >
                           {citySuggestions.map((city, idx) => (
-                            <div 
-                              key={idx} 
-                              className="px-4 py-3 hover:bg-white/10 rounded-lg cursor-pointer text-white text-sm"
-                              onClick={() => selectCity(city)}
-                            >
-                              {city}
-                            </div>
+                            city === "---" ? (
+                              <div key={idx} className="my-2 border-t border-white/20" />
+                            ) : (
+                              <div 
+                                key={idx} 
+                                className="px-4 py-3 hover:bg-white/10 rounded-lg cursor-pointer text-white text-sm transition-colors"
+                                onClick={() => selectCity(city)}
+                              >
+                                {city}
+                              </div>
+                            )
                           ))}
                         </motion.div>
                       )}
