@@ -1131,9 +1131,9 @@ loadData();
         let matchCity = true, matchThreat = true, matchSource = true, matchOperation = true, matchDate = true;
         
         if (selectedCities.length > 0) {
-          matchCity = selectedCities.some(sc => d.cities && d.cities.toLowerCase().includes(sc.toLowerCase()));
+          matchCity = d.cities ? selectedCities.some(sc => d.cities.split(',').map((c:string)=>c.trim().toLowerCase()).includes(sc.toLowerCase())) : false;
         } else if (citySearch.trim()) {
-          matchCity = d.cities && d.cities.toLowerCase().includes(citySearch.trim().toLowerCase());
+          matchCity = d.cities ? d.cities.split(',').some((c:string)=>c.trim().toLowerCase().includes(citySearch.trim().toLowerCase())) : false;
         }
         
         const dThreat = d.threatStr || 'אחר';
