@@ -14,6 +14,7 @@ import {
   Info, Bell, Menu, Sun, Moon, Languages, Layers, TrendingUp, Check, Globe
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { Analytics } from '@vercel/analytics/react';
 
 // Ensures Leaflet is available globally for plugins loaded via CDN
 if (typeof window !== 'undefined') {
@@ -2326,6 +2327,7 @@ loadData();
         )}
       </AnimatePresence>
     </div>
+    <Analytics />
     </>
   );
 }
