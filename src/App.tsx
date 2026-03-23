@@ -860,13 +860,12 @@ export default function App() {
     setCitySearch(val);
     setActiveSearchSource(source);
     if (val.trim().length > 0) {
-      const matchingRegions = popularRegions.filter(r => r.includes(val));
       const filtered = allCities.filter(c => c.toLowerCase().includes(val.toLowerCase())).slice(0, 10);
-      setCitySuggestions([...matchingRegions, ...filtered]);
+      setCitySuggestions(filtered);
       setShowSuggestions(true);
     } else {
       const remainingCities = allCities.filter(c => !popularRegions.includes(c) && !selectedCities.includes(c));
-      setCitySuggestions(["כלל הארץ (איפוס)", ...popularRegions, "---", ...remainingCities]);
+      setCitySuggestions(["כלל הארץ (איפוס)", "---", ...remainingCities]);
       setShowSuggestions(true);
     }
   };
