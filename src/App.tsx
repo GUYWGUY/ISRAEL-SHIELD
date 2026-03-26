@@ -661,6 +661,21 @@ const getGroupedData = (data: any[], res: string, lang: string) => {
     }
   } else if (res === 'weekday') {
     daysHe.forEach(day => { if (!(day in grouped)) grouped[day] = 0; });
+    // Compute averages: divide alert count by number of times each weekday appears in data
+    const weekdayOccurrences = new Array(7).fill(0);
+    const seenDates = new Set<string>();
+    data.forEach((d: any) => {
+      const dk = d.dateObj.toISOString().split('T')[0];
+      if (!seenDates.has(dk)) {
+        seenDates.add(dk);
+        weekdayOccurrences[d.dayOfWeek]++;
+      }
+    });
+    daysHe.forEach((day, idx) => {
+      if (weekdayOccurrences[idx] > 0) {
+        grouped[day] = Math.round((grouped[day] || 0) / weekdayOccurrences[idx] * 10) / 10;
+      }
+    });
   } else if (res === 'month') {
     const names = lang === 'he' ? MONTH_NAMES_HE : MONTH_NAMES_EN;
     names.forEach(name => { if (!(name in grouped)) grouped[name] = 0; });
@@ -913,7 +928,17 @@ export default function App() {
       }
     }
     if (currentRoute.length >= 2) routes.push(currentRoute);
-    return routes;
+
+    // Apply 3-point moving average to smooth coordinates (reduces city-center noise)
+    return routes.map(route =>
+      route.map((alert, i) => {
+        const prev = route[Math.max(0, i - 1)];
+        const next = route[Math.min(route.length - 1, i + 1)];
+        const smoothLat = (prev.coords[0] + alert.coords[0] + next.coords[0]) / 3;
+        const smoothLon = (prev.coords[1] + alert.coords[1] + next.coords[1]) / 3;
+        return { ...alert, coords: [smoothLat, smoothLon] as [number, number] };
+      })
+    );
   }, [filteredData, uavTimeWindow, uavMaxDist]);
 
         const regionToCities: { [key: string]: string[] } = {
@@ -1696,13 +1721,19 @@ loadData();
 
       timeSeriesInstance.current.off('click');
       timeSeriesInstance.current.on('click', (params: any) => {
-        if (timeResolution === 'date' && params.name) {
+        if (!params.name) return;
+        if (timeResolution === 'date') {
            const parts = params.name.split('/');
            if (parts.length === 3) {
              const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
              const dateStr = `${year}-${parts[1]}-${parts[0]}`;
-             setDateRange(prev => prev.start === dateStr && prev.end === dateStr ? { start: "", end: "" } : { start: dateStr, end: dateStr });
+             setDateRange(prev => prev.start === dateStr && prev.end === dateStr ? { start: '', end: '' } : { start: dateStr, end: dateStr });
            }
+        } else if (timeResolution === 'year') {
+          const y = params.name.trim();
+          if (/^\d{4}$/.test(y)) {
+            setDateRange(prev => prev.start === `${y}-01-01` && prev.end === `${y}-12-31` ? { start: '', end: '' } : { start: `${y}-01-01`, end: `${y}-12-31` });
+          }
         }
       });
     }
@@ -2308,9 +2339,17 @@ loadData();
                     <Plane size={13} className="text-purple-400" />
                     <span className="font-black text-purple-300 uppercase tracking-wider text-[10px]">{t.uavExplorer}</span>
                   </div>
-                  <span className="bg-purple-500/30 text-purple-200 px-2 py-0.5 rounded-full font-black">
-                    {uavRoutes.length} {t.uavFound}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-purple-500/30 text-purple-200 px-2 py-0.5 rounded-full font-black">
+                      {uavRoutes.length} {t.uavFound}
+                    </span>
+                    <button
+                      onClick={() => setShowUavRoutes(false)}
+                      className="p-0.5 hover:bg-white/10 rounded-lg transition-all text-purple-300/60 hover:text-white"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Time Window */}
