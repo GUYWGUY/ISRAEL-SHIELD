@@ -769,7 +769,7 @@ export default function App() {
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [threatFilter, setThreatFilter] = useState<string[]>(['all']);
   const [sourceFilter, setSourceFilter] = useState<string[]>(['all']);
-  const [operationFilter, setOperationFilter] = useState<string[]>(['all']);
+  const [operationFilter, setOperationFilter] = useState<string[]>(['כארי ישאג / שאגת הארי (איראן 2026)']);
   const [timeResolution, setTimeResolution] = useState<'year' | 'month' | 'weekday' | 'hour' | 'minute' | 'date'>('date');
 
   // New Features State
@@ -2602,7 +2602,7 @@ loadData();
                 <div className="flex flex-col gap-3">
                     <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">{t.operation}</label>
                     <div className="flex flex-wrap gap-2">
-                        {["all", ...operationsDict.map(op => op.name)].map(opt => (
+                        {["all", ...[...operationsDict].reverse().map(op => op.name)].map(opt => (
                             <button 
                                 key={opt}
                                 onClick={() => {
