@@ -899,8 +899,16 @@ export default function App() {
 
   // --- UAV Route Computation (after getCityCoords to avoid temporal dead zone) ---
   const uavRoutes = useMemo(() => {
-    const droneAlerts = filteredData
-      .filter(d => d.threatStr === "חדירת כלי טיס עוין")
+    // Use globalData (ignoring city filter) so full routes are shown when filtering by city.
+    // Respect date range and operation filter.
+    const droneAlerts = globalData
+      .filter(d => {
+        if (d.threatStr !== "חדירת כלי טיס עוין") return false;
+        if (dateRange.start && d.dateObj < new Date(dateRange.start + 'T00:00:00')) return false;
+        if (dateRange.end   && d.dateObj > new Date(dateRange.end   + 'T23:59:59')) return false;
+        if (!operationFilter.includes('all') && !d.operationsArray.some((op: string) => operationFilter.includes(op))) return false;
+        return true;
+      })
       .map(d => {
         const coords = getCityCoords(d.cities);
         return coords ? { ...d, coords } : null;
@@ -955,11 +963,24 @@ export default function App() {
     }
     const routes = completedRoutes;
 
-    // Multi-pass 1-2-1 weighted smoothing (5 passes) — endpoints preserved
-    // Converges to a smooth B-spline-like curve, eliminates sharp unrealistic turns
-    return routes.map(route => {
+    // If city filter is active, keep only routes that pass through the selected city/cities
+    const cityFilterActive = citySearch.trim() !== '' || selectedCities.length > 0;
+    const filteredRoutes = cityFilterActive
+      ? routes.filter(route =>
+          route.some(alert => {
+            const city = (alert.cities || '').toLowerCase();
+            if (selectedCities.length > 0) {
+              return selectedCities.some(sc => city.split(',').map((c: string) => c.trim()).includes(sc.toLowerCase()));
+            }
+            return city.includes(citySearch.trim().toLowerCase());
+          })
+        )
+      : routes;
+
+    // Multi-pass 1-2-1 weighted smoothing (8 passes) — endpoints preserved
+    return filteredRoutes.map(route => {
       let smoothed = route;
-      for (let pass = 0; pass < 5; pass++) {
+      for (let pass = 0; pass < 8; pass++) {
         smoothed = smoothed.map((alert, i) => {
           if (i === 0 || i === smoothed.length - 1) return alert;
           const prev = smoothed[i - 1];
@@ -971,7 +992,7 @@ export default function App() {
       }
       return smoothed;
     });
-  }, [filteredData, uavTimeWindow, uavMaxDist]);
+  }, [globalData, uavTimeWindow, uavMaxDist, citySearch, selectedCities, dateRange, operationFilter]);
 
         const regionToCities: { [key: string]: string[] } = {
     "אזור אילת": ["אזור תעשייה שחורת", "אילות", "אילת", "בחר הכל"],
@@ -1490,7 +1511,17 @@ loadData();
         }).addTo(uavLayerRef.current!);
       }
 
-      // Red dot at last point (interception marker)
+      // Green dot at first point (departure)
+      const firstDot = route[0];
+      L.circleMarker(firstDot.coords as L.LatLngExpression, {
+        radius: isSelected ? 7 : 5,
+        color: '#009900',
+        fillColor: '#00ee44',
+        fillOpacity: 0.95 * dimFactor,
+        weight: 2,
+      }).addTo(uavLayerRef.current!);
+
+      // Red dot at last point (interception / end)
       const lastAlert = route[route.length - 1];
       L.circleMarker(lastAlert.coords as L.LatLngExpression, {
         radius: isSelected ? 8 : 6,
