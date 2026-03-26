@@ -2098,13 +2098,18 @@ loadData();
       {/* Header */}
       <header className="glass-card mx-4 mt-4 px-6 py-3 flex justify-between items-center z-30 flex-shrink-0 border-none shadow-2xl">
         <div className="flex items-center gap-3">
-          <motion.div 
-            initial={{ rotate: -20, scale: 0.8 }}
-            animate={{ rotate: 0, scale: 1 }}
-            className="bg-gradient-to-br from-primary-azure to-primary-deep-blue p-2.5 rounded-2xl shadow-[0_0_15px_rgba(56,189,248,0.5)]"
-          >
-            <Shield size={24} className="text-white" />
-          </motion.div>
+          <div className="relative group/shield">
+            <motion.div
+              initial={{ rotate: -20, scale: 0.8 }}
+              animate={{ rotate: 0, scale: 1 }}
+              className="bg-gradient-to-br from-primary-azure to-primary-deep-blue p-2.5 rounded-2xl shadow-[0_0_15px_rgba(56,189,248,0.5)] cursor-help"
+            >
+              <Shield size={24} className="text-white" />
+            </motion.div>
+            <div className="absolute top-full left-0 mt-2 w-72 bg-slate-900/97 border border-sky-400/30 text-sky-100 text-[11px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/shield:opacity-100 transition-opacity duration-200 pointer-events-none z-[200] leading-relaxed whitespace-pre-line">
+              {'נתוני פיקוד העורף ומאגרו של ד"ר יובל הרפז.\nהפלטפורמה פותחה במסגרת קורס BI באוניברסיטת אריאל, בהנחיית ד"ר גיא וכטל.\nמוקדש לזכר נרצחי השביעי באוקטובר וכלל הנופלים במערכה הממושכת מאז. 🕯️'}
+            </div>
+          </div>
           <div>
             <h1 className="text-xl md:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary-azure to-primary-deep-blue neon-text">
               {t.title}
