@@ -789,7 +789,7 @@ export default function App() {
   // UAV Route Explorer state
   const [showUavRoutes, setShowUavRoutes] = useState(false);
   const uavTimeWindow = 10; // minutes (fixed)
-  const uavMaxDist = 5; // km (fixed)
+  const uavMaxDist = 15; // km (fixed)
   const uavLayerRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
@@ -2312,18 +2312,30 @@ loadData();
             {/* Time Series */}
             <div className="glass-card p-4 flex flex-col col-span-2 md:col-span-8 md:row-span-3 h-[300px] md:h-full neon-border overflow-hidden">
                 <div className="flex justify-between items-center mb-2">
-                  <div className="flex gap-1 p-0.5 bg-black/20 rounded-xl border border-white/5">
-                    {(['date', 'year', 'month', 'weekday', 'hour', 'minute', 'daytime'] as const).map(res => (
-                      <button 
-                        key={res}
-                        className={`px-2.5 py-0.5 rounded-lg text-[9px] font-bold transition-all ${timeResolution === res ? 'bg-primary-azure text-text-main shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-text-muted hover:text-text-main'}`}
-                        onClick={() => setTimeResolution(res)}
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex gap-1 p-0.5 bg-black/20 rounded-xl border border-white/5">
+                      {(['date', 'year', 'month', 'weekday', 'hour', 'minute', 'daytime'] as const).map(res => (
+                        <button
+                          key={res}
+                          className={`px-2.5 py-0.5 rounded-lg text-[9px] font-bold transition-all ${timeResolution === res ? 'bg-primary-azure text-text-main shadow-[0_0_10px_rgba(56,189,248,0.4)]' : 'text-text-muted hover:text-text-main'}`}
+                          onClick={() => setTimeResolution(res)}
+                        >
+                          {res === 'year' ? t.years : res === 'month' ? t.months : res === 'date' ? t.date : res === 'weekday' ? t.days : res === 'hour' ? t.hours : res === 'minute' ? t.minutes : t.daytime}
+                        </button>
+                      ))}
+                    </div>
+                    {timeResolution === 'date' && (dateRange.start || dateRange.end) && (
+                      <button
+                        onClick={() => setDateRange({ start: '', end: '' })}
+                        title={lang === 'he' ? 'איפוס טווח תאריכים' : 'Reset date range'}
+                        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-[9px] font-black bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-all border border-red-500/30"
                       >
-                        {res === 'year' ? t.years : res === 'month' ? t.months : res === 'date' ? t.date : res === 'weekday' ? t.days : res === 'hour' ? t.hours : res === 'minute' ? t.minutes : t.daytime}
+                        <X size={9} />
+                        {lang === 'he' ? 'איפוס' : 'Reset'}
                       </button>
-                    ))}
+                    )}
                   </div>
-                  <button 
+                  <button
                       onClick={() => setCompareMode(!compareMode)}
                       className={`flex items-center gap-1 px-2 py-1 rounded-xl text-[9px] font-black transition-all ${compareMode ? 'bg-accent-gold text-text-main shadow-[0_0_10px_#fbbf24]' : 'bg-black/20 text-text-muted border border-white/5 hover:border-white/20'}`}
                   >
