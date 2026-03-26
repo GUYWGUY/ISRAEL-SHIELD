@@ -840,46 +840,6 @@ export default function App() {
   const operationOptions = useMemo(() => [...operationsDict.map(op => op.name), "שגרה (ללא מערכה)"], []);
   const threatOptions = useMemo(() => Array.from(new Set(Object.values(threatDict))), []);
   const sourceOptions = useMemo(() => Array.from(new Set(globalData.map(d => d.sourceStr))), [globalData]);
-
-  // --- UAV Route Computation ---
-  const uavRoutes = useMemo(() => {
-    // Filter only drone (כטב"מ) alerts with known coordinates
-    const droneAlerts = filteredData
-      .filter(d => d.threatStr === "חדירת כלי טיס עוין")
-      .map(d => {
-        const coords = getCityCoords(d.cities);
-        return coords ? { ...d, coords } : null;
-      })
-      .filter(Boolean) as (AlertData & { coords: [number, number] })[];
-
-    // Sort by time ascending
-    droneAlerts.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
-
-    const routes: (AlertData & { coords: [number, number] })[][] = [];
-    let currentRoute: (AlertData & { coords: [number, number] })[] = [];
-
-    for (let i = 0; i < droneAlerts.length; i++) {
-      const alert = droneAlerts[i];
-      if (currentRoute.length === 0) {
-        currentRoute.push(alert);
-      } else {
-        const prev = currentRoute[currentRoute.length - 1];
-        const timeDiffMin = (alert.dateObj.getTime() - prev.dateObj.getTime()) / 60000;
-        const distKm = haversineKm(prev.coords, alert.coords);
-        
-        // Chain if within time window AND within geographic distance limit
-        if (timeDiffMin <= uavTimeWindow && distKm <= uavMaxDist) {
-          currentRoute.push(alert);
-        } else {
-          // Save completed route (only if ≥ 2 points)
-          if (currentRoute.length >= 2) routes.push(currentRoute);
-          currentRoute = [alert];
-        }
-      }
-    }
-    if (currentRoute.length >= 2) routes.push(currentRoute);
-    return routes;
-  }, [filteredData, uavTimeWindow, uavMaxDist]);
   const allCities = useMemo(() => {
     const cities = new Set<string>();
     // Add base coords first
@@ -920,6 +880,41 @@ export default function App() {
     }
     return null;
   };
+
+  // --- UAV Route Computation (after getCityCoords to avoid temporal dead zone) ---
+  const uavRoutes = useMemo(() => {
+    const droneAlerts = filteredData
+      .filter(d => d.threatStr === "חדירת כלי טיס עוין")
+      .map(d => {
+        const coords = getCityCoords(d.cities);
+        return coords ? { ...d, coords } : null;
+      })
+      .filter(Boolean) as (AlertData & { coords: [number, number] })[];
+
+    droneAlerts.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+    const routes: (AlertData & { coords: [number, number] })[][] = [];
+    let currentRoute: (AlertData & { coords: [number, number] })[] = [];
+
+    for (let i = 0; i < droneAlerts.length; i++) {
+      const alert = droneAlerts[i];
+      if (currentRoute.length === 0) {
+        currentRoute.push(alert);
+      } else {
+        const prev = currentRoute[currentRoute.length - 1];
+        const timeDiffMin = (alert.dateObj.getTime() - prev.dateObj.getTime()) / 60000;
+        const distKm = haversineKm(prev.coords, alert.coords);
+        if (timeDiffMin <= uavTimeWindow && distKm <= uavMaxDist) {
+          currentRoute.push(alert);
+        } else {
+          if (currentRoute.length >= 2) routes.push(currentRoute);
+          currentRoute = [alert];
+        }
+      }
+    }
+    if (currentRoute.length >= 2) routes.push(currentRoute);
+    return routes;
+  }, [filteredData, uavTimeWindow, uavMaxDist]);
 
         const regionToCities: { [key: string]: string[] } = {
     "אזור אילת": ["אזור תעשייה שחורת", "אילות", "אילת", "בחר הכל"],
