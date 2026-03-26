@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Shield, Filter, X, ChevronDown, Calendar, Search, 
   Map as MapIcon, BarChart3, PieChart as PieChartIcon, 
-  Info, Bell, Menu, Sun, Moon, Languages, Layers, TrendingUp, Check, Globe
+  Info, Bell, Menu, Sun, Moon, Languages, Layers, TrendingUp, Check, Globe, Plane
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -121,6 +121,14 @@ const translations = {
     cacheStatus: "מטמון נתונים:",
     cacheOn: "פעיל",
     cacheOff: "טוען...",
+    uavExplorer: "חוקר מסלולי כטב\"מ",
+    uavFound: "מסלולים זוהו",
+    uavTimeWindow: "חלון זמן:",
+    uavMaxDist: "מרחק מקסימלי:",
+    uavMinutes: "דק׳",
+    uavKm: "ק\"מ",
+    uavNoRoutes: "אין מסלולים — נסה להרחיב את חלון הזמן",
+    uavRouteHint: "קווים מייצגים רצף התראות כטב\"מ עוקבות, ממוינות לפי זמן",
   },
   en: {
     title: "Shield of Israel | Data Analytics Dashboard",
@@ -159,6 +167,14 @@ const translations = {
     cacheStatus: "Data Cache:",
     cacheOn: "Active",
     cacheOff: "Loading...",
+    uavExplorer: "UAV Route Explorer",
+    uavFound: "routes detected",
+    uavTimeWindow: "Time window:",
+    uavMaxDist: "Max distance:",
+    uavMinutes: "min",
+    uavKm: "km",
+    uavNoRoutes: "No routes — try widening the time window",
+    uavRouteHint: "Lines show sequential UAV alert chains ordered by time",
   },
   ar: {
     title: "درع إسرائيل | لوحة تحليل البيانات",
@@ -197,6 +213,14 @@ const translations = {
     cacheStatus: "ذاكرة التخزين:",
     cacheOn: "نشط",
     cacheOff: "جارٍ التحميل...",
+    uavExplorer: "مستكشف مسارات الطائرات",
+    uavFound: "مسارات مكتشفة",
+    uavTimeWindow: "نافذة زمنية:",
+    uavMaxDist: "المسافة القصوى:",
+    uavMinutes: "دقيقة",
+    uavKm: "كم",
+    uavNoRoutes: "لا مسارات — حاول توسيع النافذة الزمنية",
+    uavRouteHint: "الخطوط تُظهر سلاسل تنبيهات متتالية مرتبة زمنياً",
   },
   fr: {
     title: "Bouclier d'Israël | Tableau de bord analytique",
@@ -235,6 +259,14 @@ const translations = {
     cacheStatus: "Cache :",
     cacheOn: "Actif",
     cacheOff: "Chargement...",
+    uavExplorer: "Explorateur de routes UAV",
+    uavFound: "routes détectées",
+    uavTimeWindow: "Fenêtre de temps :",
+    uavMaxDist: "Distance max :",
+    uavMinutes: "min",
+    uavKm: "km",
+    uavNoRoutes: "Aucune route — essayez d'élargir la fenêtre",
+    uavRouteHint: "Les lignes montrent des chaînes d'alertes UAV ordonnées par temps",
   },
   de: {
     title: "Schild Israels | Daten-Dashboard",
@@ -273,6 +305,14 @@ const translations = {
     cacheStatus: "Cache:",
     cacheOn: "Aktiv",
     cacheOff: "Lädt...",
+    uavExplorer: "Drohnen-Routen-Explorer",
+    uavFound: "Routen erkannt",
+    uavTimeWindow: "Zeitfenster:",
+    uavMaxDist: "Max. Distanz:",
+    uavMinutes: "Min",
+    uavKm: "km",
+    uavNoRoutes: "Keine Routen — Zeitfenster vergrößern",
+    uavRouteHint: "Linien zeigen sequentielle Drohnen-Alarm-Ketten",
   },
   es: {
     title: "Escudo de Israel | Panel de análisis de datos",
@@ -311,6 +351,14 @@ const translations = {
     cacheStatus: "Caché:",
     cacheOn: "Activo",
     cacheOff: "Cargando...",
+    uavExplorer: "Explorador de rutas UAV",
+    uavFound: "rutas detectadas",
+    uavTimeWindow: "Ventana de tiempo:",
+    uavMaxDist: "Distancia máx.:",
+    uavMinutes: "min",
+    uavKm: "km",
+    uavNoRoutes: "Sin rutas — amplíe la ventana de tiempo",
+    uavRouteHint: "Las líneas muestran cadenas de alertas UAV ordenadas por tiempo",
   }
 };
 
@@ -723,6 +771,12 @@ export default function App() {
   const [activeSearchSource, setActiveSearchSource] = useState<'desktop' | 'mobile' | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
+  // UAV Route Explorer state
+  const [showUavRoutes, setShowUavRoutes] = useState(false);
+  const [uavTimeWindow, setUavTimeWindow] = useState(15); // minutes
+  const [uavMaxDist, setUavMaxDist] = useState(80); // km
+  const uavLayerRef = useRef<L.LayerGroup | null>(null);
+
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
@@ -764,6 +818,15 @@ export default function App() {
   const threatInstance = useRef<echarts.ECharts | null>(null);
   const sourceInstance = useRef<echarts.ECharts | null>(null);
 
+  // Haversine distance in km between two [lat,lng] points
+  const haversineKm = ([lat1, lon1]: [number,number], [lat2, lon2]: [number,number]): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  };
+
   const geoCache = useRef<any>(null);
   if (geoCache.current === null) {
     try {
@@ -777,6 +840,46 @@ export default function App() {
   const operationOptions = useMemo(() => [...operationsDict.map(op => op.name), "שגרה (ללא מערכה)"], []);
   const threatOptions = useMemo(() => Array.from(new Set(Object.values(threatDict))), []);
   const sourceOptions = useMemo(() => Array.from(new Set(globalData.map(d => d.sourceStr))), [globalData]);
+
+  // --- UAV Route Computation ---
+  const uavRoutes = useMemo(() => {
+    // Filter only drone (כטב"מ) alerts with known coordinates
+    const droneAlerts = filteredData
+      .filter(d => d.threatStr === "חדירת כלי טיס עוין")
+      .map(d => {
+        const coords = getCityCoords(d.cities);
+        return coords ? { ...d, coords } : null;
+      })
+      .filter(Boolean) as (AlertData & { coords: [number, number] })[];
+
+    // Sort by time ascending
+    droneAlerts.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+    const routes: (AlertData & { coords: [number, number] })[][] = [];
+    let currentRoute: (AlertData & { coords: [number, number] })[] = [];
+
+    for (let i = 0; i < droneAlerts.length; i++) {
+      const alert = droneAlerts[i];
+      if (currentRoute.length === 0) {
+        currentRoute.push(alert);
+      } else {
+        const prev = currentRoute[currentRoute.length - 1];
+        const timeDiffMin = (alert.dateObj.getTime() - prev.dateObj.getTime()) / 60000;
+        const distKm = haversineKm(prev.coords, alert.coords);
+        
+        // Chain if within time window AND within geographic distance limit
+        if (timeDiffMin <= uavTimeWindow && distKm <= uavMaxDist) {
+          currentRoute.push(alert);
+        } else {
+          // Save completed route (only if ≥ 2 points)
+          if (currentRoute.length >= 2) routes.push(currentRoute);
+          currentRoute = [alert];
+        }
+      }
+    }
+    if (currentRoute.length >= 2) routes.push(currentRoute);
+    return routes;
+  }, [filteredData, uavTimeWindow, uavMaxDist]);
   const allCities = useMemo(() => {
     const cities = new Set<string>();
     // Add base coords first
@@ -1267,6 +1370,57 @@ loadData();
       isCancelled = true;
     };
   }, [filteredData, loading, darkMode, lang]);
+
+  // --- UAV Route Overlay ---
+  useEffect(() => {
+    if (!mapRef.current) return;
+    // Clear existing UAV layer
+    if (uavLayerRef.current) {
+      uavLayerRef.current.clearLayers();
+    } else {
+      uavLayerRef.current = L.layerGroup().addTo(mapRef.current);
+    }
+    if (!showUavRoutes) return;
+
+    // Neon purple colors for routes
+    const routeColors = ['#bf5fff', '#9f3fff', '#df7fff', '#7b2fff', '#cf6fff'];
+
+    uavRoutes.forEach((route, routeIdx) => {
+      const color = routeColors[routeIdx % routeColors.length];
+      const latlngs = route.map(a => a.coords as L.LatLngExpression);
+
+      // Draw polyline
+      L.polyline(latlngs, {
+        color,
+        weight: 3,
+        opacity: 0.9,
+        dashArray: '8, 4',
+        className: 'uav-route-line'
+      }).addTo(uavLayerRef.current!);
+
+      // Draw markers at each alert point
+      route.forEach((alert, pointIdx) => {
+        const timeStr = alert.dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+        const dateStr = alert.dateObj.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        const isFirst = pointIdx === 0;
+        const isLast = pointIdx === route.length - 1;
+        
+        // Arrow marker for start/end
+        L.circleMarker(alert.coords, {
+          radius: isFirst || isLast ? 9 : 6,
+          fillColor: isFirst ? '#22d3ee' : isLast ? '#f472b6' : color,
+          color: '#ffffff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.95
+        }).addTo(uavLayerRef.current!)
+          .bindTooltip(
+            `<b>${alert.cities}</b><br>⏱ ${dateStr} ${timeStr}<br>📍 נקודה ${pointIdx + 1} מ-${route.length}`,
+            { direction: 'top', className: 'uav-tooltip' }
+          );
+      });
+    });
+  }, [showUavRoutes, uavRoutes, mapRef.current]);
 
   // --- Charts Initialization & Updates ---
   useEffect(() => {
@@ -2115,15 +2269,109 @@ loadData();
 
         {/* Right Panel: Map */}
         <div className="w-full md:w-1/4 glass-card flex flex-col overflow-hidden h-[400px] md:h-full relative flex-shrink-0 order-last md:order-1 border-none shadow-xl mb-6 md:mt-0 mt-4">
-          <div className="px-5 py-2 bg-black/20 border-b border-white/5 flex justify-between items-center">
-            <span className="font-black text-text-main text-[10px] uppercase tracking-widest">{t.mapTitle}</span>
-            <button 
-                onClick={() => setMapLayer(mapLayer === 'streets' ? 'satellite' : 'streets')}
-                className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-text-muted"
-            >
-                <Layers size={14} />
-            </button>
+          <div className="px-5 py-2 bg-black/20 border-b border-white/5 flex justify-between items-center gap-2">
+            <span className="font-black text-text-main text-[10px] uppercase tracking-widest truncate">{t.mapTitle}</span>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* UAV Explorer Toggle */}
+              <button
+                onClick={() => setShowUavRoutes(!showUavRoutes)}
+                title={t.uavExplorer}
+                className={`p-1.5 rounded-lg transition-all ${
+                  showUavRoutes
+                    ? 'bg-purple-600/80 text-white shadow-[0_0_10px_rgba(168,85,247,0.6)]'
+                    : 'hover:bg-white/10 text-text-muted'
+                }`}
+              >
+                <Plane size={14} />
+              </button>
+              <button 
+                  onClick={() => setMapLayer(mapLayer === 'streets' ? 'satellite' : 'streets')}
+                  className="p-1.5 hover:bg-white/10 rounded-lg transition-all text-text-muted"
+              >
+                  <Layers size={14} />
+              </button>
+            </div>
           </div>
+
+          {/* UAV Explorer Panel */}
+          <AnimatePresence>
+            {showUavRoutes && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute top-10 inset-x-2 z-30 rounded-xl p-3 text-[10px] border border-purple-500/40 shadow-2xl"
+                style={{ background: 'rgba(10,0,30,0.92)', backdropFilter: 'blur(12px)' }}
+                dir="rtl"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Plane size={13} className="text-purple-400" />
+                    <span className="font-black text-purple-300 uppercase tracking-wider text-[10px]">{t.uavExplorer}</span>
+                  </div>
+                  <span className="bg-purple-500/30 text-purple-200 px-2 py-0.5 rounded-full font-black">
+                    {uavRoutes.length} {t.uavFound}
+                  </span>
+                </div>
+
+                {/* Time Window */}
+                <div className="mb-2">
+                  <div className="text-purple-300/70 mb-1 font-bold">{t.uavTimeWindow}</div>
+                  <div className="flex gap-1">
+                    {[5, 10, 15, 30].map(min => (
+                      <button
+                        key={min}
+                        onClick={() => setUavTimeWindow(min)}
+                        className={`flex-1 py-1 rounded-lg font-black transition-all ${
+                          uavTimeWindow === min
+                            ? 'bg-purple-600 text-white shadow-[0_0_8px_rgba(168,85,247,0.5)]'
+                            : 'bg-white/5 text-white/50 hover:bg-white/10'
+                        }`}
+                      >
+                        {min}{t.uavMinutes}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Max Distance */}
+                <div className="mb-2">
+                  <div className="text-purple-300/70 mb-1 font-bold">{t.uavMaxDist}</div>
+                  <div className="flex gap-1">
+                    {[40, 80, 150, 300].map(km => (
+                      <button
+                        key={km}
+                        onClick={() => setUavMaxDist(km)}
+                        className={`flex-1 py-1 rounded-lg font-black transition-all ${
+                          uavMaxDist === km
+                            ? 'bg-purple-600 text-white shadow-[0_0_8px_rgba(168,85,247,0.5)]'
+                            : 'bg-white/5 text-white/50 hover:bg-white/10'
+                        }`}
+                      >
+                        {km}{t.uavKm}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
+                  <span className="inline-block w-3 h-1 bg-cyan-400 rounded" />
+                  <span className="text-cyan-300/70">התחלה</span>
+                  <span className="inline-block w-3 h-1 bg-purple-400 rounded mx-1" style={{borderStyle:'dashed'}} />
+                  <span className="text-purple-300/70">מסלול</span>
+                  <span className="inline-block w-3 h-1 bg-pink-400 rounded" />
+                  <span className="text-pink-300/70">סיום</span>
+                </div>
+
+                {uavRoutes.length === 0 && (
+                  <div className="mt-2 text-center text-purple-300/50 italic">{t.uavNoRoutes}</div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div 
             id="map" 
             className="flex-1 z-10 transition-all duration-700 grayscale-[0.5] invert-[0.1]" 
