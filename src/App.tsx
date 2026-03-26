@@ -917,38 +917,11 @@ export default function App() {
 
     droneAlerts.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
 
-    // ── BACKUP (fixed time+dist, v1) ────────────────────────────────────────
-    // type Track = { route: (AlertData & { coords: [number,number] })[]; lastTimeMs: number };
-    // const activeTracks: Track[] = []; const completedRoutes: ..[][] = [];
-    // for (const alert of droneAlerts) {
-    //   const alertTimeMs = alert.dateObj.getTime();
-    //   for (let ti = activeTracks.length-1; ti>=0; ti--) {
-    //     if ((alertTimeMs-activeTracks[ti].lastTimeMs)/60000 > uavTimeWindow) {
-    //       if (activeTracks[ti].route.length>=2) completedRoutes.push(activeTracks[ti].route);
-    //       activeTracks.splice(ti,1); } }
-    //   let bestTrack=null, bestScore=Infinity;
-    //   for (const track of activeTracks) {
-    //     const prev=track.route[track.route.length-1];
-    //     const gapMin=(alertTimeMs-prev.dateObj.getTime())/60000;
-    //     const dist=haversineKm(prev.coords,alert.coords);
-    //     if (gapMin<=uavTimeWindow && dist<=uavMaxDist) {
-    //       const score=dist+gapMin*1.5; if(score<bestScore){bestScore=score;bestTrack=track;} } }
-    //   if (bestTrack) { bestTrack.route.push(alert); bestTrack.lastTimeMs=alertTimeMs; }
-    //   else activeTracks.push({route:[alert],lastTimeMs:alertTimeMs}); }
-    // for (const t of activeTracks) if(t.route.length>=2) completedRoutes.push(t.route);
-    // ── END BACKUP ───────────────────────────────────────────────────────────
-
-    // ── v2: speed-based multi-track ─────────────────────────────────────────
-    // Instead of fixed time+dist limits, validate each candidate connection by
-    // checking that the implied flight speed is physically plausible for a UAV.
-    //   max gap  : 90 min  (handles long detection gaps over unpopulated areas)
-    //   max speed: 100/60 km/min ≈ 100 km/h (Hezbollah UAV typical speed)
-    //   min speed: 0 km/min (stationary alerts in same city are fine)
-    // Simultaneous alerts (gap≈0) that are far apart start separate tracks.
-    const UAV_MAX_GAP_MIN    = 20;        // minutes — max dark time between detections
-    const UAV_MAX_SPEED      = 100 / 60; // km / min ≈ 100 km/h
-    const UAV_MIN_SPEED      = 0;        // km / min (no lower limit)
-    const UAV_MAX_ROUTE_MIN  = 90;        // 1.5 hours — max total mission duration
+    // ── v1: fixed time+dist multi-track ─────────────────────────────────────
+    // Hard per-step caps prevent stepping-stone north→south chaining
+    // that occurs when concurrent UAVs interleave alerts chronologically.
+    const UAV_TIME_WIN = 10; // minutes — max gap between consecutive detections
+    const UAV_MAX_DIST = 20; // km     — max distance between consecutive detections
 
     type Track = { route: (AlertData & { coords: [number, number] })[]; lastTimeMs: number };
     const activeTracks: Track[] = [];
@@ -957,36 +930,25 @@ export default function App() {
     for (const alert of droneAlerts) {
       const alertTimeMs = alert.dateObj.getTime();
 
-      // Expire tracks silent for longer than max gap
+      // Expire tracks silent for longer than time window
       for (let ti = activeTracks.length - 1; ti >= 0; ti--) {
-        const gapMin = (alertTimeMs - activeTracks[ti].lastTimeMs) / 60000;
-        if (gapMin > UAV_MAX_GAP_MIN) {
+        if ((alertTimeMs - activeTracks[ti].lastTimeMs) / 60000 > UAV_TIME_WIN) {
           if (activeTracks[ti].route.length >= 2) completedRoutes.push(activeTracks[ti].route);
           activeTracks.splice(ti, 1);
         }
       }
 
-      // Find best matching active track using speed plausibility
+      // Find best matching active track within time+dist limits
       let bestTrack: Track | null = null;
       let bestScore = Infinity;
       for (const track of activeTracks) {
-        const prev    = track.route[track.route.length - 1];
-        const gapMin  = (alertTimeMs - prev.dateObj.getTime()) / 60000;
-        const dist    = haversineKm(prev.coords, alert.coords);
-
-        // Reject impossible speeds and cross-day connections
-        const speed = gapMin > 0 ? dist / gapMin : 0; // same-timestamp → 0 speed
-        if (gapMin > UAV_MAX_GAP_MIN) continue;
-        if (speed > UAV_MAX_SPEED) continue;           // physically impossible
-        if (speed < UAV_MIN_SPEED) continue;
-        // Reject if joining would make route exceed max mission duration
-        const routeDurationMin = (alertTimeMs - track.route[0].dateObj.getTime()) / 60000;
-        if (routeDurationMin > UAV_MAX_ROUTE_MIN) continue;
-
-        // Score: normalised speed deviation from typical drone (1-2 km/min)
-        // Prefer tracks where connection is geographically smooth
-        const score = dist + gapMin * 0.5;
-        if (score < bestScore) { bestScore = score; bestTrack = track; }
+        const prev   = track.route[track.route.length - 1];
+        const gapMin = (alertTimeMs - prev.dateObj.getTime()) / 60000;
+        const dist   = haversineKm(prev.coords, alert.coords);
+        if (gapMin <= UAV_TIME_WIN && dist <= UAV_MAX_DIST) {
+          const score = dist + gapMin * 1.5;
+          if (score < bestScore) { bestScore = score; bestTrack = track; }
+        }
       }
 
       if (bestTrack) {
@@ -996,12 +958,11 @@ export default function App() {
         activeTracks.push({ route: [alert], lastTimeMs: alertTimeMs });
       }
     }
-    // Flush remaining active tracks
     for (const track of activeTracks) {
       if (track.route.length >= 2) completedRoutes.push(track.route);
     }
     const routes = completedRoutes;
-    // ── END v2 ───────────────────────────────────────────────────────────────
+    // ── END v1 ───────────────────────────────────────────────────────────────
 
     // If city filter is active, keep only routes that pass through the selected city/cities
     const cityFilterActive = citySearch.trim() !== '' || selectedCities.length > 0;
