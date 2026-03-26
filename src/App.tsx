@@ -2106,8 +2106,10 @@ loadData();
             >
               <Shield size={24} className="text-white" />
             </motion.div>
-            <div className="absolute top-full left-0 mt-2 w-72 bg-slate-900/97 border border-sky-400/30 text-sky-100 text-[11px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/shield:opacity-100 transition-opacity duration-200 pointer-events-none z-[200] leading-relaxed whitespace-pre-line">
-              {'נתוני פיקוד העורף ומאגרו של ד"ר יובל הרפז.\nהפלטפורמה פותחה במסגרת קורס BI באוניברסיטת אריאל, בהנחיית ד"ר גיא וכטל.\nמוקדש לזכר נרצחי השביעי באוקטובר וכלל הנופלים במערכה הממושכת מאז. 🕯️'}
+            <div className={`absolute top-full mt-2 w-72 bg-slate-900/97 border border-sky-400/30 text-sky-100 text-[11px] rounded-xl p-3 shadow-2xl opacity-0 group-hover/shield:opacity-100 transition-opacity duration-200 pointer-events-none z-[200] leading-relaxed whitespace-pre-line ${isRtl ? 'right-0 text-right' : 'left-0 text-left'}`}>
+              {isRtl
+                ? 'נתוני פיקוד העורף ומאגרו של ד"ר יובל הרפז.\nהפלטפורמה פותחה במסגרת קורס BI באוניברסיטת אריאל, בהנחיית ד"ר גיא וכטל.\nמוקדש לזכר נרצחי השביעי באוקטובר וכלל הנופלים במערכה הממושכת מאז. 🕯️'
+                : 'Data: IDF Home Front Command & Dr. Yuval Harpaz\'s dataset.\nDeveloped as part of a BI course at Ariel University, supervised by Dr. Guy Wachtel.\nDedicated to the memory of the victims of October 7th and all those fallen in the ongoing conflict. 🕯️'}
             </div>
           </div>
           <div>
