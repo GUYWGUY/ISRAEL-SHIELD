@@ -945,7 +945,7 @@ export default function App() {
     //   max speed: 100/60 km/min ≈ 100 km/h (Hezbollah UAV typical speed)
     //   min speed: 0 km/min (stationary alerts in same city are fine)
     // Simultaneous alerts (gap≈0) that are far apart start separate tracks.
-    const UAV_MAX_GAP_MIN    = 90;        // minutes — max dark time between detections
+    const UAV_MAX_GAP_MIN    = 20;        // minutes — max dark time between detections
     const UAV_MAX_SPEED      = 100 / 60; // km / min ≈ 100 km/h
     const UAV_MIN_SPEED      = 0;        // km / min (no lower limit)
     const UAV_MAX_ROUTE_MIN  = 90;        // 1.5 hours — max total mission duration
