@@ -788,8 +788,9 @@ export default function App() {
 
   // UAV Route Explorer state
   const [showUavRoutes, setShowUavRoutes] = useState(false);
+  const [selectedUavRoute, setSelectedUavRoute] = useState<number | null>(null);
   const uavTimeWindow = 10; // minutes (fixed)
-  const uavMaxDist = 15; // km (fixed)
+  const uavMaxDist = 20; // km (fixed)
   const uavLayerRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
@@ -929,16 +930,22 @@ export default function App() {
     }
     if (currentRoute.length >= 2) routes.push(currentRoute);
 
-    // Apply 3-point moving average to smooth coordinates (reduces city-center noise)
-    return routes.map(route =>
-      route.map((alert, i) => {
-        const prev = route[Math.max(0, i - 1)];
-        const next = route[Math.min(route.length - 1, i + 1)];
-        const smoothLat = (prev.coords[0] + alert.coords[0] + next.coords[0]) / 3;
-        const smoothLon = (prev.coords[1] + alert.coords[1] + next.coords[1]) / 3;
-        return { ...alert, coords: [smoothLat, smoothLon] as [number, number] };
-      })
-    );
+    // Multi-pass 1-2-1 weighted smoothing (5 passes) — endpoints preserved
+    // Converges to a smooth B-spline-like curve, eliminates sharp unrealistic turns
+    return routes.map(route => {
+      let smoothed = route;
+      for (let pass = 0; pass < 5; pass++) {
+        smoothed = smoothed.map((alert, i) => {
+          if (i === 0 || i === smoothed.length - 1) return alert;
+          const prev = smoothed[i - 1];
+          const next = smoothed[i + 1];
+          const smoothLat = (prev.coords[0] + 2 * alert.coords[0] + next.coords[0]) / 4;
+          const smoothLon = (prev.coords[1] + 2 * alert.coords[1] + next.coords[1]) / 4;
+          return { ...alert, coords: [smoothLat, smoothLon] as [number, number] };
+        });
+      }
+      return smoothed;
+    });
   }, [filteredData, uavTimeWindow, uavMaxDist]);
 
         const regionToCities: { [key: string]: string[] } = {
@@ -1416,8 +1423,14 @@ loadData();
     const maxSegFreq = Math.max(...Object.values(segmentFreq), 1);
 
     uavRoutes.forEach((route, routeIdx) => {
+      const isSelected = routeIdx === selectedUavRoute;
       const routeLen = route.length;
       const latlngs = route.map(a => a.coords as L.LatLngExpression);
+
+      // Colors: orange for selected, purple for unselected
+      const glowColor  = isSelected ? '#ff8800' : '#bf5fff';
+      const coreColor  = isSelected ? '#ffaa00' : '#d97bff';
+      const dimFactor  = selectedUavRoute !== null && !isSelected ? 0.35 : 1;
 
       // Draw each segment individually, glow scaled by segment frequency
       for (let i = 0; i < route.length - 1; i++) {
@@ -1427,20 +1440,20 @@ loadData();
         const segLatLngs: L.LatLngExpression[] = [route[i].coords, route[i + 1].coords];
         const weight = 2 + Math.round(t * 5);
 
-        // Outer glow — intensity proportional to segment frequency
+        // Outer glow
         L.polyline(segLatLngs, {
-          color: '#bf5fff',
+          color: glowColor,
           weight: weight + 8,
-          opacity: 0.12 + t * 0.38,
+          opacity: (0.12 + t * 0.38) * dimFactor,
           lineCap: 'round',
           lineJoin: 'round',
         }).addTo(uavLayerRef.current!);
 
         // Core dashed line
         L.polyline(segLatLngs, {
-          color: '#d97bff',
+          color: coreColor,
           weight,
-          opacity: 0.6 + t * 0.35,
+          opacity: (0.6 + t * 0.35) * dimFactor,
           lineCap: 'round',
           lineJoin: 'round',
           dashArray: '12, 5',
@@ -1450,28 +1463,32 @@ loadData();
       // Red dot at last point (interception marker)
       const lastAlert = route[route.length - 1];
       L.circleMarker(lastAlert.coords as L.LatLngExpression, {
-        radius: 6,
+        radius: isSelected ? 8 : 6,
         color: '#cc0000',
         fillColor: '#ff3333',
-        fillOpacity: 0.95,
+        fillOpacity: 0.95 * dimFactor,
         weight: 2,
       }).addTo(uavLayerRef.current!);
 
-      // Transparent wide polyline for tooltip hover (sticky, top z-index)
+      // Transparent wide polyline: tooltip + click to select
       const firstAlert = route[0];
       const startTime = firstAlert.dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
       const endTime = lastAlert.dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
       const dateStr = firstAlert.dateObj.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
-      L.polyline(latlngs, {
+      const hoverLine = L.polyline(latlngs, {
         color: 'transparent',
         weight: 20,
         opacity: 0.001,
-      }).addTo(uavLayerRef.current!).bindTooltip(
+      }).addTo(uavLayerRef.current!);
+      hoverLine.bindTooltip(
         `<b>מסלול #${routeIdx + 1}</b><br>📍 ${routeLen} נקודות<br>⏱ ${dateStr} · ${startTime}–${endTime}`,
         { direction: 'top', opacity: 0.97, sticky: true, className: 'uav-route-tooltip' }
       );
+      hoverLine.on('click', () => {
+        setSelectedUavRoute(prev => prev === routeIdx ? null : routeIdx);
+      });
     });
-  }, [showUavRoutes, uavRoutes, mapRef.current]);
+  }, [showUavRoutes, uavRoutes, selectedUavRoute, mapRef.current]);
 
   // --- Charts Initialization & Updates ---
   useEffect(() => {
