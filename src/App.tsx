@@ -1272,8 +1272,8 @@ loadData();
           matchOperation = dOps.some(op => operationFilter.includes(op));
         }
 
-        if (dateRange.start) matchDate = matchDate && d.dateObj >= new Date(dateRange.start);
-        if (dateRange.end) matchDate = matchDate && d.dateObj <= new Date(dateRange.end);
+        if (dateRange.start) matchDate = matchDate && d.dateObj >= new Date(dateRange.start + 'T00:00:00');
+        if (dateRange.end) matchDate = matchDate && d.dateObj <= new Date(dateRange.end + 'T23:59:59');
 
         return matchCity && matchThreat && matchSource && matchOperation && matchDate;
       });
@@ -1408,40 +1408,45 @@ loadData();
     // Neon purple colors for routes
     const routeColors = ['#bf5fff', '#9f3fff', '#df7fff', '#7b2fff', '#cf6fff'];
 
+    // Determine max route length for scaling
+    const maxRouteLen = Math.max(...uavRoutes.map(r => r.length), 1);
+
     uavRoutes.forEach((route, routeIdx) => {
-      const color = routeColors[routeIdx % routeColors.length];
+      const routeLen = route.length;
+      // Scale weight and glow by route length
+      const weight = 2 + Math.round((routeLen / maxRouteLen) * 5);
+      const opacity = 0.7 + (routeLen / maxRouteLen) * 0.28;
       const latlngs = route.map(a => a.coords as L.LatLngExpression);
 
-      // Draw polyline
+      // Outer glow (wider, more translucent)
       L.polyline(latlngs, {
-        color,
-        weight: 3,
-        opacity: 0.9,
-        dashArray: '8, 4',
-        className: 'uav-route-line'
+        color: '#bf5fff',
+        weight: weight + 6,
+        opacity: 0.18 + (routeLen / maxRouteLen) * 0.15,
+        lineCap: 'round',
+        lineJoin: 'round',
       }).addTo(uavLayerRef.current!);
 
-      // Draw markers at each alert point
-      route.forEach((alert, pointIdx) => {
-        const timeStr = alert.dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-        const dateStr = alert.dateObj.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
-        const isFirst = pointIdx === 0;
-        const isLast = pointIdx === route.length - 1;
-        
-        // Arrow marker for start/end
-        L.circleMarker(alert.coords, {
-          radius: isFirst || isLast ? 9 : 6,
-          fillColor: isFirst ? '#22d3ee' : isLast ? '#f472b6' : color,
-          color: '#ffffff',
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.95
-        }).addTo(uavLayerRef.current!)
-          .bindTooltip(
-            `<b>${alert.cities}</b><br>⏱ ${dateStr} ${timeStr}<br>📍 נקודה ${pointIdx + 1} מ-${route.length}`,
-            { direction: 'top', className: 'uav-tooltip' }
-          );
-      });
+      // Core line
+      const line = L.polyline(latlngs, {
+        color: '#d97bff',
+        weight,
+        opacity,
+        lineCap: 'round',
+        lineJoin: 'round',
+        dashArray: '12, 5',
+      }).addTo(uavLayerRef.current!);
+
+      // Tooltip shows route summary on hover
+      const firstAlert = route[0];
+      const lastAlert = route[route.length - 1];
+      const startTime = firstAlert.dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+      const endTime = lastAlert.dateObj.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = firstAlert.dateObj.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+      line.bindTooltip(
+        `<b>מסלול #${routeIdx + 1}</b><br>📍 ${routeLen} נקודות<br>⏱ ${dateStr} · ${startTime}–${endTime}`,
+        { direction: 'top', opacity: 0.96 }
+      );
     });
   }, [showUavRoutes, uavRoutes, mapRef.current]);
 
