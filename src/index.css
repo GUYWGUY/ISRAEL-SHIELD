@@ -59,6 +59,19 @@ body {
   overflow-x: hidden;
 }
 
+/* UAV Route Tooltip — always on top */
+.uav-route-tooltip {
+  z-index: 9999 !important;
+  font-family: 'Assistant', sans-serif;
+  font-size: 11px;
+  direction: rtl;
+  text-align: right;
+  pointer-events: none;
+}
+.leaflet-tooltip-pane {
+  z-index: 9999 !important;
+}
+
 /* Mesh Gradient Background */
 .neon .mesh-gradient {
   position: fixed;
