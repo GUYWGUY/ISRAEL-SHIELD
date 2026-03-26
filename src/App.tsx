@@ -942,11 +942,11 @@ export default function App() {
     // Instead of fixed time+dist limits, validate each candidate connection by
     // checking that the implied flight speed is physically plausible for a UAV.
     //   max gap  : 90 min  (handles long detection gaps over unpopulated areas)
-    //   max speed: 5 km/min = 300 km/h (faster than any known attack drone)
+    //   max speed: 100/60 km/min ≈ 100 km/h (Hezbollah UAV typical speed)
     //   min speed: 0 km/min (stationary alerts in same city are fine)
     // Simultaneous alerts (gap≈0) that are far apart start separate tracks.
-    const UAV_MAX_GAP_MIN  = 90;   // minutes — max dark time between detections
-    const UAV_MAX_SPEED    = 5;    // km / min ≈ 300 km/h
+    const UAV_MAX_GAP_MIN  = 90;        // minutes — max dark time between detections
+    const UAV_MAX_SPEED    = 100 / 60; // km / min ≈ 100 km/h
     const UAV_MIN_SPEED    = 0;    // km / min (no lower limit)
 
     type Track = { route: (AlertData & { coords: [number, number] })[]; lastTimeMs: number };
