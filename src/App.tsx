@@ -774,7 +774,7 @@ export default function App() {
   // UAV Route Explorer state
   const [showUavRoutes, setShowUavRoutes] = useState(false);
   const [uavTimeWindow, setUavTimeWindow] = useState(15); // minutes
-  const [uavMaxDist, setUavMaxDist] = useState(80); // km
+  const [uavMaxDist, setUavMaxDist] = useState(15); // km — Israel is small!
   const uavLayerRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
@@ -1304,6 +1304,9 @@ loadData();
     markersRef.current = [];
 
     const cityCounts: Record<string, number> = {};
+    // In UAV explorer mode, hide regular markers so only UAV routes show
+    if (showUavRoutes) return;
+
     filteredData.forEach(d => {
       if (d.cities) cityCounts[d.cities] = (cityCounts[d.cities] || 0) + 1;
     });
@@ -1364,7 +1367,7 @@ loadData();
     return () => {
       isCancelled = true;
     };
-  }, [filteredData, loading, darkMode, lang]);
+  }, [filteredData, loading, darkMode, lang, showUavRoutes]);
 
   // --- UAV Route Overlay ---
   useEffect(() => {
@@ -2334,7 +2337,7 @@ loadData();
                 <div className="mb-2">
                   <div className="text-purple-300/70 mb-1 font-bold">{t.uavMaxDist}</div>
                   <div className="flex gap-1">
-                    {[40, 80, 150, 300].map(km => (
+                    {[5, 15, 30, 60].map(km => (
                       <button
                         key={km}
                         onClick={() => setUavMaxDist(km)}
