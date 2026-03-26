@@ -945,9 +945,10 @@ export default function App() {
     //   max speed: 100/60 km/min ≈ 100 km/h (Hezbollah UAV typical speed)
     //   min speed: 0 km/min (stationary alerts in same city are fine)
     // Simultaneous alerts (gap≈0) that are far apart start separate tracks.
-    const UAV_MAX_GAP_MIN  = 90;        // minutes — max dark time between detections
-    const UAV_MAX_SPEED    = 100 / 60; // km / min ≈ 100 km/h
-    const UAV_MIN_SPEED    = 0;    // km / min (no lower limit)
+    const UAV_MAX_GAP_MIN    = 90;        // minutes — max dark time between detections
+    const UAV_MAX_SPEED      = 100 / 60; // km / min ≈ 100 km/h
+    const UAV_MIN_SPEED      = 0;        // km / min (no lower limit)
+    const UAV_MAX_ROUTE_MIN  = 90;        // 1.5 hours — max total mission duration
 
     type Track = { route: (AlertData & { coords: [number, number] })[]; lastTimeMs: number };
     const activeTracks: Track[] = [];
@@ -973,11 +974,14 @@ export default function App() {
         const gapMin  = (alertTimeMs - prev.dateObj.getTime()) / 60000;
         const dist    = haversineKm(prev.coords, alert.coords);
 
-        // Reject impossible speeds (both too fast and cross-day noise)
+        // Reject impossible speeds and cross-day connections
         const speed = gapMin > 0 ? dist / gapMin : 0; // same-timestamp → 0 speed
         if (gapMin > UAV_MAX_GAP_MIN) continue;
         if (speed > UAV_MAX_SPEED) continue;           // physically impossible
         if (speed < UAV_MIN_SPEED) continue;
+        // Reject if joining would make route exceed max mission duration
+        const routeDurationMin = (alertTimeMs - track.route[0].dateObj.getTime()) / 60000;
+        if (routeDurationMin > UAV_MAX_ROUTE_MIN) continue;
 
         // Score: normalised speed deviation from typical drone (1-2 km/min)
         // Prefer tracks where connection is geographically smooth
