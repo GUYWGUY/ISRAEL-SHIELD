@@ -909,26 +909,51 @@ export default function App() {
 
     droneAlerts.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
 
-    const routes: (AlertData & { coords: [number, number] })[][] = [];
-    let currentRoute: (AlertData & { coords: [number, number] })[] = [];
+    // Multi-track algorithm: maintain parallel active routes so that
+    // concurrent alerts from different geographic regions don't break each other.
+    // Each alert joins the geographically nearest active track (if within time+dist),
+    // otherwise starts a new track.
+    type Track = { route: (AlertData & { coords: [number, number] })[]; lastTimeMs: number };
+    const activeTracks: Track[] = [];
+    const completedRoutes: (AlertData & { coords: [number, number] })[][] = [];
 
-    for (let i = 0; i < droneAlerts.length; i++) {
-      const alert = droneAlerts[i];
-      if (currentRoute.length === 0) {
-        currentRoute.push(alert);
-      } else {
-        const prev = currentRoute[currentRoute.length - 1];
-        const timeDiffMin = (alert.dateObj.getTime() - prev.dateObj.getTime()) / 60000;
-        const distKm = haversineKm(prev.coords, alert.coords);
-        if (timeDiffMin <= uavTimeWindow && distKm <= uavMaxDist) {
-          currentRoute.push(alert);
-        } else {
-          if (currentRoute.length >= 2) routes.push(currentRoute);
-          currentRoute = [alert];
+    for (const alert of droneAlerts) {
+      const alertTimeMs = alert.dateObj.getTime();
+
+      // Expire tracks that exceeded the time window since their last point
+      for (let ti = activeTracks.length - 1; ti >= 0; ti--) {
+        const gapMin = (alertTimeMs - activeTracks[ti].lastTimeMs) / 60000;
+        if (gapMin > uavTimeWindow) {
+          if (activeTracks[ti].route.length >= 2) completedRoutes.push(activeTracks[ti].route);
+          activeTracks.splice(ti, 1);
         }
       }
+
+      // Find best matching active track: closest last-point within time+dist constraints
+      let bestTrack: Track | null = null;
+      let bestScore = Infinity;
+      for (const track of activeTracks) {
+        const prev = track.route[track.route.length - 1];
+        const gapMin = (alertTimeMs - prev.dateObj.getTime()) / 60000;
+        const dist  = haversineKm(prev.coords, alert.coords);
+        if (gapMin <= uavTimeWindow && dist <= uavMaxDist) {
+          const score = dist + gapMin * 1.5; // prefer closer + more recent
+          if (score < bestScore) { bestScore = score; bestTrack = track; }
+        }
+      }
+
+      if (bestTrack) {
+        bestTrack.route.push(alert);
+        bestTrack.lastTimeMs = alertTimeMs;
+      } else {
+        activeTracks.push({ route: [alert], lastTimeMs: alertTimeMs });
+      }
     }
-    if (currentRoute.length >= 2) routes.push(currentRoute);
+    // Flush remaining active tracks
+    for (const track of activeTracks) {
+      if (track.route.length >= 2) completedRoutes.push(track.route);
+    }
+    const routes = completedRoutes;
 
     // Multi-pass 1-2-1 weighted smoothing (5 passes) — endpoints preserved
     // Converges to a smooth B-spline-like curve, eliminates sharp unrealistic turns
@@ -1422,7 +1447,12 @@ loadData();
     });
     const maxSegFreq = Math.max(...Object.values(segmentFreq), 1);
 
-    uavRoutes.forEach((route, routeIdx) => {
+    // Draw non-selected routes first, selected route last (appears on top)
+    const drawOrder = [...uavRoutes.keys()].sort((a, b) =>
+      a === selectedUavRoute ? 1 : b === selectedUavRoute ? -1 : 0
+    );
+    drawOrder.forEach((routeIdx) => {
+      const route = uavRoutes[routeIdx];
       const isSelected = routeIdx === selectedUavRoute;
       const routeLen = route.length;
       const latlngs = route.map(a => a.coords as L.LatLngExpression);
