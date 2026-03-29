@@ -438,6 +438,8 @@ interface AlertData {
   cities: string;
   threat: string;
   category?: string;
+  id?: string;
+  raw?: any[];
   dateObj: Date;
   year: string;
   month: string;
@@ -915,11 +917,20 @@ export default function App() {
 
   // --- UAV Route Computation (after getCityCoords to avoid temporal dead zone) ---
   const uavRoutes = useMemo(() => {
-    // Use globalData (ignoring city filter) so full routes are shown when filtering by city.
-    // Respect date range and operation filter.
+    // Hybrid ID-Spatial Model with Geographic Tie-Breaker
+    // 1. Find all underlying event IDs that contain a UAV alert
+    const uavIds = new Set<string>();
+    globalData.forEach(d => {
+      if (d.threatStr === "חדירת כלי טיס עוין" && d.id) uavIds.add(String(d.id));
+    });
+
+    // 2. Filter alerts (UAV + linked IDs)
     const droneAlerts = globalData
       .filter(d => {
-        if (d.threatStr !== "חדירת כלי טיס עוין") return false;
+        const isUAV = d.threatStr === "חדירת כלי טיס עוין";
+        const isLinkedByID = d.id && uavIds.has(String(d.id));
+        if (!isUAV && !isLinkedByID) return false;
+        
         if (dateRange.start && d.dateObj < new Date(dateRange.start + 'T00:00:00')) return false;
         if (dateRange.end   && d.dateObj > new Date(dateRange.end   + 'T23:59:59')) return false;
         if (!operationFilter.includes('all') && !d.operationsArray.some((op: string) => operationFilter.includes(op))) return false;
@@ -931,7 +942,16 @@ export default function App() {
       })
       .filter(Boolean) as (AlertData & { coords: [number, number] })[];
 
-    droneAlerts.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+    // 3. Sort chronologically. 
+    // CRITICAL: If alerts happen at the EXACT same second (e.g. massive interceptor shrapnel),
+    // sort them North-to-South (descending latitude) to prevent alphabetical drawing zig-zags (loops).
+    droneAlerts.sort((a, b) => {
+      const tDiff = a.dateObj.getTime() - b.dateObj.getTime();
+      if (Math.abs(tDiff) <= 1000) { // Within 1 second
+        return b.coords[0] - a.coords[0]; // Sort North to South
+      }
+      return tDiff;
+    });
 
     // ── v1: fixed time+dist multi-track ─────────────────────────────────────
     // Hard per-step caps prevent stepping-stone north→south chaining
@@ -961,8 +981,13 @@ export default function App() {
         const prev   = track.route[track.route.length - 1];
         const gapMin = (alertTimeMs - prev.dateObj.getTime()) / 60000;
         const dist   = haversineKm(prev.coords, alert.coords);
-        if (gapMin <= UAV_TIME_WIN && dist <= UAV_MAX_DIST) {
-          const score = dist + gapMin * 1.5;
+        
+        const isSameEventId = alert.id && prev.id && alert.id === prev.id;
+        
+        // Match if it's explicitly the same event ID, OR if it fits spatial thresholds
+        if (isSameEventId || (gapMin <= UAV_TIME_WIN && dist <= UAV_MAX_DIST)) {
+          // Prioritize exact ID matches (score = -1) over proximity matches
+          const score = isSameEventId ? -1 : (dist + gapMin * 1.5);
           if (score < bestScore) { bestScore = score; bestTrack = track; }
         }
       }
