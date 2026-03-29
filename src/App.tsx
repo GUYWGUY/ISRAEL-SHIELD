@@ -917,19 +917,10 @@ export default function App() {
 
   // --- UAV Route Computation (after getCityCoords to avoid temporal dead zone) ---
   const uavRoutes = useMemo(() => {
-    // Hybrid ID-Spatial Model with Geographic Tie-Breaker
-    // 1. Find all underlying event IDs that contain a UAV alert
-    const uavIds = new Set<string>();
-    globalData.forEach(d => {
-      if (d.threatStr === "חדירת כלי טיס עוין" && d.id) uavIds.add(String(d.id));
-    });
-
-    // 2. Filter alerts (UAV + linked IDs)
+    // Filter alerts to UAVs only (Strict Spatio-Temporal Model without Event ID chaining)
     const droneAlerts = globalData
       .filter(d => {
-        const isUAV = d.threatStr === "חדירת כלי טיס עוין";
-        const isLinkedByID = d.id && uavIds.has(String(d.id));
-        if (!isUAV && !isLinkedByID) return false;
+        if (d.threatStr !== "חדירת כלי טיס עוין") return false;
         
         if (dateRange.start && d.dateObj < new Date(dateRange.start + 'T00:00:00')) return false;
         if (dateRange.end   && d.dateObj > new Date(dateRange.end   + 'T23:59:59')) return false;
@@ -943,8 +934,7 @@ export default function App() {
       .filter(Boolean) as (AlertData & { coords: [number, number] })[];
 
     // 3. Sort chronologically. 
-    // CRITICAL: If alerts happen at the EXACT same second (e.g. massive interceptor shrapnel),
-    // sort them North-to-South (descending latitude) to prevent alphabetical drawing zig-zags (loops).
+    // Geographic tie-breaker is kept to prevent zigzags during simultaneous UAV alerts.
     droneAlerts.sort((a, b) => {
       const tDiff = a.dateObj.getTime() - b.dateObj.getTime();
       if (Math.abs(tDiff) <= 1000) { // Within 1 second
@@ -982,12 +972,9 @@ export default function App() {
         const gapMin = (alertTimeMs - prev.dateObj.getTime()) / 60000;
         const dist   = haversineKm(prev.coords, alert.coords);
         
-        const isSameEventId = alert.id && prev.id && alert.id === prev.id;
-        
-        // Match if it's explicitly the same event ID, OR if it fits spatial thresholds
-        if (isSameEventId || (gapMin <= UAV_TIME_WIN && dist <= UAV_MAX_DIST)) {
-          // Prioritize exact ID matches (score = -1) over proximity matches
-          const score = isSameEventId ? -1 : (dist + gapMin * 1.5);
+        // Strict spatial and temporal thresholding only
+        if (gapMin <= UAV_TIME_WIN && dist <= UAV_MAX_DIST) {
+          const score = dist + gapMin * 1.5;
           if (score < bestScore) { bestScore = score; bestTrack = track; }
         }
       }
