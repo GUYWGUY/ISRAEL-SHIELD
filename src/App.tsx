@@ -915,20 +915,11 @@ export default function App() {
 
   // --- UAV Route Computation (after getCityCoords to avoid temporal dead zone) ---
   const uavRoutes = useMemo(() => {
-    // Hybrid ID-Spatial Model: Find all underlying event IDs that contain a UAV alert
-    const uavIds = new Set<string>();
-    globalData.forEach(d => {
-      if (d.threatStr === "חדירת כלי טיס עוין" && d.id) uavIds.add(String(d.id));
-    });
-
+    // Use globalData (ignoring city filter) so full routes are shown when filtering by city.
+    // Respect date range and operation filter.
     const droneAlerts = globalData
       .filter(d => {
-        const isUAV = d.threatStr === "חדירת כלי טיס עוין";
-        const isLinkedByID = d.id && uavIds.has(String(d.id));
-        
-        // Include if explicitly a UAV, OR if it shares the exact event ID of a UAV (e.g. interceptor shrapnel alerts)
-        if (!isUAV && !isLinkedByID) return false;
-        
+        if (d.threatStr !== "חדירת כלי טיס עוין") return false;
         if (dateRange.start && d.dateObj < new Date(dateRange.start + 'T00:00:00')) return false;
         if (dateRange.end   && d.dateObj > new Date(dateRange.end   + 'T23:59:59')) return false;
         if (!operationFilter.includes('all') && !d.operationsArray.some((op: string) => operationFilter.includes(op))) return false;
