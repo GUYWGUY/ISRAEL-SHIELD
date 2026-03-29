@@ -686,6 +686,22 @@ const getGroupedData = (data: any[], res: string, lang: string) => {
         if (!(k in grouped)) grouped[k] = 0;
       }
     }
+  } else if (res === 'date' && data.length > 0) {
+    let minD = new Date(data[0].dateObj);
+    let maxD = new Date(data[0].dateObj);
+    data.forEach(d => {
+      if (d.dateObj < minD) minD = new Date(d.dateObj);
+      if (d.dateObj > maxD) maxD = new Date(d.dateObj);
+    });
+    minD.setHours(0,0,0,0);
+    maxD.setHours(0,0,0,0);
+    for (let d = new Date(minD); d <= maxD; d.setDate(d.getDate() + 1)) {
+       const y = d.getFullYear();
+       const mo = String(d.getMonth() + 1).padStart(2, '0');
+       const day = String(d.getDate()).padStart(2, '0');
+       const k = `${y}-${mo}-${day}`;
+       if (!(k in grouped)) grouped[k] = 0;
+    }
   }
 
   return grouped;
@@ -1258,13 +1274,16 @@ loadData();
     if (filteredData.length === 0) return null;
     
     const slots = new Array(48).fill(0);
+    const uniqueDays = new Set<string>();
     filteredData.forEach(d => {
+      uniqueDays.add(`${d.year}-${d.month}-${d.dateObj.getDate()}`);
       const minutes = d.hour * 60 + d.dateObj.getMinutes();
       const slotIdx = Math.floor(minutes / 30);
       if (slotIdx >= 0 && slotIdx < 48) {
         slots[slotIdx]++;
       }
     });
+    const totalDays = Math.max(1, uniqueDays.size);
 
     const score = slots.map((val, i) => {
       const prev = slots[(i - 1 + 48) % 48];
@@ -1291,9 +1310,13 @@ loadData();
 
     const timeStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')} - ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
     
+    // Poisson probability of 0 alerts: Math.exp(-lambda)
+    const lambda = slots[bestSlot] / totalDays;
+    const prob = Math.round(Math.exp(-lambda) * 100);
+    
     return {
       time: timeStr,
-      probability: Math.min(100, Math.max(0, 100 - (slots[bestSlot] * 5))) 
+      probability: prob 
     };
   }, [filteredData]);
 
@@ -1402,7 +1425,18 @@ loadData();
           opacity: 1,
           fillOpacity: 0.6
         }).addTo(mapRef.current)
-          .bindTooltip(`<b>${localizeCity(city, lang as LangCode)}</b><br>${lang === 'he' ? 'התרעות' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'top' });
+          .bindTooltip(`<b>${localizeCity(city, lang as LangCode)}</b><br>${lang === 'he' ? 'התרעות' : 'Alerts'}: ${cityCounts[city].toLocaleString()}`, { direction: 'auto' });
+        
+        marker.on('click', () => {
+          setSelectedCities(prev => {
+             const lowerCity = city.toLowerCase();
+             if (prev.some(c => c.toLowerCase() === lowerCity)) {
+               return prev.filter(c => c.toLowerCase() !== lowerCity);
+             }
+             return [...prev, city];
+          });
+        });
+
         markersRef.current.push(marker);
       } else if (!geoCache.current.hasOwnProperty(city)) {
         queue.push({ city, count: cityCounts[city] });
@@ -1508,7 +1542,8 @@ loadData();
           opacity: (0.6 + t * 0.35) * dimFactor,
           lineCap: 'round',
           lineJoin: 'round',
-          dashArray: '12, 5',
+          dashArray: '12, 10',
+          className: isSelected ? 'uav-animated-path' : '',
         }).addTo(uavLayerRef.current!);
       }
 
@@ -1544,7 +1579,7 @@ loadData();
       }).addTo(uavLayerRef.current!);
       hoverLine.bindTooltip(
         `<b>מסלול #${routeIdx + 1}</b><br>📍 ${routeLen} נקודות<br>⏱ ${dateStr} · ${startTime}–${endTime}`,
-        { direction: 'top', opacity: 0.97, sticky: true, className: 'uav-route-tooltip' }
+        { direction: 'auto', opacity: 0.97, sticky: true, className: 'uav-route-tooltip' }
       );
       hoverLine.on('click', () => {
         setSelectedUavRoute(prev => prev === routeIdx ? null : routeIdx);
