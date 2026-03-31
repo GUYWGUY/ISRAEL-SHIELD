@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
-import type { ECharts } from 'echarts';
 import { RouteImpactData } from '../utils/routePlanner';
 import { X, Navigation, Info, Star, AlertTriangle, Clock, Route } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -58,6 +57,21 @@ export const SafeRouteModal: React.FC<SafeRouteModalProps> = ({
   const [startMatches, setStartMatches] = useState<string[]>([]);
   const [endMatches, setEndMatches] = useState<string[]>([]);
   const [calcLoading, setCalcLoading] = useState(false);
+  const [chartHeight, setChartHeight] = useState(0);
+  const chartBoxRef = useRef<HTMLDivElement>(null);
+
+  // Measure the chart container with ResizeObserver so ECharts always gets
+  // an explicit pixel height rather than relying on height:'100%' in flex.
+  useEffect(() => {
+    const el = chartBoxRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      const h = entries[0]?.contentRect.height;
+      if (h && h > 0) setChartHeight(h);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [safeRouteData]);
 
   const isHe = lang === 'he';
   const isRtl = isHe;
@@ -326,12 +340,11 @@ export const SafeRouteModal: React.FC<SafeRouteModalProps> = ({
                   className="flex-1 min-h-0 flex flex-col"
                 >
                   {travelSummaryJsx}
-                  <div className={`flex-1 min-h-0 mx-4 mb-1 mt-2 rounded-xl border p-2 ${darkMode ? 'bg-slate-800/40 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
+                  <div ref={chartBoxRef} className={`flex-1 min-h-0 mx-4 mb-1 mt-2 rounded-xl border p-2 ${darkMode ? 'bg-slate-800/40 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
                     <ReactECharts
                       option={chartOptions}
-                      style={{ height: '100%', width: '100%' }}
+                      style={{ height: chartHeight > 0 ? chartHeight - 16 : '100%', width: '100%' }}
                       notMerge={true}
-                      onChartReady={(chart: ECharts) => { requestAnimationFrame(() => chart.resize()); }}
                     />
                   </div>
                   <div className={`text-[8px] text-center pb-2 flex-shrink-0 ${darkMode ? 'text-slate-600' : 'text-slate-400'}`}>
