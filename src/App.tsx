@@ -11,9 +11,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Shield, Filter, X, ChevronDown, Calendar, Search, 
   Map as MapIcon, BarChart3, PieChart as PieChartIcon, 
-  Info, Bell, Menu, Sun, Moon, Languages, Layers, TrendingUp, Check, Globe, Plane
+  Info, Bell, Menu, Sun, Moon, Languages, Layers, TrendingUp, Check, Globe, Plane, Navigation
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { calculateSafeRoute, getDistanceKm, RouteImpactData } from './utils/routePlanner';
+import { SafeRouteModal } from './components/SafeRouteModal';
 
 // Ensures Leaflet is available globally for plugins loaded via CDN
 if (typeof window !== 'undefined') {
@@ -431,6 +433,49 @@ const baseCoords: Record<string, [number, number]> = {
   "מרחב גליל": [33.0000, 35.4000], "מרחב גולן": [33.1000, 35.7000], "מרחב יהודה": [31.5000, 35.0500], "מרחב שומרון": [32.2000, 35.2000],
   "מרחב אילת": [29.5577, 34.9519], "אלוני הבשן": [33.0444, 35.8361], "קשת": [33.0000, 35.8000], "נטור": [32.8500, 35.7500],
   "חספין": [32.8200, 35.7700], "מבוא חמה": [32.7300, 35.6500], "עין גב": [32.8100, 35.6400], "כנרת": [32.7200, 35.5800],
+
+  // נגב ודרום – יישובים נוספים
+  "שדה בוקר": [30.8712, 34.7731],
+  "תל שבע": [31.2581, 34.8261], "רהט": [31.3928, 34.7553], "לקיה": [31.3769, 34.8186],
+  "ביר הדאג'": [31.1889, 34.6872], "נאות הכיכר": [30.9500, 35.2000], "פארן": [30.3600, 35.1500],
+
+  // מרכז – יישובים נוספים
+  "ראש העין": [32.0953, 34.9583], "אלעד": [32.0528, 34.9539], "קרית אונו": [32.0614, 34.8653],
+  "אור יהודה": [32.0236, 34.8569], "יהוד": [32.0333, 34.8833], "אזור": [32.0153, 34.8011],
+  "תל מונד": [32.2611, 34.9194], "כפר יונה": [32.3172, 34.9361], "אבן יהודה": [32.2750, 34.9000],
+  "קדימה-צורן": [32.2667, 34.9167], "אור עקיבא": [32.5072, 34.9175], "צור יגאל": [32.2167, 34.9833],
+  "פרדסיה": [32.3000, 34.9167], "בני עייש": [31.8339, 34.7472],
+
+  // צפון – יישובים נוספים
+  "קרית ים": [32.8500, 35.0667], "קרית אתא": [32.8069, 35.1072], "קרית טבעון": [32.7200, 35.1267],
+  "טירת כרמל": [32.7583, 34.9700], "נשר": [32.7747, 35.0411], "קרית חיים": [32.8267, 35.0697],
+  "מג'דל כרום": [32.9694, 35.2394], "ביר אל מכסור": [32.9500, 35.2200], "יסוד המעלה": [33.0653, 35.5889],
+  "מחניים": [33.0186, 35.5878], "אבן מנחם": [33.0472, 35.4361], "צורית": [32.9786, 35.2256],
+  "בקעת בית נטופה": [32.8000, 35.3000], "כפר כנא": [32.7467, 35.3364], "טורעאן": [32.7750, 35.3333],
+  "נחף": [32.9036, 35.3439], "כאבול": [32.8811, 35.2003], "בוסתן הגליל": [32.9667, 35.1167],
+  "יקנעם": [32.6583, 35.1056], "מגדל": [32.8378, 35.5064], "ציפורי": [32.7556, 35.2789],
+
+  // יהודה ושומרון (יישובים בתחום סמכות פח"ע)
+  "מעלה אדומים": [31.7700, 35.2958], "אריאל": [32.1000, 35.1500], "מודיעין עילית": [31.9333, 35.0500],
+  "בית אריה": [31.9444, 35.0408], "גוש עציון": [31.6500, 35.1167], "קרית ארבע": [31.5289, 35.1133],
+  "אפרת": [31.6578, 35.1703], "בית אל": [31.9378, 35.2253], "שילה": [32.0475, 35.2972],
+  "כדומים": [32.1833, 35.1500], "קרנה שומרון": [32.1794, 35.1794], "אלקנה": [32.1117, 35.0989],
+
+  // חוף הכרמל ועמק יזרעאל
+  "עתלית": [32.6958, 34.9444], "זכרון יעקב": [32.5739, 34.9517], "פרדס חנה-כרכור": [32.4711, 34.9675],
+  "עמק חפר": [32.3500, 34.9500], "עמק יזרעאל": [32.6500, 35.2000], "מגידו": [32.5833, 35.1833],
+  "גבעת עדה": [32.4783, 34.9700], "ביניש": [32.4550, 35.0133], "רמת ישי": [32.7022, 35.1656],
+  "גבעת אלה": [32.7250, 35.1833], "אחיהוד": [32.9183, 35.1756],
+
+  // ים המלח ובקעת הירדן
+  "עין גדי": [31.4625, 35.3897], "קליה": [31.7278, 35.4492], "מצוקי דרגות": [31.5208, 35.3889],
+  "אלמוג": [31.8128, 35.4503], "בית הערבה": [31.8197, 35.4500], "כליא": [31.7278, 35.4492],
+  "ירדן ים המלח": [31.7000, 35.4500], "שדה אליהו": [32.4222, 35.5000], "טירה": [32.2333, 34.9500],
+
+  // ערים נוספות שחסרו
+  "קצרין עילית": [33.0000, 35.6900], "אבו גוש": [31.8086, 35.1100], "מבשרת ציון": [31.8006, 35.1500],
+  "גבעת זאב": [31.8625, 35.1694], "בית חורון": [31.8622, 35.1153], "נחלים": [32.0583, 34.9500],
+  "כוכב יאיר": [32.2167, 34.9833], "רמת הגולן": [33.0000, 35.7500], "נוב": [32.9167, 35.6667],
 };
 
 interface AlertData {
@@ -810,6 +855,18 @@ export default function App() {
   const uavTimeWindow = 10; // minutes (fixed)
   const uavMaxDist = 20; // km (fixed)
   const uavLayerRef = useRef<L.LayerGroup | null>(null);
+
+  // Safe Route Planner state
+  const [showSafeRouteModal, setShowSafeRouteModal] = useState(false);
+  const [safeRouteData, setSafeRouteData] = useState<RouteImpactData | null>(null);
+  const safeRouteLayerRef = useRef<L.LayerGroup | null>(null);
+  const refMarkersLayerRef = useRef<L.LayerGroup | null>(null);
+  const allCityNames = useMemo(() => Array.from(new Set(globalData.map(d => d.cities))).filter(Boolean), [globalData]);
+  // For navigation autocomplete: combine cities that had alerts with all known baseCoords locations
+  const allNavCityNames = useMemo(() => {
+    const combined = new Set([...allCityNames, ...Object.keys(baseCoords)]);
+    return Array.from(combined).sort((a, b) => a.localeCompare(b, 'he'));
+  }, [allCityNames]);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
@@ -1409,11 +1466,31 @@ loadData();
     }
   }, [mapLayer]);
 
+  // --- Reference Markers: all baseCoords locations (always visible for navigation) ---
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (refMarkersLayerRef.current) {
+      refMarkersLayerRef.current.clearLayers();
+    } else {
+      refMarkersLayerRef.current = L.layerGroup().addTo(mapRef.current);
+    }
+    Object.entries(baseCoords).forEach(([city, coords]) => {
+      L.circleMarker(coords as L.LatLngExpression, {
+        radius: 3,
+        fillColor: darkMode ? '#94a3b8' : '#64748b',
+        color: 'transparent',
+        weight: 0,
+        fillOpacity: 0.35,
+        interactive: false,
+      }).addTo(refMarkersLayerRef.current!);
+    });
+  }, [loading, darkMode]);
+
   // --- Map Markers & Geocoding ---
   useEffect(() => {
     if (!mapRef.current) return;
     let isCancelled = false;
-    
+
     markersRef.current.forEach(m => mapRef.current?.removeLayer(m));
     markersRef.current = [];
 
@@ -1598,6 +1675,47 @@ loadData();
       });
     });
   }, [showUavRoutes, uavRoutes, selectedUavRoute, mapRef.current]);
+
+  // --- Safe Route Map Overlay ---
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (safeRouteLayerRef.current) {
+      safeRouteLayerRef.current.clearLayers();
+    } else {
+      safeRouteLayerRef.current = L.layerGroup().addTo(mapRef.current);
+    }
+
+    if (!showSafeRouteModal || !safeRouteData) return;
+
+    // Draw Route Path
+    const latlngs = safeRouteData.interpolatedPath as L.LatLngExpression[];
+    L.polyline(latlngs, {
+      color: '#10b981', // Emerald
+      weight: 4,
+      dashArray: '10, 10',
+      opacity: 0.8
+    }).addTo(safeRouteLayerRef.current);
+
+    // Highlight Impact Zone Cities
+    safeRouteData.impactZoneCities.forEach(city => {
+      const coords = getCityCoords(city);
+      if (coords) {
+        L.circleMarker(coords, {
+          radius: 8,
+          color: '#f59e0b', // Amber
+          fillColor: '#fbbf24',
+          fillOpacity: 0.4,
+          weight: 2
+        }).addTo(safeRouteLayerRef.current!)
+          .bindTooltip(`<b>${localizeCity(city, lang as LangCode)}</b><br>${lang === 'he' ? 'בטווח השפעת המסלול' : 'In route impact zone'}`, { direction: 'auto' });
+      }
+    });
+
+    // Fit bounds to route
+    if (latlngs.length > 0) {
+      mapRef.current.fitBounds(L.polyline(latlngs).getBounds(), { padding: [50, 50] });
+    }
+  }, [showSafeRouteModal, safeRouteData, lang]);
 
   // --- Charts Initialization & Updates ---
   useEffect(() => {
@@ -2171,15 +2289,24 @@ loadData();
           </div>
         </div>
         
-        <div className="flex items-center gap-2 md:gap-4">
-          <button 
+        <div className="flex items-center gap-2 md:gap-2 min-w-0">
+          {/* Safe Route Planner — mobile header */}
+          <button
+            className="md:hidden p-2.5 rounded-xl transition-all glass-card border-none"
+            onClick={() => setShowSafeRouteModal(!showSafeRouteModal)}
+            title={lang === 'he' ? 'תכנון נסיעה בטוחה' : 'Safe Route Planner'}
+          >
+            <Navigation size={20} className={showSafeRouteModal ? 'text-emerald-400 animate-pulse' : 'text-text-muted'} />
+          </button>
+
+          <button
             className="md:hidden p-2.5 hover:bg-white/10 rounded-xl transition-all text-text-main glass-card border-none"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={20} /> : <Filter size={20} />}
           </button>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
              <div className="flex items-center gap-2 bg-black/20 rounded-xl px-3 py-1.5 border border-white/5">
                 <Search size={14} className="text-text-muted" />
                 <div className="relative">
@@ -2264,7 +2391,7 @@ loadData();
           <div className="h-8 w-[1px] bg-white/10 hidden md:block" />
 
           {/* Icon group: evenly spaced — dark/light + 6 language flags */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-1.5 flex-shrink-0">
             {deferredPrompt && (
               <motion.button
                 initial={{ opacity: 0, scale: 0.5 }}
@@ -2279,7 +2406,23 @@ loadData();
               </motion.button>
             )}
 
-            <button 
+            {/* Safe Route Planner — desktop header */}
+            <button
+              onClick={() => setShowSafeRouteModal(!showSafeRouteModal)}
+              title={lang === 'he' ? 'תכנון נסיעה בטוחה' : 'Safe Route Planner'}
+              className={`p-2.5 rounded-xl transition-all flex-shrink-0 flex items-center gap-2 glass-card border-none ${
+                showSafeRouteModal
+                  ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                  : 'text-text-muted hover:text-emerald-400 hover:bg-emerald-500/10'
+              }`}
+            >
+              <Navigation size={18} className={showSafeRouteModal ? 'animate-pulse' : ''} />
+              <span className="hidden lg:inline text-[11px] font-bold uppercase tracking-wide">
+                {lang === 'he' ? 'נסיעה בטוחה' : 'Safe Route'}
+              </span>
+            </button>
+
+            <button
               onClick={() => {
                 setDarkMode(!darkMode);
                 document.documentElement.classList.toggle('neon');
@@ -2302,7 +2445,7 @@ loadData();
               <button
                 key={code}
                 onClick={() => setLang(code)}
-                className={`w-7 h-7 rounded-lg transition-all flex-shrink-0 ${
+                className={`w-5 h-5 rounded-md transition-all flex-shrink-0 ${
                   lang === code
                     ? 'ring-2 ring-primary-azure ring-offset-1 ring-offset-transparent opacity-100 shadow-[0_0_8px_rgba(56,189,248,0.5)]'
                     : 'opacity-35 hover:opacity-80'
@@ -2343,8 +2486,8 @@ loadData();
       <main className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden p-4 gap-4">
 
         
-        {/* Left Panel: Analytics */}
-        <div className="w-full md:w-3/4 flex flex-col gap-4 md:h-full order-1 md:order-2 min-h-min">
+        {/* Left Panel: Analytics — hidden on desktop when route planner is open */}
+        <div className={`w-full md:w-3/4 flex flex-col gap-4 md:h-full order-1 md:order-2 min-h-min ${showSafeRouteModal ? 'hidden md:hidden' : ''}`}>
           
           {/* Mobile Header Icons: Language & Theme */}
           <div className="md:hidden flex items-center justify-between gap-3 mb-2 flex-shrink-0 w-full overflow-x-auto pb-2 px-2">
@@ -2507,6 +2650,69 @@ loadData();
           </div>
         </div>
 
+        {/* Safe Route — inline panel (desktop only, replaces analytics area) */}
+        {showSafeRouteModal && (
+          <div className="hidden md:flex md:flex-col w-full md:w-3/4 md:h-full order-1 md:order-2 glass-card border-none shadow-xl overflow-hidden">
+            <SafeRouteModal
+              layout="inline"
+              onClose={() => { setShowSafeRouteModal(false); setSafeRouteData(null); }}
+              onCalculate={async (start, end) => {
+                let startCoords = getCityCoords(start);
+                let endCoords = getCityCoords(end);
+                const fetchCoords = async (city: string) => {
+                  try {
+                    const cleanCity = city.replace(/ \- .*/, '').split(',')[0].trim();
+                    const altCity = cleanCity.replace('קריית', 'קרית');
+                    if (baseCoords[cleanCity]) return baseCoords[cleanCity];
+                    if (baseCoords[altCity]) return baseCoords[altCity];
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanCity + ', ישראל')}`);
+                    const data = await res.json();
+                    if (data?.[0]) return [parseFloat(data[0].lat), parseFloat(data[0].lon)] as [number, number];
+                  } catch(_) {}
+                  return null;
+                };
+                if (!startCoords) startCoords = await fetchCoords(start);
+                if (!endCoords) endCoords = await fetchCoords(end);
+                if (!startCoords || !endCoords) {
+                  alert(lang === 'he' ? "לא מצאתי קואורדינטות ליעדים אלו." : "Could not find coordinates.");
+                  return;
+                }
+                let travelDurationHours = 0, estimatedDistanceKm = 0, isRoadBased = false;
+                try {
+                  const controller = new AbortController();
+                  const t = setTimeout(() => controller.abort(), 6000);
+                  const osrmRes = await fetch(
+                    `https://router.project-osrm.org/route/v1/driving/${startCoords[1]},${startCoords[0]};${endCoords[1]},${endCoords[0]}?overview=false`,
+                    { signal: controller.signal }
+                  );
+                  clearTimeout(t);
+                  const osrmData = await osrmRes.json();
+                  if (osrmData.code === 'Ok' && osrmData.routes?.[0]) {
+                    estimatedDistanceKm = osrmData.routes[0].distance / 1000;
+                    travelDurationHours = osrmData.routes[0].duration / 3600;
+                    isRoadBased = true;
+                  }
+                } catch(_) {}
+                if (!isRoadBased) {
+                  const sl = getDistanceKm(startCoords[0], startCoords[1], endCoords[0], endCoords[1]);
+                  estimatedDistanceKm = sl * 1.35;
+                  travelDurationHours = estimatedDistanceKm / 80;
+                }
+                const tempGetCoords = (city: string) => {
+                  if (city === start) return startCoords;
+                  if (city === end) return endCoords;
+                  return getCityCoords(city);
+                };
+                setSafeRouteData(calculateSafeRoute(start, end, tempGetCoords, allCityNames, globalData, 15, travelDurationHours, estimatedDistanceKm, isRoadBased));
+              }}
+              safeRouteData={safeRouteData}
+              citySuggestions={allNavCityNames}
+              darkMode={darkMode}
+              lang={lang as 'he' | 'en'}
+            />
+          </div>
+        )}
+
         {/* Right Panel: Map */}
         <div className="w-full md:w-1/4 glass-card flex flex-col overflow-hidden h-[400px] md:h-full relative flex-shrink-0 order-last md:order-1 border-none shadow-xl mb-6 md:mt-0 mt-4">
           <div className="px-5 py-2 bg-black/20 border-b border-white/5 flex justify-between items-center gap-2">
@@ -2538,6 +2744,7 @@ loadData();
             className="flex-1 z-10 transition-all duration-700 grayscale-[0.5] invert-[0.1]" 
             style={darkMode ? { filter: 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)' } : {}}
           />
+
           {geocodingStatus && (
             <div className="absolute bottom-4 left-4 right-4 glass-card px-4 py-2 text-[10px] font-black text-primary-azure z-20 flex items-center gap-3 border-none bg-black/60 shadow-2xl">
               <div className="mini-spinner" /> {geocodingStatus}
@@ -2581,6 +2788,81 @@ loadData();
           <div className={`w-2 h-2 rounded-full ${isFromCache ? "bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-amber-400 animate-pulse"}`} />
         </div>
       </footer>
+
+      {/* Safe Route Planner — full-screen overlay */}
+      <AnimatePresence>
+        {showSafeRouteModal && (
+          <SafeRouteModal
+            layout="overlay"
+            onClose={() => { setShowSafeRouteModal(false); setSafeRouteData(null); }}
+            onCalculate={async (start, end) => {
+              let startCoords = getCityCoords(start);
+              let endCoords = getCityCoords(end);
+
+              const fetchCoords = async (city: string) => {
+                try {
+                  const cleanCity = city.replace(/ \- .*/, '').split(',')[0].trim();
+                  const altCity = cleanCity.replace('קריית', 'קרית');
+                  if (baseCoords[cleanCity]) return baseCoords[cleanCity];
+                  if (baseCoords[altCity]) return baseCoords[altCity];
+                  const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanCity + ', ישראל')}`);
+                  const data = await res.json();
+                  if (data && data.length > 0) {
+                    return [parseFloat(data[0].lat), parseFloat(data[0].lon)] as [number, number];
+                  }
+                } catch(e) {}
+                return null;
+              };
+
+              if (!startCoords) startCoords = await fetchCoords(start);
+              if (!endCoords) endCoords = await fetchCoords(end);
+
+              if (!startCoords || !endCoords) {
+                alert(lang === 'he' ? "לא מצאתי קואורדינטות ליעדים אלו, אנא נסה יישוב רחב יותר." : "Could not find coordinates. Please try a broader city name.");
+                return;
+              }
+
+              // Try OSRM for real road distance + duration; fall back to straight-line estimate
+              let travelDurationHours = 0;
+              let estimatedDistanceKm = 0;
+              let isRoadBased = false;
+              try {
+                const controller = new AbortController();
+                const t = setTimeout(() => controller.abort(), 6000);
+                const osrmRes = await fetch(
+                  `https://router.project-osrm.org/route/v1/driving/${startCoords[1]},${startCoords[0]};${endCoords[1]},${endCoords[0]}?overview=false`,
+                  { signal: controller.signal }
+                );
+                clearTimeout(t);
+                const osrmData = await osrmRes.json();
+                if (osrmData.code === 'Ok' && osrmData.routes?.[0]) {
+                  estimatedDistanceKm = osrmData.routes[0].distance / 1000;
+                  travelDurationHours = osrmData.routes[0].duration / 3600;
+                  isRoadBased = true;
+                }
+              } catch(_) { /* timeout or network error */ }
+
+              if (!isRoadBased) {
+                const straightLine = getDistanceKm(startCoords[0], startCoords[1], endCoords[0], endCoords[1]);
+                estimatedDistanceKm = straightLine * 1.35;
+                travelDurationHours = estimatedDistanceKm / 80;
+              }
+
+              const tempGetCoords = (city: string) => {
+                if (city === start) return startCoords;
+                if (city === end) return endCoords;
+                return getCityCoords(city);
+              };
+
+              setSafeRouteData(calculateSafeRoute(start, end, tempGetCoords, allCityNames, globalData, 15, travelDurationHours, estimatedDistanceKm, isRoadBased));
+            }}
+            safeRouteData={safeRouteData}
+            citySuggestions={allNavCityNames}
+            darkMode={darkMode}
+            lang={lang as 'he' | 'en'}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Mobile Menu Backdrop */}
       <AnimatePresence>
