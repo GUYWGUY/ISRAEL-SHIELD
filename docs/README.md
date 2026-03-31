@@ -10,15 +10,17 @@
 
 ## Compiling the PDF
 
-You need a LaTeX distribution installed (e.g., [MiKTeX](https://miktex.org/) on Windows or TeX Live):
+The paper uses **XeLaTeX** (required for Hebrew Unicode text). You need MiKTeX or TeX Live:
 
 ```bash
 cd docs
-pdflatex paper.tex
-pdflatex paper.tex   # Run twice to resolve TOC and cross-references
+xelatex paper.tex
+xelatex paper.tex   # Run twice to resolve TOC and cross-references
 ```
 
-The output will be `paper.pdf` in the same folder.
+Or use [Overleaf](https://overleaf.com): upload `paper.tex`, set compiler to **XeLaTeX**.
+
+> **Hebrew font:** The paper uses `Arial` for Hebrew text. On Windows this is always available. On Linux/Mac install `fonts-liberation` or change the font in the `\newfontfamily\hebrewfont` line to any installed Hebrew font (e.g. `FreeSerif`).
 
 ### Required LaTeX packages (all standard, included in MiKTeX/TeX Live):
 - `amsmath`, `amssymb`, `amsthm`

@@ -1,9 +1,16 @@
+% !TEX program = xelatex
+% Compile with: xelatex paper.tex  (twice for TOC/refs)
 \documentclass[12pt,a4paper]{article}
 
-% ─── Packages ────────────────────────────────────────────────────────────────
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage[english]{babel}
+% ─── Core packages ────────────────────────────────────────────────────────────
+\usepackage{fontspec}          % XeLaTeX font selection
+\usepackage{polyglossia}       % multilingual support
+\setmainlanguage{english}
+\setotherlanguage{hebrew}      % enables \texthebrew{...}
+
+% Hebrew font (any system Hebrew font; fallback to DejaVu if unavailable)
+\newfontfamily\hebrewfont[Script=Hebrew]{Arial}
+
 \usepackage{geometry}
 \geometry{margin=2.5cm}
 
@@ -22,860 +29,1000 @@
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage{titlesec}
-\usepackage{abstract}
 \usepackage{setspace}
 \usepackage{microtype}
+\usepackage{mdframed}
 
 % TikZ
 \usepackage{tikz}
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds,
-                decorations.pathreplacing, calc, patterns, shadows}
+\usetikzlibrary{
+  shapes.geometric, shapes.misc, shapes.symbols,
+  arrows.meta, positioning, fit, backgrounds,
+  decorations.pathreplacing, decorations.markings,
+  calc, patterns, shadows, matrix, chains
+}
 
-% Code listings style
+% ─── Code style ───────────────────────────────────────────────────────────────
 \definecolor{codebg}{RGB}{248,248,252}
 \definecolor{codeframe}{RGB}{200,200,215}
-\definecolor{keyword}{RGB}{0,112,192}
-\definecolor{string}{RGB}{163,21,21}
-\definecolor{comment}{RGB}{100,130,90}
+\definecolor{kwcolor}{RGB}{0,112,192}
+\definecolor{strcolor}{RGB}{163,21,21}
+\definecolor{cmtcolor}{RGB}{90,130,80}
 
 \lstdefinestyle{tscode}{
   backgroundcolor=\color{codebg},
-  frame=single,
-  rulecolor=\color{codeframe},
-  basicstyle=\ttfamily\small,
-  keywordstyle=\color{keyword}\bfseries,
-  stringstyle=\color{string},
-  commentstyle=\color{comment}\itshape,
-  breaklines=true,
-  showstringspaces=false,
-  tabsize=2,
-  numbers=left,
-  numberstyle=\tiny\color{gray},
-  numbersep=8pt,
+  frame=single, rulecolor=\color{codeframe},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{kwcolor}\bfseries,
+  stringstyle=\color{strcolor},
+  commentstyle=\color{cmtcolor}\itshape,
+  breaklines=true, showstringspaces=false, tabsize=2,
+  numbers=left, numberstyle=\tiny\color{gray}, numbersep=7pt,
+  morekeywords={const,let,interface,type,async,await,export,import,
+                from,return,function,if,else,for,of,new,true,false,null},
+  morecomment=[l]{//}, morestring=[b]',  morestring=[b]",
 }
 
-% Custom colors
+% ─── Custom colours ───────────────────────────────────────────────────────────
 \definecolor{israelblue}{RGB}{0,56,184}
-\definecolor{israelwhite}{RGB}{255,255,255}
 \definecolor{azureblue}{RGB}{56,189,248}
 \definecolor{emerald}{RGB}{16,185,129}
-\definecolor{sectioncolor}{RGB}{0,56,184}
+\definecolor{ambercolor}{RGB}{245,158,11}
+\definecolor{riskred}{RGB}{239,68,68}
+\definecolor{darkbg}{RGB}{10,15,30}
+\definecolor{cardgray}{RGB}{30,41,59}
 
-% Section formatting
-\titleformat{\section}{\large\bfseries\color{sectioncolor}}{{\thesection}}{1em}{}[\titlerule]
-\titleformat{\subsection}{\normalsize\bfseries\color{sectioncolor}}{{\thesubsection}}{1em}{}
-\titleformat{\subsubsection}{\normalsize\bfseries}{{\thesubsubsection}}{1em}{}
+% ─── Section formatting ───────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{israelblue}}{\thesection}{1em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{israelblue}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
 
-% Header/Footer
-\pagestyle{fancy}
-\fancyhf{}
+% ─── Header/Footer ────────────────────────────────────────────────────────────
+\pagestyle{fancy}\fancyhf{}
 \fancyhead[L]{\small\textit{Israel Shield — Security Intelligence Dashboard}}
 \fancyhead[R]{\small\textit{Ariel University, 2026}}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
-% Hyperref
+% ─── Hyperref ─────────────────────────────────────────────────────────────────
 \hypersetup{
-  colorlinks=true,
-  linkcolor=israelblue,
-  citecolor=israelblue,
-  urlcolor=azureblue,
+  colorlinks=true, linkcolor=israelblue, citecolor=israelblue, urlcolor=azureblue,
   pdftitle={Israel Shield: A Real-Time Security Intelligence Dashboard},
-  pdfauthor={Ariel University BI Course},
 }
 
-% Theorem environments
 \newtheorem{definition}{Definition}
 \newtheorem{proposition}{Proposition}
 
-% ─── Document ─────────────────────────────────────────────────────────────────
+% ─── Helper: dark mockup box ──────────────────────────────────────────────────
+\newcommand{\mockupframe}[2]{%
+  \begin{mdframed}[backgroundcolor=darkbg!95, linecolor=israelblue!50,
+                   linewidth=1.2pt, roundcorner=6pt,
+                   innertopmargin=4pt, innerbottommargin=4pt]
+  \begin{tikzpicture}#1\end{tikzpicture}
+  \end{mdframed}
+  \vspace{-2pt}
+}
+
+% ═════════════════════════════════════════════════════════════════════════════
 \begin{document}
+% ═════════════════════════════════════════════════════════════════════════════
 
+% ─── Title page ───────────────────────────────────────────────────────────────
 \begin{titlepage}
-  \centering
-  \vspace*{1cm}
+\centering\vspace*{1cm}
 
-  % Shield TikZ logo
-  \begin{tikzpicture}
-    \begin{scope}[transform canvas={scale=1.2}]
-      % Shield shape
-      \fill[israelblue!90] (0,0) -- (2.2,0) -- (2.2,2.5) arc (0:180:1.1) -- cycle;
-      \fill[white,opacity=0.15] (0.3,0.3) -- (1.9,0.3) -- (1.9,2.3) arc(0:180:0.8) -- cycle;
-      % Star of David
-      \draw[white,line width=2pt] (1.1,1.1) -- ++(60:0.7) -- ++(180:0.7) -- cycle;
-      \draw[white,line width=2pt] (1.1,1.8) -- ++(-60:0.7) -- ++(60:0.7) -- cycle;
-    \end{scope}
-  \end{tikzpicture}
+\begin{tikzpicture}[scale=1.1]
+  % Dark background circle
+  \fill[israelblue!90,opacity=0.18,rounded corners=20pt] (-1.5,-0.3) rectangle (1.5,3.3);
+  % Shield
+  \fill[israelblue!85] (-1.1,0) -- (1.1,0) -- (1.1,2.2) arc(0:180:1.1) -- cycle;
+  \fill[white,opacity=0.12] (-0.75,0.3) -- (0.75,0.3) -- (0.75,1.95) arc(0:180:0.75) -- cycle;
+  % Star of David outer triangle
+  \draw[white,line width=1.8pt] (0,1.8) -- (-0.62,0.7) -- (0.62,0.7) -- cycle;
+  % Star of David inner triangle (inverted)
+  \draw[white,line width=1.8pt] (0,0.68) -- (-0.62,1.78) -- (0.62,1.78) -- cycle;
+\end{tikzpicture}
 
-  \vspace{0.8cm}
-  {\Huge\bfseries\color{israelblue} Israel Shield}\\[0.4cm]
-  {\Large\bfseries A Real-Time Security Intelligence Dashboard}\\[0.3cm]
-  {\large for Threat Pattern Analysis and Safe Navigation}
+\vspace{0.7cm}
+{\Huge\bfseries\color{israelblue} Israel Shield}\\[0.35cm]
+{\Large\bfseries A Real-Time Security Intelligence Dashboard}\\[0.25cm]
+{\large for Threat Pattern Analysis and Safe Navigation in Israel}
 
-  \vspace{1.2cm}
-  \rule{0.7\linewidth}{0.4pt}\\[0.3cm]
+\vspace{1cm}\rule{0.68\linewidth}{0.4pt}\\[0.3cm]
+\begin{tabular}{rl}
+  \textbf{Institution:} & Ariel University, Dept.\ of Industrial Engineering \& Management \\
+  \textbf{Course:}      & Business Intelligence \\
+  \textbf{Supervisor:}  & Dr.\ Guy Wachtel \\
+  \textbf{Data:}        & IDF Home Front Command \& Dr.\ Yuval Harpaz \\
+  \textbf{Year:}        & 2025--2026 \\
+\end{tabular}
 
-  \begin{tabular}{rl}
-    \textbf{Institution:} & Ariel University, Department of Industrial Engineering \\
-    \textbf{Course:}       & Business Intelligence \\
-    \textbf{Supervisor:}   & Dr. Guy Wachtel \\
-    \textbf{Data Source:}  & IDF Home Front Command \& Dr. Yuval Harpaz \\
-    \textbf{Year:}         & 2025--2026 \\
-  \end{tabular}
+\vspace{1.1cm}\rule{0.68\linewidth}{0.4pt}\\[0.8cm]
+\textit{Dedicated to the memory of the victims of October~7th, 2023,\\
+and all those who have fallen in the ongoing conflict.}
 
-  \vspace{1.2cm}
-  \rule{0.7\linewidth}{0.4pt}
-
-  \vspace{0.8cm}
-  \textit{Dedicated to the memory of the victims of October 7th, 2023,\\
-  and all those who have fallen in the ongoing conflict.}
-
-  \vfill
-  \today
+\vfill\today
 \end{titlepage}
 
-% ─── Abstract ──────────────────────────────────────────────────────────────
+% ─── Abstract ─────────────────────────────────────────────────────────────────
 \begin{abstract}
 \noindent
-We present \textbf{Israel Shield}, a browser-based, real-time security intelligence dashboard that aggregates, analyzes, and visualizes over a decade of rocket, missile, drone, and terrorist infiltration alerts across Israel. The system integrates a live alert feed from the IDF Home Front Command with a curated historical dataset of 10,000+ records spanning 2019--2026, processing them through a suite of statistical and algorithmic models. Key contributions include: (1) a \emph{Spatio-Temporal UAV Route Reconstruction} algorithm that chains historical drone alert sequences into probable flight trajectories; (2) a \emph{Safe Route Departure Advisor} that scores every departure hour using a sliding window aggregation over historical threat corridors along a travel path; (3) a \emph{Shower Index} probabilistic safety estimator based on Poisson statistics; and (4) a fully client-side, offline-capable progressive web application supporting seven languages and bidirectional text. The system demonstrates that meaningful security analytics are achievable without proprietary infrastructure, enabling both civilian and academic use cases.
+We present \textbf{Israel Shield} (\texthebrew{מגן ישראל}), a browser-based, real-time security intelligence dashboard that aggregates, analyzes, and visualizes over seven years of rocket, missile, drone, and terrorist-infiltration alerts across Israel. The system integrates a live feed from the IDF Home Front Command with a curated historical dataset of 10{,}000+ records spanning 2019--2026, processing them through a suite of statistical and algorithmic models. Key contributions include: (1) a \emph{Spatio-Temporal UAV Route Reconstruction} algorithm that chains drone alert sequences into probable flight trajectories; (2) a \emph{Safe Route Departure Advisor} that scores every departure hour using a sliding-window aggregation over historical threat corridors along a travel path; (3) a \emph{Shower Index} (\texthebrew{מדד המקלחת}), a Poisson-based daily safety-window estimator; and (4) a fully client-side, offline-capable Progressive Web App supporting seven languages and bidirectional text. The system demonstrates that meaningful security analytics are achievable without proprietary infrastructure, enabling both civilian and academic use cases.
 
-\medskip
+\smallskip
 \noindent\textbf{Keywords:} security analytics, threat visualization, spatio-temporal analysis, UAV tracking, safe route planning, business intelligence, homeland security, Israel.
 \end{abstract}
 
-\tableofcontents
-\newpage
+\tableofcontents\newpage
 
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Introduction}
 \label{sec:introduction}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
-Since 2001, Israel has faced continuous rocket fire, and since 2023, an unprecedented escalation of multi-front hostilities involving rockets, ballistic missiles, cruise missiles, and unmanned aerial vehicles (UAVs) from Gaza, Lebanon, Iran, Yemen, Iraq, and Syria simultaneously. The IDF Home Front Command (\textit{Pikud HaOref}) operates a public alert system that has generated a historically unique dataset: a timestamped, city-level record of every incoming threat warning issued to the Israeli civilian population.
+Since 2001, Israel has faced persistent rocket fire from Gaza and Lebanon. From October 2023, an unprecedented multi-front escalation added ballistic missiles, cruise missiles, and large-scale UAV swarms from Iran, Yemen, Iraq, and Syria simultaneously. The IDF Home Front Command (\textit{Pikud HaOref}, \texthebrew{פיקוד העורף}) operates a public alert system that has generated a historically unique dataset: a timestamped, city-level record of every incoming-threat warning issued to the Israeli civilian population.
 
-This dataset presents an extraordinary opportunity for \emph{threat pattern analysis} — the systematic study of \emph{when}, \emph{where}, and \emph{how} security incidents occur at a population level. Despite its public availability, no accessible, multi-functional analytical tool existed that combined this data with real-time feeds, geographic visualization, probabilistic safety estimation, and navigation planning.
+This dataset presents a rich opportunity for \emph{threat pattern analysis} — the systematic study of \emph{when}, \emph{where}, and \emph{how} security incidents occur at population scale. Despite its public availability, no accessible multi-functional analytical tool existed combining live feeds, historical analysis, geographic visualization, probabilistic safety estimation, and navigation planning in a single interface.
 
-\textbf{Israel Shield} fills this gap. It is a full-stack web application, built as a Business Intelligence project at Ariel University, that transforms the raw alert record into actionable intelligence for civilians, researchers, and policy analysts. Its key distinguishing features are:
+\textbf{Israel Shield} fills this gap. It is a full-stack web application built as a Business Intelligence project at Ariel University. Its key distinguishing features are:
 
 \begin{enumerate}
-  \item \textbf{UAV Route Reconstruction}: A novel spatio-temporal chaining algorithm that reconstructs probable drone flight trajectories from the time-ordered sequence of city alert activations.
-  \item \textbf{Safe Route Planner}: A departure time optimization system that scores each hour of day based on historical threat intensity along a proposed travel corridor.
-  \item \textbf{Shower Index}: A Poisson-based daily safety window estimator — colloquially named for the quintessential civilian dilemma of "is it safe to shower right now?"
-  \item \textbf{Multi-dimensional temporal analysis} across seven temporal resolutions (year, month, weekday, hour, minute, daytime, date).
+  \item \textbf{UAV Route Reconstruction} — a novel spatio-temporal chaining algorithm reconstructing probable drone flight trajectories from ordered city-alert sequences.
+  \item \textbf{Safe Route Planner} — a departure time optimizer scoring each departure hour by historical threat intensity along a proposed travel corridor.
+  \item \textbf{Shower Index} — a Poisson-based daily safety window estimator.
+  \item \textbf{Seven temporal resolutions} of alert frequency analysis (year → 1-minute resolution).
   \item \textbf{Full offline capability} via IndexedDB caching and Progressive Web App (PWA) support.
+  \item \textbf{Seven languages} with bidirectional text (Hebrew/Arabic RTL).
 \end{enumerate}
 
-The remainder of this paper is organized as follows. Section~\ref{sec:background} reviews related work. Section~\ref{sec:data} describes the data sources and processing pipeline. Section~\ref{sec:architecture} details the system architecture. Sections~\ref{sec:uav}--\ref{sec:shower} describe the statistical and algorithmic models. Section~\ref{sec:ui} describes the user interface. Section~\ref{sec:implementation} discusses implementation choices and performance. Section~\ref{sec:evaluation} evaluates the system. Section~\ref{sec:future} outlines future directions, and Section~\ref{sec:conclusion} concludes.
-
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Background and Related Work}
 \label{sec:background}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{Open Security Data in Israel}
+The Home Front Command's ``Red Alert'' (\texthebrew{צבע אדום}) system is one of the world's most densely documented civilian warning datasets, timestamped to the second at city level since 2001. Academic use has been limited; most analyses are journalistic \cite{harpaz2023}.
 
-The Israeli Home Front Command's alert system (\textit{Red Alert / Tzeva Adom}) is one of the world's most densely documented civilian warning datasets. Since 2001, alerts have been issued at the city level, timestamped to the second, and made publicly accessible via a JSON API. Academic use of this data has been limited; most analyses have been journalistic or statistical in nature \cite{harpaz2023}.
-
-\subsection{Threat Visualization Systems}
-
-Existing threat visualization platforms (e.g., LiveUA Map, ACLED) focus on macro-level geographic conflict mapping without city-level temporal granularity. None incorporate the IDF alert feed's precision.
+\subsection{Threat Visualization Platforms}
+Existing tools (LiveUA Map, ACLED) map macro-level conflict without city-level temporal granularity. None integrate the IDF alert feed's precision or provide civilian-facing safety planning.
 
 \subsection{UAV Trajectory Reconstruction}
-
-UAV trajectory inference from indirect observations is an active research area in air traffic management \cite{olive2019}. Prior work typically requires ADS-B transponder data or radar returns. This paper presents the first method applied to civilian warning activations as a proxy for trajectory reconstruction.
+Trajectory inference from indirect observations is active in air traffic management \cite{olive2019}. Prior work requires ADS-B or radar data. This paper presents the first method using civilian warning activations as trajectory proxies.
 
 \subsection{Route Safety Planning}
-
-Route safety planning in conflict zones has been studied in humanitarian logistics \cite{tomasini2009}. Most approaches use road network graph algorithms (Dijkstra, A*) with risk weights per edge. Our approach differs: we compute temporal rather than spatial risk, optimizing \emph{when} to travel rather than \emph{which road} to take.
+Route safety in conflict zones has been studied in humanitarian logistics \cite{tomasini2009}. Most approaches optimize \emph{which road} to take; our approach optimizes \emph{when} to travel on any road.
 
 \subsection{Poisson Models for Safety Windows}
+Poisson processes are standard models for rare event occurrence in time \cite{kingman1992}, applied here to compute zero-alert interval probabilities.
 
-Poisson processes are standard models for rare event occurrence in time \cite{kingman1992}. The Shower Index applies Poisson statistics to compute the probability of a zero-alert interval within a 30-minute window.
-
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Data Sources and Processing Pipeline}
 \label{sec:data}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{Data Sources}
 
 \subsubsection{Historical Alert Dataset}
+The primary source is a community-curated CSV by Dr.\ Yuval Harpaz \cite{harpaz2023}. Each record contains:
 
-The primary data source is a community-curated CSV maintained by Dr. Yuval Harpaz on GitHub (\texttt{yuval-harpaz/alarms}). Each record contains:
-
-\begin{table}[H]
-\centering
+\begin{table}[H]\centering
 \caption{Alert Record Schema}
-\begin{tabular}{lll}
-\toprule
-\textbf{Field} & \textbf{Type} & \textbf{Description} \\
-\midrule
-\texttt{time}     & String  & ISO timestamp (e.g., \texttt{2023-10-07 06:29:00}) \\
-\texttt{cities}   & String  & Hebrew city/region name \\
-\texttt{threat}   & String  & Numeric code or Hebrew threat category \\
-\texttt{category} & String  & Alternative threat field (some records) \\
-\texttt{id}       & String  & Optional event ID (IDF batch identifier) \\
-\bottomrule
+\begin{tabular}{lll}\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Description} \\\midrule
+\texttt{time}     & String & ISO timestamp (\texttt{2023-10-07 06:29:00}) \\
+\texttt{cities}   & String & Hebrew city/region name \\
+\texttt{threat}   & String & Numeric code or Hebrew category \\
+\texttt{category} & String & Alternative threat field \\
+\texttt{id}       & String & Optional IDF event batch ID \\\bottomrule
 \end{tabular}
 \end{table}
 
-\noindent The dataset contains $N \approx 10{,}000+$ records spanning 2019--2026, with density increasing dramatically from October 2023.
+\noindent The dataset contains $N\!\approx\!10{,}000{+}$ records spanning 2019--2026, with density increasing dramatically from October~7, 2023.
 
 \subsubsection{Live Alert Feed}
-
-Real-time alerts are fetched via:
-\begin{center}
-\texttt{https://www.oref.org.il/WarningMessages/alert/alerts.json}
-\end{center}
-due to CORS restrictions, accessed via the \texttt{allorigins.win} proxy. Polling is performed every 10 seconds.
+Real-time alerts are fetched from \texttt{oref.org.il} via an \texttt{allorigins.win} CORS proxy at 10-second intervals.
 
 \subsubsection{Geographic Coordinates}
-
-A \texttt{baseCoords} dictionary hardcodes coordinates for 450+ Israeli cities, settlements, and regions. This covers the Gaza Envelope (Otef Aza), the northern border (Upper Galilee, Golan Heights), central Israel, the Negev, and all major population centers. For cities not in \texttt{baseCoords}, the OpenStreetMap Nominatim API is queried dynamically with rate limiting (1 request/second, 20 cities/batch), and results are cached in \texttt{localStorage}.
+A \texttt{baseCoords} dictionary hardcodes coordinates for 450+ Israeli cities, settlements, and regions. For unknown cities, the OpenStreetMap Nominatim API is queried with rate-limiting (1 req/s, 20 cities/batch), and results cached in \texttt{localStorage}.
 
 \subsection{Data Processing Pipeline}
 
-Figure~\ref{fig:pipeline} shows the end-to-end data pipeline.
-
-\begin{figure}[H]
-\centering
+\begin{figure}[H]\centering
 \begin{tikzpicture}[
-  node distance=1.1cm and 2.2cm,
-  box/.style={rectangle, rounded corners=4pt, draw=israelblue!70, fill=israelblue!8,
-              minimum width=3.2cm, minimum height=0.9cm, align=center, font=\small},
-  decision/.style={diamond, draw=emerald!80, fill=emerald!10, aspect=2.2,
-                   minimum width=3cm, align=center, font=\small},
-  arrow/.style={-Stealth, thick, color=israelblue!70},
-  note/.style={rectangle, draw=gray!40, fill=gray!5, font=\scriptsize,
-               minimum width=2.8cm, align=center},
+  box/.style={rectangle, rounded corners=4pt, draw=israelblue!70, fill=israelblue!9,
+              minimum width=4.8cm, minimum height=0.85cm, align=center, font=\small},
+  dec/.style={diamond, draw=emerald!80, fill=emerald!10, aspect=2.5,
+              minimum width=4.4cm, align=center, font=\small},
+  arr/.style={-Stealth, thick, israelblue!60},
+  note/.style={rectangle, rounded corners=2pt, draw=gray!35, fill=gray!5,
+               font=\scriptsize, align=center, minimum width=2.8cm},
+  node distance=0.85cm,
 ]
-  \node[box] (start)   {App Start};
-  \node[box, below=of start] (cache) {Check IndexedDB\\Cache};
-  \node[decision, below=of cache] (valid) {Cache\\valid?};
-  \node[box, right=2.8cm of valid] (hydrate) {Hydrate \texttt{Date}\\objects from cache};
-  \node[box, below=of valid] (fetch)  {Fetch CSV from\\GitHub (PapaParse)};
-  \node[box, below=of fetch]  (parse)  {Parse \& Transform\\(dateObj, threatStr,\\sourceStr, operations)};
-  \node[box, below=of parse]  (store)  {Store to IndexedDB\\(alerts + SHA)};
-  \node[box, below=of store, minimum width=3.2cm] (state)  {\texttt{setGlobalData(\ldots)}};
-  \node[box, below=of state]  (filter) {Apply Active Filters\\(debounced 300ms)};
-  \node[box, below=of filter] (render) {Render Charts,\\Map, Analytics};
+  \node[box] (s)   {App Start};
+  \node[box, below=of s]  (idx) {Check IndexedDB Cache};
+  \node[dec, below=of idx] (v)  {Cache\\valid?};
+  \node[box, right=3.2cm of v, yshift=0.5cm] (h) {Rehydrate \texttt{Date} objects};
+  \node[box, below=of v]  (f)   {Fetch CSV from GitHub\\(PapaParse web worker)};
+  \node[box, below=of f]  (p)   {Transform: dateObj, threatStr,\\sourceStr, operationsArray};
+  \node[box, below=of p]  (st)  {Write to IndexedDB + SHA};
+  \node[box, below=of st] (gs)  {\texttt{setGlobalData(\ldots)}};
+  \node[box, below=of gs] (fi)  {Apply Active Filters (debounced 300ms)};
+  \node[box, below=of fi] (r)   {Render Charts, Map, Analytics};
 
-  \draw[arrow] (start)  -- (cache);
-  \draw[arrow] (cache)  -- (valid);
-  \draw[arrow] (valid)  -- node[right,font=\small]{No} (fetch);
-  \draw[arrow] (valid)  -- node[above,font=\small]{Yes} (hydrate);
-  \draw[arrow] (hydrate) |- (state);
-  \draw[arrow] (fetch)  -- (parse);
-  \draw[arrow] (parse)  -- (store);
-  \draw[arrow] (store)  -- (state);
-  \draw[arrow] (state)  -- (filter);
-  \draw[arrow] (filter) -- (render);
-
-  % SHA note
-  \node[note, right=1.6cm of cache] (sha) {Compare remote\\GitHub SHA};
-  \draw[->, dashed, gray] (sha) -- (valid);
+  \draw[arr] (s)--(idx); \draw[arr] (idx)--(v);
+  \draw[arr] (v)  -- node[right,font=\small]{No} (f);
+  \draw[arr] (v)  -- node[above,font=\small]{Yes} (h);
+  \draw[arr] (h)  |- (gs);
+  \draw[arr] (f)--(p); \draw[arr] (p)--(st); \draw[arr] (st)--(gs);
+  \draw[arr] (gs)--(fi); \draw[arr] (fi)--(r);
+  \node[note, right=2.4cm of idx] {Compare\\GitHub SHA};
+  \draw[->,dashed,gray!50] ([xshift=2.4cm]idx.east) -- (v);
 \end{tikzpicture}
-\caption{Data loading and processing pipeline.}
+\caption{End-to-end data loading and processing pipeline.}
 \label{fig:pipeline}
 \end{figure}
 
-\subsubsection{Threat Classification}
+\subsection{Threat Classification}
 
-Threat types are extracted from numeric codes and keyword patterns in the raw data:
-
-\begin{table}[H]
-\centering
-\caption{Threat Type Taxonomy}
-\begin{tabular}{lll}
-\toprule
-\textbf{Code/Pattern} & \textbf{Hebrew} & \textbf{English} \\
-\midrule
-1 / ירי   & ירי רקטות וטילים & Rocket \& Missile Fire \\
-2 / כטב"מ & חדירת כלי טיס עוין & Hostile Aircraft Intrusion \\
-3         & רעידת אדמה         & Earthquake \\
-4         & אירוע רדיולוגי     & Radiological Incident \\
-5 / מחבלים & חדירת מחבלים      & Terrorist Infiltration \\
-6         & צונאמי             & Tsunami \\
-7         & חומרים מסוכנים     & Hazardous Materials \\
-8         & אירוע לא קונבנציונלי & Non-Conventional Event \\
---        & אחר               & Other \\
-\bottomrule
+\begin{table}[H]\centering
+\caption{Threat Type Taxonomy (Hebrew UI names shown in parentheses)}
+\begin{tabular}{lll}\toprule
+\textbf{Code} & \textbf{Hebrew} & \textbf{English} \\\midrule
+1  & \texthebrew{ירי רקטות וטילים}        & Rocket \& Missile Fire \\
+2  & \texthebrew{חדירת כלי טיס עוין}      & Hostile Aircraft Intrusion \\
+3  & \texthebrew{רעידת אדמה}               & Earthquake \\
+4  & \texthebrew{אירוע רדיולוגי}           & Radiological Incident \\
+5  & \texthebrew{חדירת מחבלים}             & Terrorist Infiltration \\
+6  & \texthebrew{צונאמי}                   & Tsunami \\
+7  & \texthebrew{חומרים מסוכנים}           & Hazardous Materials \\
+8  & \texthebrew{אירוע לא קונבנציונלי}     & Non-Conventional Event \\
+-- & \texthebrew{אחר}                       & Other \\\bottomrule
 \end{tabular}
 \end{table}
 
-\subsubsection{Source Attribution}
+\subsection{Named Military Operations}
 
-Threat sources are inferred via keyword matching in raw data fields plus geographic heuristics:
-\begin{itemize}
-  \item Raw field contains "איראן" $\Rightarrow$ Iran
-  \item Alert city is in the Gaza Envelope $\Rightarrow$ Gaza Strip (default for rockets)
-  \item Alert city is on northern border (e.g., Kiryat Shmona) $\Rightarrow$ Lebanon
-  \item Operation date overlaps with known Iranian strikes $\Rightarrow$ Iran
-\end{itemize}
-
-\subsubsection{Operation Assignment}
-
-Each alert is assigned to one or more named military operations based on its timestamp. The operations dictionary defines 10 operations:
-
-\begin{table}[H]
-\centering
+\begin{table}[H]\centering
 \caption{Named Military Operations in the Dataset}
-\begin{tabular}{lll}
-\toprule
-\textbf{Name (Hebrew)} & \textbf{Dates} & \textbf{Theater} \\
-\midrule
-חגורה שחורה (2019) & Nov 12--14, 2019 & Gaza \\
-שומר החומות (2021) & May 10--21, 2021 & Gaza, Lebanon \\
-עלות השחר (2022) & Aug 5--7, 2022 & Gaza \\
-מגן וחץ (2023) & May 9--13, 2023 & Gaza \\
-חרבות ברזל (2023+) & Oct 7, 2023 -- present & Multi-front \\
-מתקפת אפריל — איראן (2024) & Apr 13--14, 2024 & Iran \\
-מתקפת אוקטובר — איראן (2024) & Oct 1, 2024 & Iran \\
-ימי תשובה — איראן (2024) & Oct 26--27, 2024 & Iran \\
-עם כלביא — איראן (2025) & Jun 13--24, 2025 & Iran \\
-כארי ישאג — איראן (2026) & Feb 28 -- Mar 31, 2026 & Iran \\
-\bottomrule
+\begin{tabular}{lll}\toprule
+\textbf{Operation} & \textbf{Dates} & \textbf{Theater} \\\midrule
+Black Belt (\texthebrew{חגורה שחורה})        & Nov 12--14, 2019  & Gaza \\
+Guardian of the Walls (\texthebrew{שומר החומות}) & May 10--21, 2021 & Gaza, Lebanon \\
+Breaking Dawn (\texthebrew{עלות השחר})       & Aug 5--7, 2022    & Gaza \\
+Shield \& Arrow (\texthebrew{מגן וחץ})       & May 9--13, 2023   & Gaza \\
+Iron Swords (\texthebrew{חרבות ברזל})        & Oct 7, 2023 -- present & Multi-front \\
+April Attack -- Iran                          & Apr 13--14, 2024  & Iran \\
+October Attack -- Iran                        & Oct 1, 2024       & Iran \\
+Days of Repentance -- Iran                    & Oct 26--27, 2024  & Iran \\
+Am Kelavi -- Iran                             & Jun 13--24, 2025  & Iran \\
+Kari Yishag -- Iran                           & Feb 28 -- Mar 31, 2026 & Iran \\\bottomrule
 \end{tabular}
 \end{table}
 
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{System Architecture}
 \label{sec:architecture}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{Technology Stack}
 
-\begin{table}[H]
-\centering
+\begin{table}[H]\centering
 \caption{Technology Stack}
-\begin{tabular}{ll}
-\toprule
-\textbf{Layer} & \textbf{Technology} \\
-\midrule
+\begin{tabular}{ll}\toprule
+\textbf{Layer} & \textbf{Technology} \\\midrule
 Frontend framework & React 19 + TypeScript \\
-Build tool & Vite 6.2 \\
-Styling & Tailwind CSS 4.1 + CSS custom properties \\
-Charts & Apache ECharts 6 via \texttt{echarts-for-react} \\
-Mapping & Leaflet 1.9 (CartoDB Light + ESRI Satellite tiles) \\
-Animations & Framer Motion \\
-CSV parsing & PapaParse 5.5 (web worker) \\
-Data caching & Browser IndexedDB \\
-Geocoding & OpenStreetMap Nominatim \\
-Road routing & OSRM public API \\
-Live alerts & \texttt{oref.org.il} via CORS proxy \\
-Analytics & Vercel Analytics 2.0 \\
-AI (planned) & Google GenAI SDK 1.29 \\
-\bottomrule
+Build tool         & Vite 6.2 \\
+Styling            & Tailwind CSS 4.1 + CSS custom properties \\
+Charts             & Apache ECharts 6 via \texttt{echarts-for-react} \\
+Mapping            & Leaflet 1.9 (CartoDB Light + ESRI Satellite) \\
+Animations         & Framer Motion 11 \\
+CSV parsing        & PapaParse 5.5 (web worker) \\
+Data caching       & Browser IndexedDB \\
+Geocoding          & OpenStreetMap Nominatim API \\
+Road routing       & OSRM public API \\
+Live alerts        & \texttt{oref.org.il} via CORS proxy \\
+Analytics          & Vercel Analytics 2.0 \\
+AI (planned)       & Google GenAI SDK 1.29 \\\bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Component Architecture}
 
-Figure~\ref{fig:components} shows the high-level component hierarchy.
-
-\begin{figure}[H]
-\centering
+\begin{figure}[H]\centering
 \begin{tikzpicture}[
-  comp/.style={rectangle, rounded corners=3pt, draw=israelblue!60, fill=israelblue!6,
-               minimum width=3cm, minimum height=0.75cm, align=center, font=\small},
-  util/.style={rectangle, rounded corners=3pt, draw=emerald!60, fill=emerald!6,
+  comp/.style={rectangle, rounded corners=3pt, draw=israelblue!60, fill=israelblue!7,
+               minimum width=3.1cm, minimum height=0.72cm, align=center, font=\small},
+  util/.style={rectangle, rounded corners=3pt, draw=emerald!60, fill=emerald!7,
                minimum width=2.5cm, minimum height=0.65cm, align=center, font=\scriptsize},
-  arrow/.style={-Stealth, gray!70},
-  font=\small,
+  arr/.style={-Stealth, gray!60, thick},
 ]
-  \node[comp, minimum width=9cm, fill=israelblue!12] (app) {\textbf{App.tsx} — Root component, global state};
+  \node[comp, minimum width=10cm, fill=israelblue!13] (app) {\textbf{App.tsx} — Root; global state, filtering, data loading};
 
-  \node[comp, below=1.2cm of app, xshift=-5cm] (header) {Header / Nav};
-  \node[comp, below=1.2cm of app, xshift=-1.5cm] (map) {Leaflet Map Panel};
-  \node[comp, below=1.2cm of app, xshift=2.5cm] (charts) {Analytics Panel};
-  \node[comp, below=1.2cm of app, xshift=5.8cm] (safe) {SafeRouteModal};
+  \node[comp, below=1.2cm of app, xshift=-5.5cm] (hdr) {Header / Nav};
+  \node[comp, below=1.2cm of app, xshift=-1.8cm] (map) {Leaflet Map};
+  \node[comp, below=1.2cm of app, xshift= 2.2cm] (cht) {Analytics Panel};
+  \node[comp, below=1.2cm of app, xshift= 5.5cm] (saf) {SafeRouteModal};
 
-  \node[util, below=1.0cm of header] (multi) {MultiSelect};
-  \node[util, below=1.0cm of map, xshift=-0.8cm] (layers) {Map Layers};
-  \node[util, below=1.0cm of map, xshift=1.5cm] (geocode) {Geocoder};
-  \node[util, below=1.0cm of charts] (echarts) {ECharts Wrapper};
-  \node[util, below=1.0cm of safe, xshift=-1cm] (planner) {routePlanner.ts};
-  \node[util, below=1.0cm of safe, xshift=1.2cm] (osrm) {OSRM API};
+  \node[util, below=1.0cm of hdr] (ms)   {MultiSelect};
+  \node[util, below=1.0cm of map, xshift=-0.7cm] (ly) {Map Layers};
+  \node[util, below=1.0cm of map, xshift= 1.3cm] (gc) {Geocoder};
+  \node[util, below=1.0cm of cht] (ec)   {ECharts Wrapper};
+  \node[util, below=1.0cm of saf, xshift=-1cm] (rp) {routePlanner.ts};
+  \node[util, below=1.0cm of saf, xshift= 1.2cm] (os) {OSRM API};
 
-  \foreach \from/\to in {app/header, app/map, app/charts, app/safe}
-    \draw[arrow] (\from) -- (\to);
-  \foreach \from/\to in {header/multi, map/layers, map/geocode, charts/echarts, safe/planner, safe/osrm}
-    \draw[arrow] (\from) -- (\to);
+  \foreach \f/\t in {app/hdr,app/map,app/cht,app/saf,
+                     hdr/ms,map/ly,map/gc,cht/ec,saf/rp,saf/os}
+    \draw[arr] (\f)--(\t);
 \end{tikzpicture}
 \caption{High-level component hierarchy. Green nodes are utility modules.}
 \label{fig:components}
 \end{figure}
 
-\subsection{State Management}
+% ═════════════════════════════════════════════════════════════════════════════
+\section{Dashboard UI --- Annotated Mockups}
+\label{sec:mockups}
+% ═════════════════════════════════════════════════════════════════════════════
 
-The application uses React's built-in \texttt{useState} and \texttt{useMemo} hooks for state management without an external state library. Key state variables include:
-\begin{itemize}
-  \item \texttt{globalData}: Full parsed alert dataset ($\approx$10,000 records)
-  \item \texttt{filteredData}: Subset after applying active filters
-  \item \texttt{selectedCities}, \texttt{threatFilter}, \texttt{sourceFilter}, \texttt{operationFilter}, \texttt{dateRange}: Filter state
-  \item \texttt{safeRouteData}: Result object from the route planner
-  \item \texttt{uavRoutes}: Reconstructed UAV flight path array
-\end{itemize}
+This section presents TikZ-rendered mockups of each major screen, faithfully reproducing the layout and visual hierarchy of the deployed application.
 
-% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Main Dashboard}
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}[x=1pt,y=1pt,font=\tiny]
+  \def\W{420} \def\H{250}
+  % Background
+  \fill[darkbg!90] (0,0) rectangle (\W,\H);
+  % Header bar
+  \fill[cardgray!80] (0,230) rectangle (\W,\H);
+  % Shield icon
+  \fill[israelblue!80] (8,233) -- (8,247) arc(180:0:5) -- (18,233) -- cycle;
+  \draw[white,line width=0.6pt] (13,238) -- (10,244) -- (16,244) -- cycle;
+  \draw[white,line width=0.6pt] (13,244) -- (10,238) -- (16,238) -- cycle;
+  \node[anchor=west,white,font=\scriptsize\bfseries] at (22,240) {\texthebrew{מגן ישראל} | Israel Shield};
+  % Language flags
+  \foreach \x/\c in {310/yellow!80!orange,320/red!70,330/blue!70,340/white,350/blue!50,360/white!80}
+    \fill[\c,rounded corners=1pt] (\x,236) rectangle (\x+7,244);
+  % Dark mode
+  \fill[cardgray!60,rounded corners=2pt] (370,234) rectangle (380,246);
+  \node[white] at (375,240) {$\bullet$};
+  % Search bar
+  \fill[darkbg!95,rounded corners=3pt] (160,234) rectangle (250,246);
+  \node[gray!50,anchor=west,font=\tiny] at (163,240) {Search city...};
+  % Filters
+  \foreach \x/\t in {252/Operations,285/Threat,316/Source}
+    {\fill[cardgray!60,rounded corners=2pt] (\x,234) rectangle (\x+30,246);
+     \node[white,font=\tiny] at (\x+15,240) {\t};}
+  % Safe Route button (green)
+  \fill[emerald!30,rounded corners=3pt] (390,234) rectangle (415,246);
+  \node[emerald!90,font=\tiny\bfseries] at (402,240) {Route};
+  % Left sidebar
+  \fill[cardgray!40] (0,0) rectangle (70,229);
+  \node[white!70,font=\scriptsize\bfseries] at (35,218) {Filters};
+  \fill[darkbg!80,rounded corners=2pt] (4,195) rectangle (66,210);
+  \node[gray!60,font=\tiny] at (35,202) {City search};
+  \fill[darkbg!80,rounded corners=2pt] (4,178) rectangle (66,193);
+  \node[gray!60,font=\tiny] at (35,185) {Date range};
+  % Shower index box
+  \fill[israelblue!20,rounded corners=2pt] (4,100) rectangle (66,135);
+  \node[azureblue,font=\tiny\bfseries] at (35,126) {Shower Index};
+  \node[emerald!80,font=\small\bfseries] at (35,115) {04:00--04:30};
+  \node[gray!60,font=\tiny] at (35,106) {P(quiet) = 94\%};
+  % Ticker at bottom
+  \fill[riskred!30] (0,0) rectangle (\W,8);
+  \node[white!80,font=\tiny] at (\W/2,4) {Live alert ticker: Sderot, Ashkelon, Be'er Sheva ... };
+  % Map panel
+  \fill[blue!8] (72,10) rectangle (270,229);
+  % Map tiles (stylised)
+  \foreach \x in {90,130,170,210,250}
+    \draw[gray!20,line width=0.3pt] (\x,10)--(\x,229);
+  \foreach \y in {40,80,120,160,200}
+    \draw[gray!20,line width=0.3pt] (72,\y)--(270,\y);
+  % Israel coastline suggestion
+  \draw[blue!40,line width=1pt] (160,200)--(155,180)--(150,150)--(148,120)--(150,80)--(155,40);
+  % Alert circles
+  \foreach \x/\y/\r/\lbl in {
+    152/190/4/TLV, 148/160/6/Ashk, 155/140/8/Beer, 165/100/5/Dimi, 158/75/4/Eilat,
+    170/175/7/Hdera, 180/185/5/Netan, 145/205/6/HCar}{
+    \fill[riskred!80,opacity=0.7] (\x,\y) circle (\r pt);
+    \draw[white,line width=0.4pt] (\x,\y) circle (\r pt);
+    \node[white,font=\tiny,opacity=0.9] at (\x+\r+5,\y) {\lbl};
+  }
+  \node[white!60,font=\tiny] at (171,218) {Map Mockup};
+  % Time series chart
+  \fill[cardgray!30,rounded corners=3pt] (72,10) rectangle (270,100); % overwrite lower map
+  \fill[darkbg!95,rounded corners=3pt] (74,12) rectangle (268,98);
+  \node[gray!50,font=\tiny,anchor=north west] at (76,95) {Alerts / Year};
+  \foreach \x/\h in {90/20,105/35,120/25,135/28,150/45,165/90,180/80,195/75,210/82,225/88}{
+    \fill[israelblue!70] (\x,14) rectangle (\x+12,14+\h);
+  }
+  \fill[riskred!80] (165,14) rectangle (177,104); % Oct 2023 spike
+  \foreach \x/\lbl in {90/2018,120/2020,150/2022,180/2023,210/2025}
+    \node[gray!50,font=\tiny] at (\x+6,11) {\lbl};
+  % Analytics panel
+  \fill[cardgray!30,rounded corners=3pt] (272,10) rectangle (\W-2,229);
+  \fill[darkbg!90] (274,12) rectangle (\W-4,227);
+  \node[white!70,font=\scriptsize\bfseries] at (346,218) {Analytics};
+  % Top cities bar chart
+  \foreach \i/\city/\cnt in {0/Sderot/95, 1/Ashkelon/82, 2/Beer\ Sheva/76,
+                              3/Tel\ Aviv/68, 4/Nahariya/55, 5/Kiryat\ Shmona/50}{
+    \pgfmathsetmacro{\yy}{200-\i*16}
+    \fill[israelblue!60] (276,\yy-5) rectangle (276+\cnt*0.4,\yy+4);
+    \node[white!70,font=\tiny,anchor=east] at (275,\yy) {\city};
+    \node[white!70,font=\tiny,anchor=west] at (276+\cnt*0.4+1,\yy) {\cnt k};
+  }
+  % Pie charts
+  \fill[riskred!80]   (316,70) -- (316,95) arc(90:330:25) -- cycle;
+  \fill[israelblue!70](316,70) -- (316,95) arc(330:450:25) -- cycle;
+  \fill[emerald!70]   (316,70) -- (316,95) arc(90:130:25) -- cycle;
+  \draw[darkbg,line width=1.5pt] (316,70) circle(25pt);
+  \fill[darkbg,rounded corners=8pt] (306,60) circle(8pt);
+  \node[white!60,font=\tiny] at (346,62) {Threat dist.};
+\end{tikzpicture}
+\caption{Main dashboard mockup. Left sidebar: filters + Shower Index. Centre: interactive map with
+  alert markers sized by incident count. Lower centre: time-series chart (year resolution) with the
+  Oct~2023 spike clearly visible in red. Right panel: top-cities chart + threat distribution.}
+\label{fig:dash_mockup}
+\end{figure}
+
+\subsection{UAV Route Explorer}
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}[x=1pt,y=1pt,font=\tiny]
+  \def\W{380}\def\H{210}
+  \fill[darkbg!90] (0,0) rectangle (\W,\H);
+  % Map base
+  \fill[blue!7] (10,10) rectangle (270,200);
+  \foreach \x in {40,80,120,160,200,240}
+    \draw[gray!15,line width=0.3pt] (\x,10)--(\x,200);
+  \foreach \y in {40,80,120,160}
+    \draw[gray!15,line width=0.3pt] (10,\y)--(270,\y);
+  % Coastline
+  \draw[blue!35,line width=1pt]
+    (140,195)--(135,170)--(130,140)--(128,110)--(130,75)--(135,40);
+  % UAV route 1 (orange, thick)
+  \draw[orange!80,line width=2.5pt,opacity=0.85]
+    (230,190)--(210,175)--(190,160)--(170,145)--(155,125)--(145,105)--(138,80);
+  \draw[orange!60,line width=5pt,opacity=0.25]
+    (230,190)--(210,175)--(190,160)--(170,145)--(155,125)--(145,105)--(138,80);
+  % UAV route 2 (purple)
+  \draw[violet!70,line width=2pt,opacity=0.7]
+    (240,170)--(215,155)--(195,140)--(175,120)--(158,100)--(148,78);
+  \draw[violet!50,line width=4pt,opacity=0.2]
+    (240,170)--(215,155)--(195,140)--(175,120)--(158,100)--(148,78);
+  % UAV route 3
+  \draw[violet!60,line width=1.5pt,opacity=0.5]
+    (220,165)--(200,148)--(182,130)--(165,115)--(150,95)--(140,72);
+  % Start/end markers
+  \fill[emerald!80] (230,190) circle (4pt); \draw[white,line width=0.5pt] (230,190) circle (4pt);
+  \fill[riskred!80]  (138,80)  circle (5pt); \draw[white,line width=0.5pt] (138,80) circle (5pt);
+  \fill[emerald!80] (240,170) circle (3pt);
+  \fill[riskred!80]  (148,78)  circle (4pt);
+  % Labels
+  \node[emerald!90,font=\scriptsize] at (240,197) {Departure};
+  \node[riskred!80,font=\scriptsize]  at (138,68)  {Intercept};
+  % City dots along route
+  \foreach \x/\y/\c in {210/175/Ashdod,170/145/Rehovot,155/125/Lod,145/105/Petah\ Tiqva}{
+    \fill[white,opacity=0.4] (\x,\y) circle (2pt);
+    \node[white!60,anchor=west,font=\tiny] at (\x+3,\y) {\c};
+  }
+  \node[white!60,font=\scriptsize,anchor=north west] at (12,198) {UAV Route Explorer};
+  % Legend
+  \fill[darkbg!95,rounded corners=3pt] (275,160) rectangle (\W-5,200);
+  \draw[orange!80,line width=2pt] (280,190)--(300,190);
+  \node[white!70,anchor=west,font=\tiny] at (303,190) {Selected route};
+  \draw[violet!70,line width=1.5pt] (280,180)--(300,180);
+  \node[white!70,anchor=west,font=\tiny] at (303,180) {Other routes};
+  \fill[emerald!80] (285,170) circle (3pt);
+  \node[white!70,anchor=west,font=\tiny] at (303,170) {Start};
+  \fill[riskred!80]  (285,162) circle (3pt);
+  \node[white!70,anchor=west,font=\tiny] at (303,162) {Endpoint};
+  % Route info panel
+  \fill[darkbg!95,rounded corners=3pt] (275,10) rectangle (\W-5,155);
+  \node[white!80,font=\scriptsize\bfseries] at (327,148) {Route \#7};
+  \node[gray!60,font=\tiny,anchor=north west] at (277,140) {Oct 19, 2023};
+  \node[gray!60,font=\tiny,anchor=north west] at (277,131) {06:44 -- 07:02};
+  \node[gray!60,font=\tiny,anchor=north west] at (277,122) {9 alert points};
+  \node[gray!60,font=\tiny,anchor=north west] at (277,113) {Gulf of Aqaba $\to$ Beer Sheva};
+  \node[gray!50,font=\tiny,anchor=north west] at (277,98) {Segment frequency};
+  \foreach \i/\w in {0/3,1/4,2/4,3/5,4/4,5/3,6/2}{
+    \pgfmathsetmacro{\bx}{278+\i*8}
+    \fill[orange!70,opacity=0.7] (\bx,60) rectangle (\bx+6,60+\w*5);
+  }
+\end{tikzpicture}
+\caption{UAV Route Explorer mockup. The map shows three reconstructed drone trajectories
+  (east-to-west in orange/purple). The selected route (orange) is shown with extra glow.
+  Start points are green circles; interception/endpoint markers are red. City waypoints are shown
+  along the path. The right panel shows route metadata.}
+\label{fig:uav_mockup}
+\end{figure}
+
+\subsection{Safe Route Planner --- Inline Desktop Mode}
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}[x=1pt,y=1pt,font=\tiny]
+  \def\W{430}\def\H{230}
+  \fill[darkbg!90] (0,0) rectangle (\W,\H);
+  % Left: input form (top)
+  \fill[darkbg!95,rounded corners=3pt] (2,170) rectangle (195,228);
+  \node[emerald!80,font=\scriptsize\bfseries] at (100,220) {\texthebrew{תכנון נסיעה בטוחה} --- Safe Route Planner};
+  % Origin input
+  \fill[cardgray!80,rounded corners=2pt] (8,195) rectangle (190,208);
+  \node[gray!50,anchor=west,font=\tiny] at (12,201) {Origin:};
+  \node[white!80,anchor=west,font=\tiny] at (40,201) {Kiryat Tivon -- Beit Zeid};
+  % Dest input
+  \fill[cardgray!80,rounded corners=2pt] (8,181) rectangle (190,194);
+  \node[gray!50,anchor=west,font=\tiny] at (12,187) {Destination:};
+  \node[white!80,anchor=west,font=\tiny] at (55,187) {Tel Aviv};
+  % Calculate button
+  \fill[emerald!70,rounded corners=2pt] (8,172) rectangle (190,180);
+  \node[white,font=\tiny\bfseries] at (99,176) {Calculate Safe Route};
+  % Travel summary bar
+  \fill[cardgray!50] (2,158) rectangle (195,170);
+  \node[gray!60,font=\tiny] at (100,164) {96 km (road)  |  $\sim$1h 18m  |  402 towns  |  41,113 alerts};
+  % Hourly chart
+  \fill[darkbg!80,rounded corners=3pt] (4,8) rectangle (194,156);
+  \node[gray!50,font=\tiny,anchor=north west] at (6,153) {Hourly alert distribution};
+  % Bars
+  \def\colors{{"israelblue!60","israelblue!60","israelblue!60","israelblue!60","emerald!90",
+                "emerald!80","emerald!80","emerald!70","emerald!70","riskred!90",
+                "israelblue!60","israelblue!60","israelblue!60","israelblue!60","israelblue!60",
+                "israelblue!60","israelblue!60","israelblue!60","israelblue!60","israelblue!60",
+                "israelblue!60","israelblue!60","israelblue!60","israelblue!60"}}
+  \def\heights{{20,18,16,17,52,48,45,40,38,85,55,52,54,50,52,55,56,54,52,50,48,46,42,30}}
+  \foreach \i in {0,...,23}{
+    \pgfmathsetmacro{\bx}{8+\i*7.7}
+    \pgfmathsetlengthmacro{\bh}{\heights[\i]*0.9pt}
+    \pgfmathsetmacro{\col}{\colors[\i]}
+    \fill[\col] (\bx,14) rectangle (\bx+6,14+\bh);
+  }
+  % x axis labels
+  \foreach \h/\lbl in {0/0:00, 4/4:00, 8/8:00, 12/12:00, 16/16:00, 20/20:00}{
+    \pgfmathsetmacro{\tx}{8+\h*7.7+3}
+    \node[gray!40] at (\tx,11) {\lbl};
+  }
+  % Legend
+  \node[emerald!80,font=\tiny] at (50,5) {$\bullet$ Safe departure};
+  \node[riskred!80,font=\tiny] at (130,5) {$\bullet$ Riskiest};
+  % Right: departure hours list
+  \fill[darkbg!95,rounded corners=3pt] (198,8) rectangle (295,228);
+  \node[gray!50,font=\tiny,anchor=north west] at (200,225) {Recommended Departures};
+  \def\deptimes{{"09:00","03:00","04:00","05:00","12:00","02:00","18:00","15:00"}}
+  \def\arrtimes{{"10:18","04:18","05:18","06:18","13:18","03:18","19:18","16:18"}}
+  \def\probs{{50,47,45,45,44,36,33,32}}
+  \def\rcolors{{"emerald!90","emerald!80","emerald!75","emerald!70","emerald!65","emerald!55","emerald!45","emerald!40"}}
+  \foreach \i in {0,...,7}{
+    \pgfmathsetmacro{\yy}{215-\i*25}
+    \pgfmathsetmacro{\rc}{\rcolors[\i]}
+    \fill[\rc,opacity=0.15,rounded corners=2pt] (200,\yy-10) rectangle (293,\yy+12);
+    \draw[\rc,line width=0.5pt,rounded corners=2pt,opacity=0.4] (200,\yy-10) rectangle (293,\yy+12);
+    \pgfmathtruncatemacro{\rank}{\i+1}
+    \node[\rc,font=\tiny\bfseries] at (212,\yy+1) {\rank};
+    \node[\rc,font=\small\bfseries] at (240,\yy+4) {\deptimes[\i]};
+    \node[gray!50,font=\tiny] at (240,\yy-4) {$\to$ \arrtimes[\i]};
+    \pgfmathsetmacro{\pval}{\probs[\i]}
+    \node[\rc,font=\tiny\bfseries] at (280,\yy+4) {\pval\%};
+    \fill[gray!20,rounded corners=1pt] (253,\yy-3) rectangle (291,\yy-0);
+    \fill[\rc] (253,\yy-3) rectangle (253+\pval*0.38,\yy-0);
+  }
+  % Map panel (right)
+  \fill[blue!8] (298,8) rectangle (\W-2,228);
+  \foreach \x in {320,345,370,395,418}
+    \draw[gray!15,line width=0.3pt] (\x,8)--(\x,228);
+  \foreach \y in {40,80,120,160,200}
+    \draw[gray!15,line width=0.3pt] (298,\y)--(\W-2,\y);
+  \draw[blue!35,line width=0.8pt]
+    (355,220)--(352,195)--(349,165)--(348,135)--(350,100)--(353,65)--(355,35);
+  % Safe route overlay (green dashed)
+  \draw[emerald!80,line width=1.5pt,dashed]
+    (335,180)--(342,158)--(350,135)--(355,112)--(360,90);
+  % Impact zone cities (amber)
+  \foreach \x/\y in {335/180,340/170,345/158,350/148,353/135,356/122,359/110,360/98}{
+    \fill[ambercolor,opacity=0.5] (\x,\y) circle (3pt);
+  }
+  % Start/end
+  \fill[emerald!80] (335,180) circle (4pt);
+  \fill[riskred!80]  (360,90)  circle (4pt);
+  \node[white!70,font=\scriptsize] at (360,230) {Map (route overlay)};
+\end{tikzpicture}
+\caption{Safe Route Planner mockup in inline desktop mode. Left: origin/destination inputs, calculate
+  button, travel summary, and hourly risk bar chart (green = safest departure hours, red = riskiest).
+  Centre: ranked departure windows (colour-graded, rank 1 = safest). Right: map with green dashed
+  route path and amber circles marking impact-zone cities.}
+\label{fig:safe_mockup}
+\end{figure}
+
+\subsection{Hourly Distribution Chart (Detail)}
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}[x=1pt,y=1pt]
+  \fill[darkbg!92,rounded corners=6pt] (0,0) rectangle (400,180);
+  % Grid lines
+  \foreach \y in {20,50,80,110,140}
+    \draw[gray!15,line width=0.4pt] (30,\y)--(390,\y);
+  % Y axis labels
+  \foreach \y/\lbl in {20/0,50/1000,80/2000,110/3000,140/2800}
+    \node[gray!50,font=\tiny,anchor=east] at (28,\y) {\lbl};
+  % Bars with rounded tops and glow
+  \def\bdata{{35,32,30,31,68,62,58,54,50,120,80,76,78,74,76,80,82,78,76,74,70,68,62,45}}
+  \def\bcolors{{"israelblue!50","israelblue!50","israelblue!50","israelblue!50",
+                 "emerald!95","emerald!85","emerald!80","emerald!75","emerald!70",
+                 "riskred!90",
+                 "israelblue!55","israelblue!55","israelblue!55","israelblue!55",
+                 "israelblue!55","israelblue!55","israelblue!55","israelblue!55",
+                 "israelblue!55","israelblue!55","israelblue!55","israelblue!55",
+                 "israelblue!50","israelblue!50"}}
+  \def\bshadow{{"none","none","none","none",
+                 "emerald!40","emerald!30","emerald!25","emerald!20","emerald!15",
+                 "riskred!40",
+                 "none","none","none","none","none","none","none","none",
+                 "none","none","none","none","none","none"}}
+  \foreach \i in {0,...,23}{
+    \pgfmathsetmacro{\bx}{32+\i*15}
+    \pgfmathsetmacro{\bh}{\bdata[\i]*1.0}
+    \pgfmathsetmacro{\bc}{\bcolors[\i]}
+    % Glow shadow (approximate with a wider, lighter bar)
+    \pgfmathsetmacro{\shadow}{\bshadow[\i]}
+    % Main bar
+    \fill[\bc,rounded corners={2pt 2pt 0pt 0pt}] (\bx,18) rectangle (\bx+11,18+\bh);
+    % Top highlight
+    \fill[white,opacity=0.12] (\bx,18+\bh-2) rectangle (\bx+11,18+\bh);
+  }
+  % X axis labels
+  \foreach \h/\lbl in {0/0:00,4/4:00,8/8:00,12/12:00,16/16:00,20/20:00}{
+    \pgfmathsetmacro{\tx}{32+\h*15+5}
+    \node[gray!50,font=\tiny] at (\tx,13) {\lbl};
+  }
+  % Axes
+  \draw[gray!40,line width=0.6pt] (30,17)--(390,17); % x
+  \draw[gray!40,line width=0.6pt] (30,17)--(30,155); % y
+  % Annotations
+  \draw[riskred!80,-Stealth,line width=0.7pt] (170,145)--(171,138);
+  \node[riskred!80,font=\scriptsize] at (180,150) {Riskiest: 9:00};
+  \draw[emerald!80,-Stealth,line width=0.7pt] (100,90)--(99,87);
+  \node[emerald!80,font=\scriptsize] at (108,94) {Safest zone};
+  % Legend
+  \fill[emerald!80,rounded corners=1pt] (30,165) rectangle (40,170);
+  \node[gray!70,anchor=west,font=\tiny] at (42,167) {Top 12 safest departure hours};
+  \fill[riskred!80,rounded corners=1pt] (150,165) rectangle (160,170);
+  \node[gray!70,anchor=west,font=\tiny] at (162,167) {Riskiest hour};
+  \fill[israelblue!55,rounded corners=1pt] (260,165) rectangle (270,170);
+  \node[gray!70,anchor=west,font=\tiny] at (272,167) {Background hours};
+\end{tikzpicture}
+\caption{Hourly alert distribution bar chart (detail). Bars represent historical alert counts per hour
+  of day for the computed impact zone. Green bars mark the 12 statistically safest departure hours;
+  the red bar marks the riskiest hour. Rounded bar tops and subtle glow effects emphasize safety-ranked hours.}
+\label{fig:chart_mockup}
+\end{figure}
+
+% ═════════════════════════════════════════════════════════════════════════════
 \section{UAV Route Reconstruction Algorithm}
 \label{sec:uav}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{Motivation}
-
-When a hostile UAV enters Israeli airspace, the Home Front Command activates alerts in cities sequentially as the UAV approaches each population center. The resulting time-ordered sequence of city alerts implicitly encodes the flight trajectory. We exploit this structure to reconstruct probable drone flight paths from the historical record.
+When a hostile UAV (\texthebrew{כטב"מ}) enters Israeli airspace, Home Front Command activates alerts in cities sequentially as it approaches each population center. The time-ordered city alert sequence implicitly encodes the flight trajectory.
 
 \subsection{Problem Formulation}
 
 \begin{definition}[UAV Alert Sequence]
-Let $\mathcal{A} = \{a_1, a_2, \ldots, a_n\}$ be the set of all alerts with threat type "hostile aircraft intrusion," sorted chronologically. Each alert $a_i = (t_i, \mathbf{p}_i)$ where $t_i$ is the timestamp and $\mathbf{p}_i = (\phi_i, \lambda_i)$ are geographic coordinates (latitude, longitude).
+Let $\mathcal{A} = \{a_1,\ldots,a_n\}$ be all ``hostile aircraft intrusion'' alerts, sorted chronologically. Each $a_i=(t_i,\mathbf{p}_i)$ where $t_i$ is the timestamp and $\mathbf{p}_i=(\phi_i,\lambda_i)$ are geographic coordinates.
 \end{definition}
 
 \begin{definition}[UAV Route]
-A UAV route $R = (a_{i_1}, a_{i_2}, \ldots, a_{i_k})$ is a maximal subsequence of $\mathcal{A}$ such that for each consecutive pair $(a_{i_j}, a_{i_{j+1}})$:
+A route $R=(a_{i_1},\ldots,a_{i_k})$ is a maximal subsequence satisfying for each consecutive pair:
 \[
-t_{i_{j+1}} - t_{i_j} \leq \tau_{\max} \quad \text{and} \quad d(\mathbf{p}_{i_j}, \mathbf{p}_{i_{j+1}}) \leq d_{\max}
+t_{i_{j+1}}-t_{i_j}\leq\tau_{\max}=10\text{ min}
+\quad\text{and}\quad
+d_H(\mathbf{p}_{i_j},\mathbf{p}_{i_{j+1}})\leq d_{\max}=20\text{ km}
 \]
-where $\tau_{\max} = 10$ minutes, $d_{\max} = 20$ km, and $d(\cdot, \cdot)$ is the Haversine distance.
 \end{definition}
 
-\subsection{Algorithm}
+\subsection{Algorithm Flowchart}
 
-\begin{figure}[H]
-\centering
+\begin{figure}[H]\centering
 \begin{tikzpicture}[
   step/.style={rectangle, rounded corners=4pt, draw=israelblue!70, fill=israelblue!8,
-               minimum width=5.5cm, minimum height=0.85cm, align=center, font=\small},
-  decision/.style={diamond, draw=emerald!80, fill=emerald!10, aspect=2.8,
-                   minimum width=5cm, align=center, font=\small},
-  arrow/.style={-Stealth, thick, israelblue!60},
-  node distance=0.9cm,
+               minimum width=6.5cm, minimum height=0.85cm, align=center, font=\small},
+  dec/.style={diamond, draw=emerald!80, fill=emerald!10, aspect=3.0,
+              minimum width=6cm, align=center, font=\small},
+  arr/.style={-Stealth, thick, israelblue!60},
+  node distance=0.85cm,
 ]
-  \node[step] (s1) {Filter: threat = ``כטב"מ''};
-  \node[step, below=of s1] (s2) {Sort chronologically\\(lat tiebreak N$\to$S)};
-  \node[step, below=of s2] (s3) {Initialize: \texttt{visited[]} = false, routes = []};
-  \node[step, below=of s3] (s4) {Pick first unvisited alert $a_i$; start chain $C = [a_i]$};
-  \node[decision, below=of s4] (d1) {Next unvisited $a_j$:\\$\Delta t \leq 10$min?\\$d \leq 20$km?};
-  \node[step, right=2.5cm of d1, yshift=0cm] (s5) {Append $a_j$ to $C$\\mark $a_j$ visited; $i \gets j$};
+  \node[step] (s1) {Filter: threat = ``Hostile Aircraft Intrusion''};
+  \node[step, below=of s1] (s2) {Sort chronologically\\(north-to-south tiebreak for simultaneous alerts)};
+  \node[step, below=of s2] (s3) {Initialize: \texttt{visited[i]=false} for all $i$};
+  \node[step, below=of s3] (s4) {Pick first unvisited $a_i$; start chain $C=[a_i]$};
+  \node[dec, below=of s4] (d1) {Next unvisited $a_j$:\\$\Delta t \leq 10$\,min \textbf{AND} $d \leq 20$\,km?};
+  \node[step, right=2.8cm of d1] (s5) {Append $a_j$ to $C$, mark visited, $i\leftarrow j$};
   \node[step, below=of d1] (s6) {Save chain $C$; start new chain};
-  \node[decision, below=of s6] (d2) {More unvisited\\alerts?};
-  \node[step, below=of d2] (s7) {Smooth routes\\(1-2-1 convolution, 2 passes)};
-  \node[step, below=of s7] (s8) {Compute segment frequencies\\Render on Leaflet map};
+  \node[dec,  below=of s6] (d2) {More unvisited?};
+  \node[step, below=of d2] (s7) {Apply 1-2-1 coordinate smoothing (2 passes)};
+  \node[step, below=of s7] (s8) {Compute segment frequencies; render coloured polylines};
 
-  \draw[arrow] (s1) -- (s2);
-  \draw[arrow] (s2) -- (s3);
-  \draw[arrow] (s3) -- (s4);
-  \draw[arrow] (s4) -- (d1);
-  \draw[arrow] (d1) -- node[above,font=\small]{Yes} (s5);
-  \draw[arrow] (s5) |- ([yshift=0.45cm]d1.north);
-  \draw[arrow] (d1) -- node[right,font=\small]{No} (s6);
-  \draw[arrow] (s6) -- (d2);
-  \draw[arrow] (d2) -| node[above,font=\small,pos=0.3]{Yes} ([xshift=-3cm]s4.west) |- (s4);
-  \draw[arrow] (d2) -- node[right,font=\small]{No} (s7);
-  \draw[arrow] (s7) -- (s8);
+  \draw[arr] (s1)--(s2)--(s3)--(s4)--(d1);
+  \draw[arr] (d1) -- node[above,font=\small]{Yes} (s5);
+  \draw[arr] (s5) |- ([yshift=0.45cm]d1.north);
+  \draw[arr] (d1) -- node[right,font=\small]{No} (s6)--(d2);
+  \draw[arr] (d2.south) -- node[right,font=\small]{No} (s7)--(s8);
+  \draw[arr] (d2.west) -| node[left,yshift=6pt,font=\small]{Yes} ([xshift=-2.5cm]s4.west) |- (s4.west);
 \end{tikzpicture}
-\caption{UAV Route Reconstruction Algorithm flowchart.}
+\caption{UAV Route Reconstruction Algorithm.}
 \label{fig:uav_algo}
 \end{figure}
 
-\subsubsection{Coordinate Smoothing}
+\subsection{Coordinate Smoothing}
 
-Raw chains exhibit zigzag artifacts due to simultaneous alerts in distant cities. A 1-2-1 weighted convolution is applied:
-
+A 1-2-1 weighted convolution removes zigzag artifacts from simultaneous multi-city alerts:
 \begin{equation}
-\hat{\mathbf{p}}_i = \frac{\mathbf{p}_{i-1} + 2\mathbf{p}_i + \mathbf{p}_{i+1}}{4}
+\hat{\mathbf{p}}_i = \frac{\mathbf{p}_{i-1}+2\mathbf{p}_i+\mathbf{p}_{i+1}}{4}
 \end{equation}
+with endpoints fixed ($\hat{\mathbf{p}}_0=\mathbf{p}_0$, $\hat{\mathbf{p}}_k=\mathbf{p}_k$). Two passes are applied.
 
-with boundary conditions $\hat{\mathbf{p}}_0 = \mathbf{p}_0$ and $\hat{\mathbf{p}}_{k} = \mathbf{p}_{k}$ (endpoints fixed). Two passes are applied.
+\subsection{Segment Frequency Scoring}
 
-\subsubsection{Segment Frequency Scoring}
-
-For each city pair $(c_i, c_j)$ appearing as consecutive points across all routes, a frequency $f_{ij}$ is computed. Segment visual properties scale with frequency:
+For each city pair $(c_i,c_j)$ appearing across all routes, frequency $f_{ij}$ drives visual weight:
 \[
-\text{opacity}_{ij} = 0.3 + 0.7 \cdot \frac{f_{ij}}{\max_k f_k}, \qquad
-\text{weight}_{ij} = 2 + 4 \cdot \frac{f_{ij}}{\max_k f_k}
+\text{opacity}_{ij}=0.3+0.7\cdot\tfrac{f_{ij}}{f_{\max}}, \qquad
+\text{weight}_{ij}=2+4\cdot\tfrac{f_{ij}}{f_{\max}}
 \]
 
-\subsection{Algorithm Evolution}
+\subsection{Algorithm Evolution History}
 
-\begin{table}[H]
-\centering
-\caption{UAV Algorithm Iteration History}
-\begin{tabular}{llp{7cm}}
-\toprule
-\textbf{Version} & \textbf{Name} & \textbf{Description and Reason for Revision} \\
-\midrule
-v1 & Strict S-T & 10 min / 20 km thresholds. Simple and interpretable. \\
-v2 & Speed-constrained & Added $v \leq 100$ km/h physics constraint. Rejected: created many false splits at slow segments. \\
-v3 & Hybrid ID & Mixed event-ID chaining with temporal. Rejected: event IDs concatenated unrelated alerts, generating noise. \\
-v4 & Pure ID & Removed temporal, used only event IDs. Rejected: too many false chains across distant cities. \\
-\textbf{Current} & \textbf{v1 Reverted} & Back to strict spatio-temporal. Most robust against noise. \\
-\bottomrule
+\begin{table}[H]\centering
+\caption{UAV Tracking Algorithm Iteration History}
+\begin{tabular}{p{2.1cm} l p{8cm}}\toprule
+\textbf{Version} & \textbf{Name} & \textbf{Description and Revision Reason} \\\midrule
+v1 & Strict S-T & 10\,min / 20\,km thresholds. Simple and interpretable. \\
+v2 & Speed-constrained & Added $v\!\leq\!100$\,km/h physics constraint. \textit{Rejected}: created false splits at slow flight segments. \\
+v3 & Hybrid ID & Mixed event-ID chaining with temporal. \textit{Rejected}: event IDs concatenated unrelated alerts, generating noisy cross-country trajectories. \\
+v4 & Pure ID & Temporal removed, IDs only. \textit{Rejected}: too many false chains across distant cities. \\
+\textbf{Current} & \textbf{v1 Reverted} & Back to strict spatio-temporal. Most robust against noise. \\\bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Limitations}
-
-\begin{itemize}
-  \item Only city-level precision (alert system does not report exact impact points)
-  \item Haversine distance ignores topography
-  \item Cannot distinguish between intercepted, landed, and continuing UAVs
-  \item Simultaneous multi-front launches may create spurious cross-country chains
-\end{itemize}
-
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Safe Route Departure Planner}
 \label{sec:route}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{Problem Statement}
-
-Given origin city $O$ and destination city $D$, recommend the top-$K$ departure hours $h^* \in \{0, 1, \ldots, 23\}$ that minimize the expected historical alert exposure during the trip.
+Given origin $O$ and destination $D$, identify the departure hours $h^*\in\{0,\ldots,23\}$ that minimise expected historical alert exposure during travel.
 
 \subsection{Algorithm}
 
-\begin{figure}[H]
-\centering
+\begin{figure}[H]\centering
 \begin{tikzpicture}[
   step/.style={rectangle, rounded corners=4pt, draw=israelblue!70, fill=israelblue!8,
-               minimum width=7cm, minimum height=0.85cm, align=center, font=\small},
-  arrow/.style={-Stealth, thick, israelblue!60},
-  node distance=0.9cm,
+               minimum width=8.8cm, minimum height=0.85cm, align=center, font=\small},
+  arr/.style={-Stealth, thick, israelblue!60},
+  node distance=0.85cm,
 ]
   \node[step] (s1) {Geocode $O$, $D$ from \texttt{baseCoords} / Nominatim};
-  \node[step, below=of s1] (s2) {Query OSRM API for road distance $d_r$ and duration $\Delta t_r$\\(6s timeout; fallback: $d_r = 1.35 \cdot d_H$, $\Delta t_r = d_r / 80$)};
-  \node[step, below=of s2] (s3) {Interpolate path: one point every 5 km ($\sim$30--150 points)};
-  \node[step, below=of s3] (s4) {Find impact zone $\mathcal{Z}$: all cities within 15 km of any path point};
-  \node[step, below=of s4] (s5) {Aggregate hourly counts: $c_h = |\{a \in \mathcal{A}_\mathcal{Z} : \text{hour}(a) = h\}|$};
-  \node[step, below=of s5] (s6) {Score each departure hour: $S(h) = \texttt{getWindowScore}(c, h, \Delta t_r)$};
-  \node[step, below=of s6] (s7) {Rank all 24 hours by $S(h)$; output top 12 with arrival time \& quiet\%};
+  \node[step, below=of s1] (s2) {OSRM API: road distance $d_r$ and duration $\Delta T$\\(6\,s timeout; fallback: $d_r\!=\!1.35\,d_H$, $\Delta T\!=\!d_r/80$)};
+  \node[step, below=of s2] (s3) {Interpolate straight-line path every 5\,km ($\sim$30--150 points)};
+  \node[step, below=of s3] (s4) {Find impact zone: all cities within 15\,km of any path point};
+  \node[step, below=of s4] (s5) {Aggregate per-hour alert counts $c_h$ for impact zone cities};
+  \node[step, below=of s5] (s6) {Score each of 24 departure hours: $S(h)=\texttt{getWindowScore}(c,h,\Delta T)$};
+  \node[step, below=of s6] (s7) {Rank all 24 hours; output top 12 with arrival time \& quiet\%};
+
+  \draw[arr] (s1)--(s2)--(s3)--(s4)--(s5)--(s6)--(s7);
 \end{tikzpicture}
 \caption{Safe Route Departure Planner algorithm.}
 \label{fig:route_algo}
 \end{figure}
 
-\subsubsection{Path Interpolation}
+\subsection{Key Equations}
 
-Let $\mathbf{p}_O$ and $\mathbf{p}_D$ be the coordinates of origin and destination. The interpolated path is:
+\paragraph{Path interpolation.}
 \[
-\mathbf{p}(t) = (1-t)\,\mathbf{p}_O + t\,\mathbf{p}_D, \quad t \in \left\{\frac{i}{\lceil d / 5 \rceil}\right\}_{i=0}^{\lceil d/5 \rceil}
+\mathbf{p}(t)=(1-t)\,\mathbf{p}_O + t\,\mathbf{p}_D,\quad
+t\in\Bigl\{\tfrac{i}{\lceil d/5\rceil}\Bigr\}_{i=0}^{\lceil d/5\rceil}
 \]
-where $d$ is the Haversine distance in km. This yields $\approx d/5$ evenly-spaced points.
 
-\subsubsection{Impact Zone Detection}
-
-\begin{equation}
-\mathcal{Z} = \left\{ c \in \mathcal{C} \;\Big|\; \exists\, \mathbf{p} \in \text{path} : d_H(\mathbf{p}, \mathbf{p}_c) \leq 15 \text{ km} \right\}
-\end{equation}
-
-where $\mathcal{C}$ is the set of all known cities and $d_H$ is Haversine distance.
-
-\subsubsection{Window Score Function}
-
-\begin{equation}
-S(h, \Delta T) = \sum_{i=0}^{\lfloor \Delta T \rfloor - 1} c_{(h+i) \bmod 24} + c_{(h + \lfloor \Delta T \rfloor) \bmod 24} \cdot \{\Delta T\}
-\label{eq:window_score}
-\end{equation}
-
-where $\{x\}$ denotes the fractional part of $x$. This sums the historical alert counts for all hours the traveler would be on the road.
-
-\subsubsection{Quiet Probability}
-
-\begin{equation}
-P_{\text{quiet}}(h) = 1 - \frac{S(h)}{\max_{h'} S(h')} \times 100\%
-\end{equation}
-
-This is a relative metric (not a Poisson probability) indicating how much quieter this departure window is compared to the worst.
-
-\subsubsection{OSRM Integration}
-
-The application queries the public OSRM API:
-\begin{center}
-\texttt{/route/v1/driving/\{lon1\},\{lat1\};\{lon2\},\{lat2\}?overview=false}
-\end{center}
-An \texttt{AbortController} enforces a 6-second timeout. If the query fails, the fallback is:
+\paragraph{Impact zone.}
 \[
-d_r = 1.35 \cdot d_H, \qquad \Delta t_r = d_r / 80 \text{ h}
+\mathcal{Z}=\bigl\{c\in\mathcal{C}\mid\exists\,\mathbf{p}\in\mathrm{path}:d_H(\mathbf{p},\mathbf{p}_c)\leq15\,\text{km}\bigr\}
 \]
-The 1.35 multiplier is a standard road-to-straight-line ratio for Israel's road network.
 
-% ─────────────────────────────────────────────────────────────────────────────
+\paragraph{Window score.}
+\begin{equation}
+S(h,\Delta T)=\sum_{i=0}^{\lfloor\Delta T\rfloor-1}c_{(h+i)\bmod 24}
++c_{(h+\lfloor\Delta T\rfloor)\bmod 24}\cdot\{\Delta T\}
+\label{eq:window}
+\end{equation}
+where $\{x\}$ is the fractional part of $x$.
+
+\paragraph{Relative quiet probability.}
+\[
+P_{\mathrm{quiet}}(h)=\Bigl(1-\tfrac{S(h)}{\max_{h'}S(h')}\Bigr)\times100\%
+\]
+
+\subsection{OSRM Fallback}
+If the OSRM query fails (timeout or server error), the application falls back to:
+\[
+d_r=1.35\,d_H,\qquad \Delta T=d_r/80\text{ h}
+\]
+The 1.35 multiplier reflects the typical road-to-straight-line distance ratio for Israeli inter-city routes.
+
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Shower Index: Daily Safety Window Estimator}
 \label{sec:shower}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{Motivation}
-
-A common civilian question during prolonged security operations is: ``When is it safe to do routine activities that temporarily prevent one from reaching a shelter?'' The Shower Index answers this by identifying the 30-minute window with the lowest historical alert probability.
+Civilians in prolonged operations need to know \emph{when} is the safest 30-minute window for everyday activities that temporarily prevent them from reaching a shelter (showering, cooking, etc.). The Shower Index answers this question statistically.
 
 \subsection{Algorithm}
 
 \begin{enumerate}
-  \item \textbf{Bucket alerts into 48 half-hour slots:}
+  \item \textbf{Bucket} all alerts into 48 half-hour slots:
+  $b(a)=\lfloor(60\cdot\mathrm{hour}(a)+\mathrm{min}(a))/30\rfloor\in\{0,\ldots,47\}$
+
+  \item \textbf{Weight} each slot (penalises target slot more than neighbours):
+  $w_i=3c_i+c_{(i-1)\bmod48}+c_{(i+1)\bmod48}$
+
+  \item \textbf{Find optimal slot}, preferring waking hours (07:00--22:00):
   \[
-  b(a) = \left\lfloor \frac{60 \cdot \text{hour}(a) + \text{minute}(a)}{30} \right\rfloor \in \{0, 1, \ldots, 47\}
+  i^*=\begin{cases}\arg\min_{i\in[14,44]}w_i&\text{if such }i\text{ exists with }c_i<\max_j c_j\\\arg\min_{i\in[0,47]}w_i&\text{otherwise}\end{cases}
   \]
 
-  \item \textbf{Compute weighted score per slot:}
+  \item \textbf{Poisson probability} of zero alerts in the optimal window:
   \[
-  w_i = 3 c_i + c_{(i-1) \bmod 48} + c_{(i+1) \bmod 48}
-  \]
-  The weight 3 penalizes the target slot itself more heavily than neighbors.
-
-  \item \textbf{Find optimal slot, preferring waking hours (07:00--22:00):}
-  \[
-  i^* = \begin{cases}
-    \arg\min_{i \in [14,44]} w_i & \text{if } \exists i \in [14,44] \text{ with } c_i < \max_j c_j \\
-    \arg\min_{i \in [0,47]} w_i & \text{otherwise}
-  \end{cases}
-  \]
-
-  \item \textbf{Poisson probability of zero alerts in the optimal slot:}
-  \[
-  \lambda = \frac{c_{i^*}}{|\mathcal{D}|}
+  \lambda=\frac{c_{i^*}}{|\mathcal{D}|},\qquad P(\text{quiet})=e^{-\lambda}
   \]
   where $|\mathcal{D}|$ is the number of distinct days in the filtered dataset.
-  \[
-  P(\text{quiet}) = e^{-\lambda}
-  \]
 \end{enumerate}
 
 \begin{proposition}
-Under a Poisson process assumption with rate $\lambda$ alerts per 30-minute window per day, the probability of observing zero alerts in a randomly selected window of the optimal slot is $P = e^{-\lambda}$.
+Under a homogeneous Poisson process with rate $\lambda$ per 30-minute window per day, $P(\text{quiet})=e^{-\lambda}$ is the probability of observing zero alerts in a randomly chosen instance of the recommended slot.
 \end{proposition}
 
-\subsection{Interpretation}
+\subsection{Visual Representation}
 
-A result of $P = 95\%$ means that in 95\% of historical instances of this time slot, no alert occurred. This provides a conservative, data-driven safety estimate without requiring real-time data.
+\begin{figure}[H]\centering
+\begin{tikzpicture}[x=1pt,y=1pt]
+  \fill[darkbg!90,rounded corners=5pt] (0,0) rectangle (300,80);
+  % Slot circles
+  \foreach \i in {0,...,47}{
+    \pgfmathsetmacro{\xpos}{10+\i*5.8}
+    \pgfmathsetmacro{\ypos}{40}
+    % Random height for bar
+    \pgfmathsetmacro{\h}{10+40*rand}
+    \pgfmathsetmacro{\habs}{abs(\h)}
+    \ifdim\xpos pt<90pt % waking hours highlight
+      \fill[gray!30] (\xpos,25) rectangle (\xpos+4.5,25+\habs);
+    \else\ifdim\xpos pt>255pt
+      \fill[gray!30] (\xpos,25) rectangle (\xpos+4.5,25+\habs);
+    \else
+      \pgfmathsetmacro{\r}{\xpos<130?0.5:0.3} % near-optimal lower
+      \fill[israelblue!50] (\xpos,25) rectangle (\xpos+4.5,25+\habs*\r);
+    \fi\fi
+  }
+  % Optimal bar (brightest green)
+  \fill[emerald!90] (113,25) rectangle (117.5,35); % slot ~08:00-08:30
+  \draw[emerald!90,-Stealth,line width=1pt] (115,36)--(115,42);
+  \node[emerald!80,font=\scriptsize] at (115,47) {08:00};
+  \node[emerald!70,font=\tiny] at (115,53) {P=94\%};
+  % Axis
+  \draw[gray!40,line width=0.5pt] (8,24)--(283,24);
+  \foreach \h/\lbl in {0/00:00,8/04:00,16/08:00,24/12:00,32/16:00,40/20:00,47/23:30}{
+    \pgfmathsetmacro{\tx}{10+\h*5.8+2}
+    \node[gray!50,font=\tiny] at (\tx,20) {\lbl};
+  }
+  % Box around waking hours
+  \draw[ambercolor,dashed,line width=0.6pt] (88,22) rectangle (256,73);
+  \node[ambercolor!80,font=\tiny,anchor=north west] at (89,72) {Preferred window (07:00--22:00)};
+\end{tikzpicture}
+\caption{Shower Index display. The 48 half-hour slots are shown as bars (height = weighted alert score). The optimal slot (lowest score within waking hours) is highlighted in green with its Poisson quiet probability. The amber dashed rectangle marks the preferred waking-hours range.}
+\label{fig:shower}
+\end{figure}
 
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Temporal Analysis Models}
 \label{sec:temporal}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{Seven Temporal Resolutions}
 
-\begin{table}[H]
-\centering
+\begin{table}[H]\centering
 \caption{Temporal Aggregation Modes}
-\begin{tabular}{llll}
-\toprule
-\textbf{Mode} & \textbf{Bins} & \textbf{Normalization} & \textbf{Primary Use} \\
-\midrule
-Year     & $n$ calendar years & Raw count & Long-term escalation \\
-Month    & 12 canonical months & Avg across years & Seasonality \\
-Weekday  & 7 days & Avg per occurrence & Weekly rhythm \\
-Hour     & 24 slots & Raw count & Daily peak hours \\
-Minute   & 60 slots & Raw count & Sub-hour patterns \\
-Daytime  & 1,440 slots & Raw count & Intra-day heatmap \\
-Date     & Variable & Raw count & Event-level drill-down \\
-\bottomrule
+\begin{tabular}{lrll}\toprule
+\textbf{Mode}  & \textbf{Bins} & \textbf{Normalization} & \textbf{Primary Use} \\\midrule
+Year     &  $n$ years & Raw count       & Long-term escalation trends \\
+Month    & 12         & Avg.\ across years & Seasonality detection \\
+Weekday  &  7         & Avg.\ per occurrence & Weekly rhythm \\
+Hour     & 24         & Raw count       & Daily peak detection \\
+Minute   & 60         & Raw count       & Sub-hour patterns \\
+Daytime  & 1{,}440    & Raw count       & Intra-day heatmap \\
+Date     & variable   & Raw count       & Event-level drill-down \\\bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Top 15\% Highlight}
 
-High-frequency periods are highlighted:
+Frequency bins in the top 15th percentile are rendered in a pink gradient:
 \[
-\theta_{85} = \text{percentile}_{85}(\{y_1, \ldots, y_n\})
+\theta_{85}=\mathrm{percentile}_{85}(\{y_1,\ldots,y_n\});\quad
+\text{bar }\textit{i}\text{ highlighted iff }y_i\geq\theta_{85}
 \]
-Bins with $y_i \geq \theta_{85}$ are rendered with a pink gradient and shadow blur effect, drawing the user's attention to statistical outliers.
 
 \subsection{Comparison Mode}
 
-Two filter sets (primary and secondary operation) produce two time series $Y^{(1)}$ and $Y^{(2)}$. These are rendered simultaneously on a dual-axis ECharts area chart, enabling visual comparison of attack intensity across different military campaigns.
+Two operation filter sets produce dual time-series $Y^{(1)}$, $Y^{(2)}$ rendered simultaneously on a dual-axis ECharts area chart (blue vs.\ amber). This enables quantitative comparison of attack intensity across distinct military campaigns.
 
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Filtering System}
 \label{sec:filtering}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{Filter Logic}
 
-All filters combine with conjunction (AND) across dimensions and disjunction (OR) within a multi-select dimension:
-
-\begin{equation}
-\mathcal{F} = \left\{ a \in \mathcal{A} \;\Big|\; \text{city}(a) \in C_\text{sel} \;\wedge\; \text{threat}(a) \in T_\text{sel} \;\wedge\; \text{source}(a) \in S_\text{sel} \;\wedge\; \text{op}(a) \cap O_\text{sel} \neq \emptyset \;\wedge\; d_1 \leq \text{date}(a) \leq d_2 \right\}
-\end{equation}
-
-where $C_\text{sel}$, $T_\text{sel}$, $S_\text{sel}$, $O_\text{sel}$ are the selected sets for city, threat, source, and operation, and $[d_1, d_2]$ is the date range.
+Filters combine with AND across dimensions and OR within a multi-select set:
+\[
+\mathcal{F}=\bigl\{a\in\mathcal{A}\mid\mathrm{city}(a)\in C_\mathrm{sel}\wedge\mathrm{threat}(a)\in T_\mathrm{sel}\wedge\mathrm{src}(a)\in S_\mathrm{sel}\wedge\mathrm{op}(a)\cap O_\mathrm{sel}\neq\emptyset\wedge d_1\leq\mathrm{date}(a)\leq d_2\bigr\}
+\]
 
 \subsection{Debounced Filtering}
 
-To prevent excessive re-renders during rapid input, a 300ms \texttt{setTimeout} debounce is applied:
-
-\begin{lstlisting}[style=tscode, language=JavaScript, caption=Debounced filter application]
+\begin{lstlisting}[style=tscode, language=JavaScript,
+  caption={Debounced 300\,ms filter application}]
 useEffect(() => {
   const timer = setTimeout(() => {
     const filtered = globalData.filter(d => {
-      // city, threat, source, operation, date checks
+      const matchCity = selectedCities.length === 0 ||
+        selectedCities.includes(d.cities) || d.cities.includes(citySearch);
+      const matchThreat = threatFilter.length === 0 ||
+        threatFilter.includes(d.threatStr);
+      const matchOp = operationFilter.length === 0 ||
+        d.operationsArray.some(op => operationFilter.includes(op));
+      return matchCity && matchThreat && matchOp /* && date range */;
     });
     setFilteredData(filtered);
   }, 300);
   return () => clearTimeout(timer);
-}, [citySearch, selectedCities, threatFilter, /* ... */]);
+}, [citySearch, selectedCities, threatFilter, sourceFilter,
+    operationFilter, dateRange, globalData]);
 \end{lstlisting}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{User Interface Design}
-\label{sec:ui}
-% ─────────────────────────────────────────────────────────────────────────────
-
-\subsection{Layout Architecture}
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
-  % Desktop layout
-  \draw[rounded corners=6pt, fill=gray!8, draw=gray!40] (0,0) rectangle (14,9);
-  \node[anchor=north west] at (0.1,9) {\textbf{Desktop Layout (lg+)}};
-
-  % Header
-  \draw[fill=israelblue!15, draw=israelblue!40, rounded corners=4pt] (0.2,8.1) rectangle (13.8,9.0);
-  \node at (7,8.55) {Header: Logo | Search | Filters | Language | Dark Mode | Safe Route};
-
-  % Left sidebar
-  \draw[fill=emerald!8, draw=emerald!40, rounded corners=4pt] (0.2,0.2) rectangle (3.2,8.0);
-  \node[align=center] at (1.7,4.1) {Sidebar\\City Filter\\Date Range\\Shower Index\\Live Ticker};
-
-  % Map
-  \draw[fill=blue!6, draw=blue!30, rounded corners=4pt] (3.3,4.5) rectangle (9.2,8.0);
-  \node at (6.25,6.25) {Leaflet Map};
-
-  % Time series chart
-  \draw[fill=yellow!5, draw=orange!30, rounded corners=4pt] (3.3,0.2) rectangle (9.2,4.4);
-  \node[align=center] at (6.25,2.3) {Time Series Chart\\(7 resolutions, ECharts)};
-
-  % Analytics panel
-  \draw[fill=purple!5, draw=purple!30, rounded corners=4pt] (9.3,0.2) rectangle (13.8,8.0);
-  \node[align=center] at (11.55,4.1) {Analytics Panel\\Top Cities\\Threat Distribution\\Source Distribution\\Smart Insight};
-
-  % Ticker
-  \draw[fill=red!8, draw=red!30, rounded corners=4pt] (0.2,0.05) rectangle (13.8,0.18);
-  \node[font=\tiny] at (7,0.12) {Live Alert Ticker};
-
-\end{tikzpicture}
-\caption{Desktop layout (screens $\geq$1024px). On mobile, sections stack vertically with a hamburger menu.}
-\label{fig:layout}
-\end{figure}
-
-\subsection{Safe Route Panel Layout}
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[scale=0.85, every node/.style={font=\small}]
-  \draw[rounded corners=6pt, fill=gray!8, draw=gray!40] (0,0) rectangle (14,7.5);
-  \node[anchor=north west] at (0.1,7.5) {\textbf{Safe Route Mode (inline, desktop)}};
-
-  % Map
-  \draw[fill=blue!6, draw=blue!30, rounded corners=4pt] (9.3,0.2) rectangle (13.8,7.4);
-  \node[align=center] at (11.55,3.8) {Leaflet Map\\(always visible)\\+\\Route Overlay};
-
-  % Left: inputs
-  \draw[fill=emerald!8, draw=emerald!40, rounded corners=4pt] (0.2,5.0) rectangle (6.2,7.4);
-  \node[align=center] at (3.2,6.2) {Origin / Destination Inputs\\Calculate Button};
-
-  % Left: chart
-  \draw[fill=yellow!5, draw=orange!30, rounded corners=4pt] (0.2,0.2) rectangle (6.2,4.9);
-  \node[align=center] at (3.2,2.55) {Hourly Risk Bar Chart\\(ECharts, fills remaining height)};
-
-  % Right: hours list
-  \draw[fill=israelblue!8, draw=israelblue!40, rounded corners=4pt] (6.3,3.0) rectangle (9.2,7.4);
-  \node[align=center] at (7.75,5.2) {Ranked\\Departure\\Hours\\(scrollable)};
-
-  % Right: disclaimers
-  \draw[fill=red!5, draw=red!30, rounded corners=4pt] (6.3,0.2) rectangle (9.2,2.9);
-  \node[align=center] at (7.75,1.55) {Disclaimers\\(fixed)};
-
-\end{tikzpicture}
-\caption{Safe Route panel layout in inline (desktop) mode. The map remains visible on the right.}
-\label{fig:safe_layout}
-\end{figure}
-
-\subsection{Internationalization}
-
-The application supports 7 languages through a unified translation dictionary:
-
-\begin{table}[H]
-\centering
-\caption{Language Support}
-\begin{tabular}{llll}
-\toprule
-\textbf{Code} & \textbf{Language} & \textbf{Direction} & \textbf{Scope} \\
-\midrule
-\texttt{he} & Hebrew    & RTL & Full (primary) \\
-\texttt{en} & English   & LTR & Full \\
-\texttt{ar} & Arabic    & RTL & Full \\
-\texttt{fr} & French    & LTR & Full \\
-\texttt{de} & German    & LTR & Full \\
-\texttt{es} & Spanish   & LTR & Full \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-RTL/LTR switching is applied dynamically via the \texttt{dir} attribute on the root element, affecting all CSS flexbox direction, text alignment, and component positioning simultaneously.
-
-\subsection{Visual Design System}
-
-The UI follows a dark-primary glassmorphism design system with these design tokens:
-
-\begin{table}[H]
-\centering
-\caption{Design Token System}
-\begin{tabular}{llll}
-\toprule
-\textbf{Token} & \textbf{Dark Value} & \textbf{Light Value} & \textbf{Role} \\
-\midrule
-\texttt{--bg-color}       & \texttt{\#0a0f1e} & \texttt{\#f1f5f9} & Page background \\
-\texttt{--text-main}      & \texttt{\#e2e8f0} & \texttt{\#1e293b} & Body text \\
-\texttt{--primary-azure}  & \texttt{\#38bdf8} & \texttt{\#0284c7} & Accent / links \\
-\texttt{glass-card}       & \texttt{rgba(255,255,255,0.04)} & white & Card background \\
-\texttt{neon-text}        & \texttt{drop-shadow(0 0 8px \#38bdf8)} & none & Neon glow effect \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Implementation Notes}
 \label{sec:implementation}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{React Anti-Pattern: Inner Function Components}
 
-A critical bug was identified and resolved during development. When React function components are defined \emph{inside} the render function of a parent component, they receive a new function reference on every render cycle:
+A critical bug was identified during development. When React components are defined \emph{inside} a parent render function, each render creates a new component type identity, causing React to unmount and remount it — resetting all internal state including keyboard focus:
 
-\begin{lstlisting}[style=tscode, language=JavaScript, caption=Incorrect: inner function components lose state on parent re-render]
-// WRONG: InputForm is a new component type on every render
+\begin{lstlisting}[style=tscode, language=JavaScript,
+  caption={Incorrect: inner function component loses focus on each parent re-render}]
 const SafeRouteModal = () => {
   const [city, setCity] = useState('');
-
-  const InputForm = () => (  // New type identity every render!
+  // NEW component type identity on every render -> unmount/remount!
+  const InputForm = () => (
     <input value={city} onChange={e => setCity(e.target.value)} />
   );
-  return <InputForm />;
+  return <InputForm />;  // Focus lost after every keystroke
 };
 \end{lstlisting}
 
-\begin{lstlisting}[style=tscode, language=JavaScript, caption=Correct: JSX variable assignment preserves state]
-// CORRECT: inputFormJsx is a JSX value, not a new component type
+\begin{lstlisting}[style=tscode, language=JavaScript,
+  caption={Correct: JSX variable preserves identity; focus retained}]
 const SafeRouteModal = () => {
   const [city, setCity] = useState('');
-
-  const inputFormJsx = (  // JSX variable, not a component
+  // JSX value, not a new component type -> stable identity
+  const inputFormJsx = (
     <input value={city} onChange={e => setCity(e.target.value)} />
   );
   return <div>{inputFormJsx}</div>;
 };
 \end{lstlisting}
 
-The inner component pattern causes React to unmount and remount the component on every parent state change (since the component \emph{type identity} changes), resetting all internal state including focus — making text input fields lose focus after every keystroke.
+\subsection{ECharts Sizing in Flex Containers}
 
-\subsection{ECharts Height in Flex Containers}
+Apache ECharts reads \texttt{clientHeight} at initialization. In CSS flexbox with \texttt{flex:1} / \texttt{min-height:0}, layout may not be finalized at that moment. The solution is a \texttt{ResizeObserver}:
 
-Apache ECharts reads its container's \texttt{clientHeight} at initialization time. In a CSS flexbox layout with \texttt{flex:1} and \texttt{min-height:0}, the browser may not have finalized layout when ECharts initializes. The solution is a \texttt{ResizeObserver}:
-
-\begin{lstlisting}[style=tscode, language=JavaScript, caption=ResizeObserver pattern for reliable ECharts sizing]
+\begin{lstlisting}[style=tscode, language=JavaScript,
+  caption=ResizeObserver pattern for correct ECharts height in flex containers]
 const [chartHeight, setChartHeight] = useState(0);
 const chartBoxRef = useRef<HTMLDivElement>(null);
 
@@ -890,256 +1037,235 @@ useEffect(() => {
   return () => ro.disconnect();
 }, [safeRouteData]);
 
-// Then in JSX:
+// JSX:
 <div ref={chartBoxRef} style={{ flex: 1, minHeight: 0 }}>
   <ReactECharts style={{ height: chartHeight - 16 }} />
 </div>
 \end{lstlisting}
 
-\subsection{IndexedDB Caching with Version Control}
+\subsection{OSRM with AbortController Timeout}
 
-\begin{lstlisting}[style=tscode, language=JavaScript, caption=Version-controlled data caching]
-const remoteVersion = await fetch(GITHUB_SHA_API).json();
-const cachedVersion = await indexedDB.get('lastModified');
-
-if (remoteVersion.sha === cachedVersion) {
-  // Use cache: rehydrate Date objects and return
-  const cached = await indexedDB.get('alerts');
-  return cached.map(d => ({ ...d, dateObj: new Date(d.dateObj) }));
-} else {
-  // Fetch fresh: parse CSV, store to IndexedDB with new SHA
-  const fresh = await fetchAndParseCSV();
-  await indexedDB.put('alerts', fresh);
-  await indexedDB.put('lastModified', remoteVersion.sha);
-  return fresh;
-}
-\end{lstlisting}
-
-\subsection{OSRM Query with AbortController Timeout}
-
-\begin{lstlisting}[style=tscode, language=JavaScript, caption=OSRM with timeout and fallback]
+\begin{lstlisting}[style=tscode, language=JavaScript,
+  caption=OSRM query with 6-second timeout and graceful fallback]
 const controller = new AbortController();
 const timeout = setTimeout(() => controller.abort(), 6000);
-
 try {
-  const res = await fetch(`${OSRM_URL}/${lon1},${lat1};${lon2},${lat2}`,
-                          { signal: controller.signal });
-  const data = await res.json();
-  const route = data.routes[0];
-  distanceKm = route.distance / 1000;
-  durationH  = route.duration / 3600;
+  const res = await fetch(
+    `https://router.project-osrm.org/route/v1/driving/
+     ${startCoords[1]},${startCoords[0]};${endCoords[1]},${endCoords[0]}
+     ?overview=false`,
+    { signal: controller.signal }
+  );
+  const { routes } = await res.json();
+  distanceKm = routes[0].distance / 1000;
+  durationH  = routes[0].duration / 3600;
   isRoadBased = true;
 } catch {
-  // Fallback to Haversine * 1.35
   distanceKm = haversine(start, end) * 1.35;
   durationH  = distanceKm / 80;
   isRoadBased = false;
-} finally {
-  clearTimeout(timeout);
-}
+} finally { clearTimeout(timeout); }
 \end{lstlisting}
 
-% ─────────────────────────────────────────────────────────────────────────────
+\subsection{IndexedDB Version-Controlled Caching}
+
+\begin{lstlisting}[style=tscode, language=JavaScript,
+  caption=SHA-based cache invalidation]
+const { sha } = await fetch(GITHUB_SHA_API).then(r => r.json())[0].commit;
+const cachedSha = await idb.get('lastModified');
+
+if (sha === cachedSha) {
+  const cached = await idb.get('alerts');
+  return cached.map(d => ({ ...d, dateObj: new Date(d.dateObj) }));
+}
+const fresh = await fetchAndParseCSV();
+await idb.put('alerts', fresh);
+await idb.put('lastModified', sha);
+return fresh;
+\end{lstlisting}
+
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Evaluation}
 \label{sec:evaluation}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
-\subsection{Functional Evaluation}
+\subsection{Qualitative Validation}
 
-\subsubsection{UAV Route Reconstruction}
+\paragraph{UAV reconstruction.} For the documented Houthi UAV attack of October~19, 2023, the algorithm reconstructed a north-westward trajectory from the Gulf of Aqaba through the Negev consistent with publicly reported flight paths. For the Iranian UAV swarm of April~13--14, 2024, multiple simultaneous east-to-west chains were reconstructed, consistent with the reported approach vector.
 
-The algorithm was evaluated qualitatively against known, publicly documented drone incidents:
-\begin{itemize}
-  \item \textbf{Oct 19, 2023 (Eilat drone attack):} A Houthi UAV traversed southern Israel before interception. The algorithm reconstructed a trajectory from the Red Sea coast northward through the Arava Valley, consistent with publicly reported flight paths.
-  \item \textbf{April 13--14, 2024 (Iranian mass UAV attack):} Multiple simultaneous chains were reconstructed, converging from east to west, consistent with the direction of the reported Iranian UAV swarm.
-\end{itemize}
+\paragraph{Shower Index.} Back-testing over October--December 2023 recommends early morning hours (03:00--06:00), consistent with the predominantly daytime-rocket-fire pattern from Gaza. During the Houthi ballistic-missile period, late-night windows emerged as safer.
 
-\subsubsection{Shower Index Calibration}
-
-Historical back-testing shows that the recommended window coincides with periods of objectively low alert density. For the October 2023 -- December 2023 period, the algorithm recommended early morning hours (04:00--06:00), consistent with the military operational pattern (daytime rocket fire).
-
-\subsubsection{Safe Route Planner}
-
-For the Tel Aviv -- Eilat route ($\approx$350 km, $\approx$4 hours driving), the planner correctly identifies nighttime (00:00--05:00) as statistically safest, consistent with the daytime-heavy pattern of short-range rocket fire from Gaza and the overnight pattern of Houthi missile launches.
+\paragraph{Safe Route Planner.} For Tel Aviv -- Eilat ($\approx$350\,km, $\sim$4\,h), the planner identifies 00:00--05:00 as historically safest, consistent with daytime rocket fire patterns from Gaza and Houthi overnight launch patterns.
 
 \subsection{Performance Benchmarks}
 
-\begin{table}[H]
-\centering
-\caption{Performance Characteristics (10,000 alert records)}
-\begin{tabular}{lll}
-\toprule
-\textbf{Operation} & \textbf{Duration} & \textbf{Notes} \\
-\midrule
-Initial CSV load + parse & $\sim$800ms & PapaParse web worker \\
-Cache hit load           & $\sim$50ms  & IndexedDB + Date rehydration \\
-Filter application       & $\sim$30ms  & Debounced, in main thread \\
-UAV route computation    & $\sim$120ms & O(n) chaining + smoothing \\
-Safe route calculation   & $\sim$15ms  & Pure JS, 450-city scan \\
-OSRM API query           & $\sim$800ms & Network dependent \\
-Chart render (ECharts)   & $\sim$40ms  & Canvas renderer \\
-Map marker update        & $\sim$25ms  & Leaflet, 200 markers \\
-\bottomrule
+\begin{table}[H]\centering
+\caption{Performance Characteristics (10,000 alert records, mid-range laptop)}
+\begin{tabular}{lll}\toprule
+\textbf{Operation} & \textbf{Duration} & \textbf{Notes} \\\midrule
+Initial CSV load + parse & $\sim$800\,ms & PapaParse web worker \\
+Cache-hit load           & $\sim$50\,ms  & IndexedDB + Date rehydration \\
+Filter application       & $\sim$30\,ms  & Debounced, main thread \\
+UAV route computation    & $\sim$120\,ms & O(n) chaining + smoothing \\
+Safe route calculation   & $\sim$15\,ms  & Pure JS, 450-city scan \\
+OSRM API round-trip      & $\sim$800\,ms & Network-dependent \\
+ECharts render           & $\sim$40\,ms  & Canvas renderer \\
+Leaflet marker update    & $\sim$25\,ms  & 200 markers \\\bottomrule
 \end{tabular}
 \end{table}
 
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Future Work}
 \label{sec:future}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
 \subsection{Predictive Modeling}
-
-The current system is retrospective. Future work could apply time-series forecasting:
 \begin{itemize}
-  \item \textbf{LSTM networks} for hourly alert probability prediction given recent alert history
-  \item \textbf{Hawkes processes} for self-exciting event models (an attack wave increases short-term probability)
+  \item \textbf{LSTM networks} for hourly alert probability forecasting given recent alert history
+  \item \textbf{Hawkes processes} for self-exciting event models (an attack wave raises short-term probability)
   \item \textbf{Spatial autoregressive models} for geographic spread prediction
 \end{itemize}
 
 \subsection{Real-Time Route Monitoring}
+A live route advisor could monitor the alert feed during an active trip and push notifications if alerts activate within the travel corridor.
 
-A live route advisor could:
-1. Accept a planned departure time and route
-2. Monitor the live alert feed during the trip
-3. Push notifications if alerts activate within the travel corridor
-4. Suggest stopping or rerouting
+\subsection{UAV Physics-Constrained Tracking}
+Speed-constrained chaining with Shahed-136 parameters ($v\!\approx\!180$\,km/h) and multi-hypothesis tracking (MHT) to disambiguate simultaneous launches.
 
-\subsection{UAV Physics-Constrained Modeling}
+\subsection{Extended Platform}
+Native mobile app, Waze/Google Maps integration, WCAG~2.1 accessibility, community incident reports, and an open academic-export API.
 
-The current algorithm ignores UAV flight physics. Future improvements:
-\begin{itemize}
-  \item Speed-constrained chaining with Shahed-136/136B parameters ($v \approx 180$ km/h)
-  \item Altitude inference from interception altitude data
-  \item Multi-hypothesis tracking (MHT) for simultaneous launch disambiguation
-\end{itemize}
-
-\subsection{Machine Learning Source Attribution}
-
-Current source attribution uses rule-based heuristics. A trained classifier using temporal patterns, geographic origin vectors, and threat type combinations could improve accuracy significantly.
-
-\subsection{Integration and Accessibility}
-
-\begin{itemize}
-  \item Native mobile app (React Native / Capacitor)
-  \item Waze / Google Maps plugin for in-navigation safety scoring
-  \item Accessibility improvements (WCAG 2.1 AA compliance)
-  \item Screen reader support for visually impaired users
-\end{itemize}
-
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 \section{Conclusion}
 \label{sec:conclusion}
-% ─────────────────────────────────────────────────────────────────────────────
+% ═════════════════════════════════════════════════════════════════════════════
 
-We have presented Israel Shield, a browser-based security intelligence dashboard that transforms a decade of public alert data into actionable civilian safety intelligence. The system's core contributions — the spatio-temporal UAV route reconstruction algorithm, the sliding-window departure hour scorer, and the Poisson-based Shower Index — demonstrate that meaningful security analytics are achievable from passively collected public data, without specialized sensors or proprietary feeds.
+We have presented Israel Shield, a browser-based security intelligence dashboard that transforms a decade of public alert data into actionable civilian safety intelligence. The system's three core algorithmic contributions --- the spatio-temporal UAV route reconstruction, the sliding-window departure time optimizer, and the Poisson-based Shower Index --- demonstrate that meaningful security analytics are achievable from passively collected public data, without specialized sensors or proprietary feeds.
 
-The application's fully client-side architecture, seven-language support, offline capability, and PWA installation make it accessible to the broadest possible audience during high-stress security events when network reliability cannot be assumed.
+The application's fully client-side architecture, seven-language support, offline capability, and PWA installation make it accessible to the broadest possible audience during high-stress security events. The codebase also demonstrates engineering lessons of broader applicability: the hazards of defining React components inside render functions, the importance of explicit pixel sizing for canvas-based charting libraries, and the value of conservative fallback strategies in latency-sensitive API calls.
 
-The codebase demonstrates several engineering lessons of broader applicability: the hazards of inner React function components, the importance of explicit pixel heights for canvas-based charting libraries in flex layouts, and the value of conservative fallback strategies in API-dependent features.
+We hope this work serves both as a publicly useful tool and as a demonstration that academic BI projects can produce production-quality, societal-value applications.
 
-We hope this work serves both as a useful public tool and as a demonstration that academic BI projects can produce production-quality, publicly valuable applications.
+\vspace{0.8em}
+\noindent\textit{This application is dedicated to the memory of the victims of the October~7th, 2023 massacre, and all those who have fallen in the ongoing conflict. \texthebrew{יהי זכרם ברוך.}}
 
-\vspace{1em}
-\noindent\textit{The application is dedicated to the memory of the victims of the October 7th, 2023 massacre, and all those who have fallen in the ongoing conflict. May their memory be a blessing.}
-
-% ─────────────────────────────────────────────────────────────────────────────
+% ─── References ───────────────────────────────────────────────────────────────
 \begin{thebibliography}{99}
 
 \bibitem{harpaz2023}
-Y. Harpaz, ``Israeli rocket alert dataset,'' GitHub repository, 2019--2026.
+Y.~Harpaz, ``Israeli rocket alert dataset,'' GitHub, 2019--2026.
 \url{https://github.com/yuval-harpaz/alarms}
 
 \bibitem{olive2019}
-X. Olive, J. Morio, ``Trajectory clustering of air traffic flows around airports,'' \textit{Aerospace Science and Technology}, 84:776--784, 2019.
+X.~Olive, J.~Morio, ``Trajectory clustering of air traffic flows around airports,''
+\textit{Aerospace Science and Technology}, 84:776--784, 2019.
 
 \bibitem{tomasini2009}
-R.~Tomasini, L.~Van~Wassenhove, \textit{Humanitarian Logistics}. Palgrave Macmillan, 2009.
+R.~Tomasini, L.~Van~Wassenhove,
+\textit{Humanitarian Logistics}. Palgrave Macmillan, 2009.
 
 \bibitem{kingman1992}
-J.~F.~C. Kingman, \textit{Poisson Processes}. Oxford University Press, 1992.
+J.~F.~C.~Kingman, \textit{Poisson Processes}. Oxford University Press, 1992.
 
 \bibitem{idf_oref}
-IDF Home Front Command, ``Red Alert API,'' \url{https://www.oref.org.il}, accessed 2026.
+IDF Home Front Command, ``Red Alert API,''
+\url{https://www.oref.org.il}, accessed~2026.
 
 \bibitem{osrm}
-D. Luxen, C. Vetter, ``Real-time routing with OpenStreetMap data,'' in \textit{Proc. SIGSPATIAL}, 2011.
+D.~Luxen, C.~Vetter, ``Real-time routing with OpenStreetMap data,''
+in \textit{Proc.\ ACM SIGSPATIAL}, 2011.
 
 \bibitem{leaflet}
-V. Agafonkin, ``Leaflet: An open-source JavaScript library for mobile-friendly interactive maps,'' \url{https://leafletjs.com}, 2010--2024.
+V.~Agafonkin, ``Leaflet: An open-source JavaScript library for interactive maps,''
+\url{https://leafletjs.com}, 2010--2024.
 
 \bibitem{echarts}
-Apache ECharts, ``Apache ECharts: A powerful, interactive charting and data visualization library,'' Apache Software Foundation, 2025.
+Apache ECharts, ``A powerful charting and data visualization library,''
+Apache Software Foundation, 2025.
 
 \bibitem{react}
-Meta Open Source, ``React 19: The library for web and native user interfaces,'' 2024.
+Meta Open Source, ``React 19,'' 2024.
 
 \bibitem{haversine}
-R.~Sinnott, ``Virtues of the Haversine,'' \textit{Sky and Telescope}, 68(2):159, 1984.
+R.~Sinnott, ``Virtues of the Haversine,''
+\textit{Sky and Telescope}, 68(2):159, 1984.
 
 \end{thebibliography}
 
+% ─── Appendices ───────────────────────────────────────────────────────────────
 \appendix
 
-% ─────────────────────────────────────────────────────────────────────────────
 \section{Haversine Distance Formula}
 \label{app:haversine}
-% ─────────────────────────────────────────────────────────────────────────────
-
-The Haversine formula computes the great-circle distance between two points on a sphere:
 
 \begin{align}
-a &= \sin^2\!\left(\frac{\Delta\phi}{2}\right) + \cos\phi_1 \cos\phi_2 \sin^2\!\left(\frac{\Delta\lambda}{2}\right) \\
-c &= 2 \arctan2\!\left(\sqrt{a},\, \sqrt{1-a}\right) \\
-d &= R \cdot c
+a &= \sin^2\!\Bigl(\tfrac{\Delta\phi}{2}\Bigr)+\cos\phi_1\cos\phi_2\sin^2\!\Bigl(\tfrac{\Delta\lambda}{2}\Bigr)\\
+c &= 2\arctan2\!\bigl(\sqrt{a},\sqrt{1-a}\bigr)\\
+d &= R\cdot c,\quad R=6371\text{ km}
 \end{align}
 
-where $\phi$ is latitude in radians, $\lambda$ is longitude in radians, and $R = 6371$ km (mean Earth radius).
+\section{Core TypeScript Interfaces}
+\label{app:interfaces}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{AlertData TypeScript Interface}
-\label{app:interface}
-% ─────────────────────────────────────────────────────────────────────────────
-
-\begin{lstlisting}[style=tscode, language=JavaScript, caption=AlertData TypeScript interface]
+\begin{lstlisting}[style=tscode, language=JavaScript,
+  caption={AlertData and RouteImpactData TypeScript interfaces}]
 export interface AlertData {
-  time:            string;      // Original timestamp string
-  cities:          string;      // Hebrew city name
-  threatStr:       string;      // Localized threat type
-  sourceStr:       string;      // Threat source
-  dateObj:         Date;        // Parsed JavaScript Date
-  operationsArray: string[];    // Assigned operations
-  // Derived temporal fields
-  hour:      number;   // 0-23
-  minute:    number;   // 0-59
-  dayOfWeek: number;   // 0=Sun, 6=Sat
-  coords?:   [number, number];  // [lat, lon], if resolved
+  time:            string;
+  cities:          string;        // Hebrew city name
+  threatStr:       string;        // Localized threat type
+  sourceStr:       string;        // Threat source
+  dateObj:         Date;          // Parsed JavaScript Date
+  operationsArray: string[];      // Assigned military operations
+  hour:            number;        // 0-23
+  minute:          number;        // 0-59
+  dayOfWeek:       number;        // 0=Sun ... 6=Sat
+  coords?:         [number, number]; // [lat, lon], if resolved
+}
+
+export interface RouteImpactData {
+  impactZoneCities:    string[];
+  hourlyRisk:          { hour: number; count: number }[];
+  safestHour:          number | null;
+  riskiestHour:        number | null;
+  totalAlerts:         number;
+  interpolatedPath:    [number, number][];
+  top5SafestHours:     SafeHourOption[];    // up to 12
+  travelDurationHours: number;
+  estimatedDistanceKm: number;
+  isRoadBased:         boolean;
+}
+
+export interface SafeHourOption {
+  hour:             number;
+  windowScore:      number;
+  quietProbability: number;   // 0-100 (relative to riskiest)
+  rank:             number;
+  arrivalHour:      number;
+  arrivalMin:       number;
 }
 \end{lstlisting}
 
-% ─────────────────────────────────────────────────────────────────────────────
-\section{Window Score Function Implementation}
+\section{Window Score Implementation}
 \label{app:window}
-% ─────────────────────────────────────────────────────────────────────────────
 
 \begin{lstlisting}[style=tscode, language=JavaScript,
-  caption=getWindowScore -- scoring a departure hour over a travel window]
+  caption=getWindowScore: scores a departure hour over the full travel window]
 function getWindowScore(
-  hourCounts: number[],  // 24-element array (alerts per hour)
-  startH: number,        // Departure hour 0-23
-  durationH: number      // Trip duration in hours (may be fractional)
+  hourCounts:  number[],  // 24-element: alerts per hour of day
+  startH:      number,    // departure hour 0-23
+  durationH:   number     // trip duration in hours (may be fractional)
 ): number {
   if (durationH <= 0) return hourCounts[startH % 24];
   let score = 0;
-  const fullHours = Math.floor(durationH);
+  const fullHours      = Math.floor(durationH);
   const partialFraction = durationH - fullHours;
   for (let i = 0; i < fullHours; i++) {
-    score += hourCounts[(startH + i) % 24];
+    score += hourCounts[(startH + i) % 24];          // each full hour
   }
-  if (partialFraction > 0.001) {
+  if (partialFraction > 0.001) {                     // fractional last hour
     score += hourCounts[(startH + fullHours) % 24] * partialFraction;
   }
-  return score;
+  return score;  // lower = safer departure window
 }
 \end{lstlisting}
 
