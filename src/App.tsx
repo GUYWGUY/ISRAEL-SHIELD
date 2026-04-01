@@ -386,7 +386,7 @@ const operationsDict = [
   { name: "מתקפת אוקטובר (איראן 2024)", start: new Date("2024-10-01"), end: new Date("2024-10-01T23:59:59") },
   { name: "ימי תשובה (איראן 2024)", start: new Date("2024-10-26"), end: new Date("2024-10-27T23:59:59") },
   { name: "עם כלביא (איראן 2025)", start: new Date("2025-06-13"), end: new Date("2025-06-24T23:59:59") },
-  { name: "כארי ישאג / שאגת הארי (איראן 2026)", start: new Date("2026-02-28"), end: new Date("2026-03-31T23:59:59") }
+  { name: "כארי ישאג / שאגת הארי (איראן 2026)", start: new Date("2026-02-28"), end: new Date("2026-04-30T23:59:59") }
 ];
 
 const baseCoords: Record<string, [number, number]> = {
