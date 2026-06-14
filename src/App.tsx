@@ -1216,7 +1216,7 @@ export default function App() {
               dateObj: dt,
               hour: dt.getHours(),
               minute: dt.getMinutes(),
-              operationsArray: d.operationsArray || []
+              operationsArray: getOperationNames(dt)
             };
           });
           
